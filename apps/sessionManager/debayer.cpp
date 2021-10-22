@@ -1,5 +1,5 @@
 #include "mainWindow.h"
-#include "misc/splitLine.h"
+#include "misc/tokeniser.h"
 
 #include <boost/filesystem.hpp>
 

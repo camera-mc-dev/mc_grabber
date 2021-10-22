@@ -18,7 +18,7 @@ def SetPathsLibsAndFlagsAll(env):
 	corecfg.SetCoreConfig(env)
 	grabcfg.SetFittingConfig(env)
 	env.Append(CPPPATH=["%s/../mc_core/src"%(Dir('.').abspath)])
-	env.Append(CPPPATH=["%s/../mc_reconstruction/src"%(Dir('.').abspath)])
+	env.Append(CPPPATH=["%s/../mc_imgproc/src"%(Dir('.').abspath)])
 
 
 
@@ -43,7 +43,7 @@ def SetPathsLibsAndFlags_dbgOpt(env):
 	# stuff.
 	env.Append(CPPFLAGS=['-g', '-O2'])
 	env.Append(CPPFLAGS=['-fopenmp'])
-
+	env.Append(LINKFLAGS=['-fopenmp'])
 
 
 
@@ -54,7 +54,7 @@ def SetPathsLibsAndFlags_dbgOpt(env):
 def SetPathsLibsAndFlags_opt(env):
 	env.Append(CPPFLAGS=['-O2'])
 	env.Append(CPPFLAGS=['-fopenmp'])
-
+	env.Append(LINKFLAGS=['-fopenmp'])
 
 # ---------------------------------------------------------
 # Set libraries to link against and include paths for the compiler
@@ -65,7 +65,7 @@ def SetPathsLibsAndFlags_opt(env):
 def SetPathsLibsAndFlags_memSan(env):
 	env.Append(CPPFLAGS=['-g', '-O1', '-fsanitize=address', '-fno-omit-frame-pointer'])
 	env.Append(LINKFLAGS=['-g', '-O1', '-fsanitize=address', '-fno-omit-frame-pointer'])
-
+	env.Append(LINKFLAGS=['-fopenmp'])
 
 
 
