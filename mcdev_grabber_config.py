@@ -16,6 +16,6 @@ def FindGTKMM(env):
 	#
 	env.ParseConfig("pkg-config gtkmm-3.0 --cflags --libs");
 
-def SetReconConfig(env):
+def SetGrabberConfig(env):
 	FindSISO(env)
 	FindGTKMM(env)
