@@ -34,11 +34,11 @@ scfpath = Dir('.').srcnode().abspath
 
 
 # make sure we link against our library
-srcEnv.Append(LIBPATH = ["%s/../mc_core/%s/src"%(Dir('#').abspath, buildDir)])
-srcEnv.Append(LIBPATH = ["%s/../mc_imgproc/%s/src"%(Dir('#').abspath, buildDir)])
+srcEnv.Append(LIBPATH = ["%s/../mc_core/%s/src"%(scfpath, buildDir)])
+srcEnv.Append(LIBPATH = ["%s/../mc_imgproc/%s/src"%(scfpath, buildDir)])
 
-srcEnv.Append(CPPPATH = ["%s/src"%(Dir('#').abspath)] )
-srcEnv.Append(LIBPATH = ["%s/%s/src"%(Dir('#').abspath, buildDir)])
+srcEnv.Append(CPPPATH = ["%s/src"%(scfpath)] )
+srcEnv.Append(LIBPATH = ["%s/%s/src"%(scfpath, buildDir)])
 srcEnv.Prepend(LIBS = ["MC-core", "MC-imgproc", "MC-grabber"])
 
 # now find the source files.

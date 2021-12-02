@@ -29,12 +29,15 @@ os.chdir("%s"%(Dir(".").srcnode().abspath))
 # means it doesn't automatically pull in the c++ libraries. Ooops.
 srcEnv.Replace(LINK=srcEnv['CXX'])
 
-# make sure we link against our library
-srcEnv.Append(LIBPATH = ["%s/../mc_core/%s/src"%(Dir('#').abspath, buildDir)])
-srcEnv.Append(LIBPATH = ["%s/../mc_imgproc/%s/src"%(Dir('#').abspath, buildDir)])
+# find out where the current SConscript file was.
+scfpath = Dir('.').srcnode().abspath
 
-srcEnv.Append(CPPPATH = ["%s/src"%(Dir('#').abspath)] )
-srcEnv.Append(LIBPATH = ["%s/%s/src"%(Dir('#').abspath, buildDir)])
+# make sure we link against our library
+srcEnv.Append(LIBPATH = ["%s/../mc_core/%s/src"%(scfpath, buildDir)])
+srcEnv.Append(LIBPATH = ["%s/../mc_imgproc/%s/src"%(scfpath, buildDir)])
+
+srcEnv.Append(CPPPATH = ["%s/src"%(scfpath)] )
+srcEnv.Append(LIBPATH = ["%s/%s/src"%(scfpath, buildDir)])
 srcEnv.Prepend(LIBS = ["MC-core", "MC-imgproc", "MC-grabber"])
 
 # now find the source files.
@@ -42,8 +45,8 @@ srcEnv.Prepend(LIBS = ["MC-core", "MC-imgproc", "MC-grabber"])
 cpps = [f for f in os.listdir('.') if f[-4:] == '.cpp']
 for f in cpps:
 	srcf = "%s"%f
-	objf = "%s/%s/bin/obj/%s"%( Dir('#').abspath, buildDir, f[:-4] )
-	tname = "%s/%s/bin/%s"%(Dir('#').abspath, buildDir,   f[:-4])
+	objf = "%s/%s/bin/obj/%s"%( scfpath, buildDir, f[:-4] )
+	tname = "%s/%s/bin/%s"%(scfpath, buildDir,   f[:-4])
 	targ = srcEnv.Object(objf, srcf)
 	srcEnv.Program(tname, targ)
 
@@ -61,10 +64,10 @@ for d in dirs:
 		objs = []
 		for f in dcpps:
 			srcf = "%s/%s"%(d,f)
-			objf = "%s/%s/bin/obj/%s/%s.o"%( Dir('#').abspath, buildDir,   d, f[:-4] )
+			objf = "%s/%s/bin/obj/%s/%s.o"%( scfpath, buildDir,   d, f[:-4] )
 			print f, srcf, objf
 			objs.append( srcEnv.Object( objf, srcf ) )
-		tname = "%s/%s/bin/%s"%(Dir('#').abspath, buildDir,   d)
+		tname = "%s/%s/bin/%s"%(scfpath, buildDir,   d)
 		print "tn: ", tname
 		srcEnv.Program(target = tname, source = objs )
 	
