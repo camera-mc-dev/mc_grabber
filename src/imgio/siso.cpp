@@ -266,7 +266,7 @@ void SiSoGrabber::SetFPS(int inFPS, int masterBoard )
 	Fg_setParameter(fgHandles[masterBoard], FG_TRIGGER_FRAMESPERSECOND, &fps, 0);
 }
 
-void SiSoGrabber::SetResolution( long int &cols, long int &rows )
+void SiSoGrabber::SetResolution( long int cols, long int rows )
 {
 	for( unsigned cc = 0; cc < camInfos.size(); ++cc )
 	{
@@ -274,7 +274,7 @@ void SiSoGrabber::SetResolution( long int &cols, long int &rows )
 	}
 }
 
-void SiSoGrabber::SetResolution( int cam, long int &cols, long int &rows )
+void SiSoGrabber::SetResolution( int cam, long int cols, long int rows )
 {
 	int fc = camAddrs[cam].first;
 	int port = camAddrs[cam].second;
@@ -378,14 +378,14 @@ void SiSoGrabber::GetResolution(int cam, long int &cols, long int &rows )
 	Sgc_getIntegerValue( camHandles[cam], "Height", &rows );
 }
 
-void SiSoGrabber::SetExposure( long int &exposure )
+void SiSoGrabber::SetExposure( long int exposure )
 {
 	for( unsigned cc = 0; cc < camInfos.size(); ++cc )
 	{
 		SetExposure(cc, exposure);
 	}
 }
-void SiSoGrabber::SetExposure( int cam, long int &exposure )
+void SiSoGrabber::SetExposure( int cam, long int exposure )
 {
 	long int val;
 // 	cout << Sgc_getEnumerationValue( camHandles[cam], "ExposureMode", &val ) << endl;

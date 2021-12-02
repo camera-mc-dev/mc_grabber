@@ -53,14 +53,14 @@ public:
 	void PrintCameraInfo();
 
 	// Sets the resolution for all cameras or individual cameras.
-	void SetResolution( long int &cols, long int &rows );
-	void SetResolution( int cam, long int &cols, long int &rows );
+	void SetResolution( long int cols, long int rows );
+	void SetResolution( int cam, long int cols, long int rows );
 	
 	void GetResolution( int cam, long int &cols, long int &rows );
 	
 	// Sets the exposure (for timed exposure ), in microseconds
-	void SetExposure( long int &exposure );
-	void SetExposure( int cam, long int &exposure );
+	void SetExposure( long int exposure );
+	void SetExposure( int cam, long int exposure );
 	
 	// Sets the digital gain
 	void SetGain( double gain );
