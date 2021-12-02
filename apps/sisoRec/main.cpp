@@ -1,5 +1,7 @@
 #ifdef USE_SISO
 
+#define GRABBER_SAVE_AS_HDF5
+
 #include <iostream>
 #include <thread>
 
@@ -12,6 +14,8 @@ using std::endl;
 
 #include "misc/imgSender.h"
 #include "imgproc/debayer/debayer.h"
+
+#include "imgio/hdf5source.h"
 
 #include <boost/filesystem.hpp>
 #include <iomanip>
@@ -687,6 +691,32 @@ void SaveEven(GrabThreadData *tdata)
 		
 		tfi << "run" << endl;
 		
+#ifdef GRABBER_SAVE_AS_HDF5
+		// open an hdf5 file for saving.
+		std::stringstream ss;
+		ss << tdata->outDir0 << "/" << std::setw(2) << std::setfill('0') << cc << "/"
+		   << std::setw(12) << std::setfill('0') << tdata->bufferFrameIdx[cc][ tdata->startIdx ] 
+		   << ".hdf5";
+		
+		HDF5ImageWriter writer( ss.str() );
+		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); cc+=2 )
+		{
+			for( unsigned ic = 0; ic < tdata->buffersNeeded; ++ic )
+			{
+				int bufIndx = tdata->startIdx + ic;
+				
+				if( bufIndx >= tdata->buffersNeeded )
+					bufIndx = bufIndx - tdata->buffersNeeded;
+				
+				writer.AddFrame( tdata->rawBuffers[cc][ bufIndx ], tdata->bufferFrameIdx[cc][ bufIndx ] );
+				
+				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
+			}
+		}
+		
+		writer.Flush();
+		
+#else
 		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); cc+=2 )
 		{
 			for( unsigned ic = 0; ic < tdata->buffersNeeded; ++ic )
@@ -705,6 +735,8 @@ void SaveEven(GrabThreadData *tdata)
 				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
 			}
 		}
+#endif
+
 		
 		tfi << "done" << endl;
 		
@@ -739,7 +771,15 @@ void SaveOdd(GrabThreadData *tdata)
 		tfi << "run" << endl;
 		
 		
-		for( unsigned cc = 1; cc < tdata->rawBuffers.size(); cc+=2 )
+#ifdef GRABBER_SAVE_AS_HDF5
+		// open an hdf5 file for saving.
+		std::stringstream ss;
+		ss << tdata->outDir1 << "/" << std::setw(2) << std::setfill('0') << cc << "/"
+		   << std::setw(12) << std::setfill('0') << tdata->bufferFrameIdx[cc][ tdata->startIdx ] 
+		   << ".hdf5";
+		
+		HDF5ImageWriter writer( ss.str() );
+		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); cc+=2 )
 		{
 			for( unsigned ic = 0; ic < tdata->buffersNeeded; ++ic )
 			{
@@ -748,6 +788,23 @@ void SaveOdd(GrabThreadData *tdata)
 				if( bufIndx >= tdata->buffersNeeded )
 					bufIndx = bufIndx - tdata->buffersNeeded;
 				
+				writer.AddFrame( tdata->rawBuffers[cc][ bufIndx ], tdata->bufferFrameIdx[cc][ bufIndx ] );
+				
+				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
+			}
+		}
+		
+		writer.Flush();
+		
+#else
+		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); cc+=2 )
+		{
+			for( unsigned ic = 0; ic < tdata->buffersNeeded; ++ic )
+			{
+				int bufIndx = tdata->startIdx + ic;
+				
+				if( bufIndx >= tdata->buffersNeeded )
+					bufIndx = bufIndx - tdata->buffersNeeded;
 				std::stringstream ss;
 				ss << tdata->outDir1 << "/" 
 				   << std::setw(2) << std::setfill('0') << cc << "/"
@@ -758,6 +815,7 @@ void SaveOdd(GrabThreadData *tdata)
 				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
 			}
 		}
+#endif
 		
 		tfi << "done" << endl;
 		
