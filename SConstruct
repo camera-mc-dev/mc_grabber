@@ -5,6 +5,7 @@ print( os.getcwd() )
 
 sys.path.append("../mc_core/")
 import mcdev_core_config as corecfg
+import mcdev_grabber_config as grabbercfg
 
 # ---------------------------------------------------------
 # results of some checks.
@@ -20,6 +21,7 @@ def SetPathsLibsAndFlagsAll(env):
 	corecfg.SetCoreConfig(env)
 	env.Append(CPPPATH=["%s/../mc_core/src"%(Dir('.').abspath)])
 	
+	grabbercfg.SetGrabberConfig(env)
 
 
 
