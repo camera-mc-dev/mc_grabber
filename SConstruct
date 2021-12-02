@@ -19,9 +19,9 @@ openmpAvailable = True
 def SetPathsLibsAndFlagsAll(env):
 	
 	corecfg.SetCoreConfig(env)
-	env.Append(CPPPATH=["%s/../mc_core/src"%(Dir('.').abspath)])
-	
 	grabbercfg.SetGrabberConfig(env)
+	env.Append(CPPPATH=["%s/../mc_core/src"%(Dir('.').abspath)])
+	env.Append(CPPPATH=["%s/../mc_imgproc/src"%(Dir('.').abspath)])
 
 
 
