@@ -55,6 +55,11 @@ public:
 	{
 		return shareSpinner.get_value();
 	}
+
+	int GetRecDuration()
+	{
+		return durScale.get_value();
+	}
 	
 	GrabThreadData gdata;
 	

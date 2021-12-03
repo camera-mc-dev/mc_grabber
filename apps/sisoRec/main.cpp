@@ -22,6 +22,7 @@ using std::endl;
 
 #include "commonConfig/commonConfig.h"
 
+#include <chrono>
 
 
 void PrepSaveDirectories( const std::vector<std::string> outDir, unsigned numCameras );
@@ -258,7 +259,9 @@ int main(int argc, char* argv[])
 					liveRecord = false;
 					grabber.StopTrigger(0);
 					grabber.SetOutput1StateHigh(0);
-					
+				
+					auto t0 = std::chrono::steady_clock::now();
+	
 					renderer->Get2dFgCamera()->SetOrthoProjection(0, 1, 0, 1, -10, 10 );
 					hVec3D cent; cent << 0.5, 0.5, 0.0, 1.0f;
 					
@@ -306,7 +309,7 @@ int main(int argc, char* argv[])
 					
 					
 					unsigned numCams = tdata.rawBuffers.size();
-					PrepSaveDirectories( {outDir0.str(), outDir1.str()}, numCams );
+					PrepSaveDirectories( {tdata.outDir0, tdata.outDir1}, numCams );
 					
 					
 					
@@ -329,6 +332,7 @@ int main(int argc, char* argv[])
 					tdata.savingOdd = true;
 					tdata.savingEven = true;
 					
+					auto t1 = std::chrono::steady_clock::now();
 					evenlock.unlock();
 					oddlock.unlock();
 					
@@ -355,7 +359,17 @@ int main(int argc, char* argv[])
 					
 					buffRecord = false;
 					liveRecord = false;
-					
+
+					auto t2 = std::chrono::steady_clock::now();
+					std::stringstream clss;
+					clss << outDir0.str() << "/capTime.log";
+					std::ofstream caplog( clss.str() );
+					std::string trialName = gtdata.window->GetSaveDirectory();
+					float capTime = gtdata.window->GetRecDuration();
+					float saveTime = std::chrono::duration <double> (t2-t1).count();
+					caplog << trialName << " " << capTime << " " << " " << saveTime << endl;
+					caplog.close(); 					
+
 					gtdata.window->IncrementTrialNumber();
 					
 					for( unsigned cc = 0; cc < tdata.saveProgress.size(); ++cc )
@@ -771,7 +785,7 @@ void SaveOdd(GrabThreadData *tdata)
 		
 		
 #ifdef GRABBER_SAVE_AS_HDF5
-		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); cc+=2 )
+		for( unsigned cc = 1; cc < tdata->rawBuffers.size(); cc+=2 )
 		{
 			// open an hdf5 file for saving.
 			std::stringstream ss;
@@ -795,7 +809,7 @@ void SaveOdd(GrabThreadData *tdata)
 		}
 		
 #else
-		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); cc+=2 )
+		for( unsigned cc = 1; cc < tdata->rawBuffers.size(); cc+=2 )
 		{
 			for( unsigned ic = 0; ic < tdata->buffersNeeded; ++ic )
 			{
