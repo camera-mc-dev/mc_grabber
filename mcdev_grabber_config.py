@@ -6,8 +6,8 @@ def FindSISO(env):
 	# and the JAI cameras.
 	#
 	env.Append(CPPDEFINES=["USE_SISO"])
-	env.Append(CPPPATH=["/opt/frameGrabbers/SiSo-Runtime-5.7.0/include/"] )
-	env.Append(LIBPATH=["/opt/frameGrabbers/SiSo-Runtime-5.7.0/lib64/"] )
+	env.Append(CPPPATH=["/opt/SiliconSoftware/Runtime5.7.0/siso-rt5-5.7.0.76321-linux-amd64/include/"] )
+	env.Append(LIBPATH=["/opt/SiliconSoftware/Runtime5.7.0/siso-rt5-5.7.0.76321-linux-amd64/lib64/"] )
 	env.Append(LIBS=["fglib5", "siso_genicam"] )
 
 def FindGTKMM(env):
