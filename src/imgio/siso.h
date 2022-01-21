@@ -3,31 +3,30 @@
 #ifndef SISO_GRABBER
 #define SISO_GRABBER
 
+////
+//// Silicon Software SDK includes
+////
+//#include <fgrab_struct.h>
+//#include <fgrab_prototyp.h>
+//#include <fgrab_define.h>
+//#include <siso_genicam.h>
 //
-// Silicon Software SDK includes
-//
-#include <fgrab_struct.h>
-#include <fgrab_prototyp.h>
-#include <fgrab_define.h>
-#include <siso_genicam.h>
-
 //
 // Framework includes
 //
-#include "misc/types.h"
-#include <cv.hpp>
-
-
+#include "grabber.h"
 //
-// System includes
 //
-#include <vector>
-#include <iostream>
-#include <string>
-#include <chrono>
-using std::cout;
-using std::endl;
-
+////
+//// System includes
+////
+//#include <vector>
+//#include <iostream>
+//#include <string>
+//#include <chrono>
+//using std::cout;
+//using std::endl;
+//
 
 //
 // I don't see anything in the SDK to ask about what grabbers
@@ -40,7 +39,7 @@ struct SiSoBoardInfo
 	std::string grabberConfig;
 };
 
-class SiSoGrabber
+class SiSoGrabber:AbstractGrabber
 {
 public:
 	
