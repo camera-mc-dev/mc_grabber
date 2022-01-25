@@ -58,15 +58,15 @@ for d in dirs:
 	dfs = os.listdir(d)
 	dcpps = ["%s"%(f) for f in dfs if f[-4:] == '.cpp']
 	if len(dcpps) > 0:
-		print dcpps
+		print(dcpps)
 		objs = []
 		for f in dcpps:
 			srcf = "%s/%s"%(d,f)
 			objf = "%s/../%s/bin/obj/%s/%s.o"%( scfpath, buildDir,   d, f[:-4] )
-			print f, srcf, objf
+			print(f, srcf, objf)
 			objs.append( srcEnv.Object( objf, srcf ) )
 		tname = "%s/../%s/bin/%s"%(scfpath, buildDir,   d)
-		print "tn: ", tname
+		print("tn: ", tname)
 		srcEnv.Program(target = tname, source = objs )
 	
 
