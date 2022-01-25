@@ -9,7 +9,7 @@
 
 class FakeGrabber: public AbstractGrabber{
 
-    FakeGrabber( std::vector<SiSoBoardInfo> boardInfo );
+    FakeGrabber( int boardInfo );
 
 };
 
