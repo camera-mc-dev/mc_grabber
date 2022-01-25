@@ -17,7 +17,6 @@
 // Framework includes
 //
 #include "misc/types.h"
-//#include "grabber.h"
 #include <cv.hpp>
 
 
@@ -34,7 +33,7 @@ using std::endl;
 
 
 class AbstractGrabber {
-//public:
+public:
 //
 //    enum baseGain_t {baseGain00, baseGain06, baseGain12};
 //
@@ -42,7 +41,7 @@ class AbstractGrabber {
 //    // SiSoGrabber( std::vector<SiSoBoardInfo> boardInfo );
 //
     // Obvious really: Prints info about the discovered cameras.
-    virtual void PrintCameraInfo(){};
+    //virtual void PrintCameraInfo(){};
 //
 //    // Sets the resolution for all cameras or individual cameras.
 //    virtual void SetResolution( long int cols, long int rows );
@@ -71,14 +70,14 @@ class AbstractGrabber {
 //    // must specify the buffer size in terms of number of seconds.
 //    // Function will determine number of bytes based on current image size,
 //    // frame rate and format.
-//    virtual void StartAcquisition( int bufferFrames, int masterBoard );
-//    virtual void StopAcquisition();
+    virtual void StartAcquisition( int bufferFrames, int masterBoard ) {};
+    virtual void StopAcquisition() {};
 //
 //    // Start or stop the trigger
 //    // If the trigger is not running, images will not be captured.
 //    // Needs to know which board is the master
-//    virtual void StartTrigger( int masterBoard );
-//    virtual void StopTrigger( int masterBoard );
+    virtual void StartTrigger( int masterBoard ) {};
+    virtual void StopTrigger( int masterBoard ) {};
 //
 //    // As well as the pulse trigger (output 0 of the master frame grabber)
 //    // we can manaully change the state of output 1 of the master frame grabber.
@@ -97,20 +96,20 @@ class AbstractGrabber {
 //    // The next approach is very simillar, but puts some effort in to
 //    // make sure that the current frames all have the same frame number,
 //    // and thus, should all be synchronised.
-//    virtual bool GetCurrentEnsureSynch( int timeout );
+    virtual bool GetCurrentEnsureSynch( int timeout ) = 0;
 //
 //    // This is like GetCurrentEnsureSynch, but it only works out what the most recetly available
 //    // frame number is from all cameras.
-//    virtual frameindex_t GetSyncFrame( int timeout );
+    virtual frameindex_t GetSyncFrame( int timeout ) {};
 //
 //    // Next up we have the option of asking for a specific frame number.
 //    // This will be primarily useful when you are recording to RAM
-//    virtual bool GetNumberedFrame( frameindex_t frameIdx, int timeout );
+   virtual bool GetNumberedFrame( frameindex_t frameIdx, int timeout ) = 0;
 //
 //    // This is the same as above, but we provide a place to put the grabbed frames
 //    // instead of putting them into currentFrames.
 //    // This might save a bunch of big copies if we are recording.
-//    virtual bool GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< cv::Mat* > dsts );
+    virtual bool GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< cv::Mat* > dsts ) = 0;
 //
 //
 //    //
@@ -118,6 +117,10 @@ class AbstractGrabber {
 //    // Resets the cameras by power-cycling them.
 //    //
 //    virtual void PowerCycle();
+    std::vector< frameindex_t > GetFrameNumbers(){};
+//    {
+//        return camFrames;
+//    }
 };
 
 

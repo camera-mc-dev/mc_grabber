@@ -3,3 +3,8 @@
 //
 
 #include "fake.h"
+
+FakeGrabber::FakeGrabber(int boardInfo)
+{
+
+}

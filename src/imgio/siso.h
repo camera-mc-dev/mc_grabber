@@ -15,6 +15,7 @@
 // Framework includes
 //
 #include "grabber.h"
+#include "fake.h"
 //
 //
 ////
@@ -39,7 +40,7 @@ struct SiSoBoardInfo
 	std::string grabberConfig;
 };
 
-class SiSoGrabber:AbstractGrabber
+class SiSoGrabber: public AbstractGrabber
 {
 public:
 	

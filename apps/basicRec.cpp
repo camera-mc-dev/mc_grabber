@@ -54,7 +54,7 @@ protected:
 struct ThreadData
 {
 	// pointer to the grabber
-	SiSoGrabber *grabber;
+	AbstractGrabber *grabber;
 	
 	// the recording buffer
 	int currentBufferIndx;

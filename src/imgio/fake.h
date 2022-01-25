@@ -7,7 +7,9 @@
 
 #include "grabber.h"
 
-class FakeGrabber:AbstractGrabber{
+class FakeGrabber: public AbstractGrabber{
+
+    FakeGrabber( std::vector<SiSoBoardInfo> boardInfo );
 
 };
 
