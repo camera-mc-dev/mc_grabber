@@ -7,7 +7,8 @@
 
 #include "grabber.h"
 
-class FakeGrabber: public AbstractGrabber {
+class FakeGrabber: public AbstractGrabber 
+{
 public:
 
     FakeGrabber(int value);

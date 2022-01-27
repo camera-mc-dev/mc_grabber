@@ -6,14 +6,6 @@
 #define MC_GRABBER_GRABBER_H
 
 //
-// Silicon Software SDK includes
-//
-#include <fgrab_struct.h>
-#include <fgrab_prototyp.h>
-#include <fgrab_define.h>
-#include <siso_genicam.h>
-
-//
 // Framework includes
 //
 #include "misc/types.h"
@@ -32,7 +24,8 @@ using std::endl;
 
 
 
-class AbstractGrabber {
+class AbstractGrabber 
+{
 public:
     virtual void PrintCameraInfo(){};
 //    virtual void StartAcquisition( int bufferFrames, int masterBoard ) {};

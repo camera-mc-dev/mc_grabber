@@ -2,7 +2,6 @@
 
 #include "imgio/siso.h"
 
-
 SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 {
 	for( unsigned bc = 0; bc < boardInfo.size(); ++bc )
