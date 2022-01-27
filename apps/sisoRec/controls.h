@@ -256,6 +256,8 @@ struct GUIThreadData
 	Glib::RefPtr<Gtk::Application> app;
 	
 	ControlsWindow *window;
+	
+	std::string evenSaveDir, oddSaveDir;
 };
 
 void GUIThread( GUIThreadData *gtdata );
