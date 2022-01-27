@@ -1,6 +1,6 @@
 #ifdef USE_SISO
 
-#define GRABBER_SAVE_AS_HDF5
+// #define GRABBER_SAVE_AS_HDF5
 
 #include <iostream>
 #include <thread>
@@ -24,9 +24,9 @@ using std::endl;
 
 #include <chrono>
 
-void GUIThreadData( GUIThreadData &gtdata );
+void GetSaveRoots( GUIThreadData &gtdata );
 
-void PrepSaveDirectories( const std::vector<std::string> outDir, unsigned numCameras );
+void PrepSaveDirectories( const std::vector<std::string> outDir, unsigned numCameras, GUIThreadData gtdata );
 
 
 
@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
 					
 					
 					unsigned numCams = tdata.rawBuffers.size();
-					PrepSaveDirectories( {tdata.outDir0, tdata.outDir1}, numCams );
+					PrepSaveDirectories( {tdata.outDir0, tdata.outDir1}, numCams, gtdata );
 					
 					
 					
@@ -393,7 +393,7 @@ int main(int argc, char* argv[])
 					
 					std::string outDir = gtdata.saveRoot0 + gtdata.window->GetSaveDirectory();
 					unsigned numCams = tdata.rawBuffers.size();
-					PrepSaveDirectories( {outDir}, numCams );
+					PrepSaveDirectories( {outDir}, numCams, gtdata );
 					
 					auto fnos = grabber.GetFrameNumbers();
 					auto earliest = fnos[0];

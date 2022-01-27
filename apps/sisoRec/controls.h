@@ -257,7 +257,8 @@ struct GUIThreadData
 	
 	ControlsWindow *window;
 	
-	std::string evenSaveDir, oddSaveDir;
+	std::string saveRoot0;
+	std::string saveRoot1;
 };
 
 void GUIThread( GUIThreadData *gtdata );
