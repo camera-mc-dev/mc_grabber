@@ -8,6 +8,7 @@
 #include "commonConfig/commonConfig.h"
 
 #include "imgio/siso.h"
+#include "imgio/fake.h"
 #include "imgio/loadsave.h"
 
 //
@@ -68,53 +69,53 @@ struct ThreadData
 
 void GrabThread( ThreadData *tdata )
 {
-	tdata->grabber->StopTrigger(0);
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	tdata->grabber->StartAcquisition(10, 0);
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	tdata->grabber->StartTrigger(0);
-	tdata->grabber->GetCurrentEnsureSynch(2);
-	
-	auto prevfnos = tdata->grabber->GetFrameNumbers();
-	std::vector< cv::Mat* > dsts;
-	dsts.resize( tdata->rawBuffers.size() );
-	while( !tdata->done )
-	{
-		//
-		// Grab...
-		//
-		//tdata->grabber->GetCurrentEnsureSynch(2);
-		frameindex_t fno = tdata->grabber->GetSyncFrame(2);
-		unsigned long bufIdx = fno % tdata->buffersNeeded;
-		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
-		{
-			dsts[cc] = &tdata->rawBuffers[cc][bufIdx];
-			tdata->bufferFrameIdx[cc][bufIdx] = fno;
-		}
-		tdata->grabber->GetNumberedFrame( fno, 2, dsts );
-		auto fnos = tdata->grabber->GetFrameNumbers();
-		
-		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
-		{			
-			cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
-		}
-		cout << "---" << endl;
-		
-		
-		
-		prevfnos = fnos;
-	}
-	
-	tdata->grabber->StopTrigger(0);
-	tdata->grabber->StopAcquisition();
-	
-	return;
+//	tdata->grabber->StopTrigger(0);
+//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//	tdata->grabber->StartAcquisition(10, 0);
+//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//	tdata->grabber->StartTrigger(0);
+//	tdata->grabber->GetCurrentEnsureSynch(2);
+//
+//	auto prevfnos = tdata->grabber->GetFrameNumbers();
+//	std::vector< cv::Mat* > dsts;
+//	dsts.resize( tdata->rawBuffers.size() );
+//	while( !tdata->done )
+//	{
+//		//
+//		// Grab...
+//		//
+//		//tdata->grabber->GetCurrentEnsureSynch(2);
+//		frameindex_t fno = tdata->grabber->GetSyncFrame(2);
+//		unsigned long bufIdx = fno % tdata->buffersNeeded;
+//		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
+//		{
+//			dsts[cc] = &tdata->rawBuffers[cc][bufIdx];
+//			tdata->bufferFrameIdx[cc][bufIdx] = fno;
+//		}
+//		tdata->grabber->GetNumberedFrame( fno, 2, dsts );
+//		auto fnos = tdata->grabber->GetFrameNumbers();
+//
+//		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
+//		{
+//			cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
+//		}
+//		cout << "---" << endl;
+//
+//
+//
+//		prevfnos = fnos;
+//	}
+//
+//	tdata->grabber->StopTrigger(0);
+//	tdata->grabber->StopAcquisition();
+//
+//	return;
 }
 
 
 int main(int argc, char* argv[])
 {
-	if( argc != 7 )
+	if( argc != 8 )
 	{
 		cout << "Basic buffered recording of camera feeds." << endl;
 		cout << "Usage: " << endl;
@@ -128,17 +129,26 @@ int main(int argc, char* argv[])
 	long int exposure  = atoi(argv[4]) * 1000; 
 	long int imgCols   = atoi(argv[5]);
 	long int imgRows   = atoi(argv[6]);
-	
+    bool fake          = atoi(argv[7]);
+
+    if (fake)
+    {
+        cout << "This is a fake instance." << endl;
+    }
+
 	CommonConfig ccfg;
 	//
 	// first off, create the grabber and find out how many cameras we have
 	//
 	
 	std::vector<SiSoBoardInfo> boardInfo(numBoards);
+    cout << "board infor string :" << boardInfo[0].grabberConfig << endl;
+
 	for( unsigned bc = 0; bc < numBoards; ++bc )
 	{
 		std::stringstream ss;
 		boardInfo[bc].boardIndx = bc;
+
 		if( bc == 0 )
 		{
 			ss << ccfg.coreDataRoot << "/SiSo/MS_Generator_Master_ME.mcf";
@@ -153,14 +163,21 @@ int main(int argc, char* argv[])
 	
 	
 	cout << "Create Grabber..." << endl;
-	SiSoGrabber grabber( boardInfo );
-	
+//    if (fake)
+//    {
+//
+//    }
+//    else
+//    {
+//        SiSoGrabber grabber( boardInfo );
+//    }
+    FakeGrabber grabber(0); //TODO: ask murray how to toggle between a fake and real grabber at runtime
 	grabber.PrintCameraInfo();
 	
-	grabber.SetFPS(fps, 0);
-	grabber.SetResolution( imgCols, imgRows );
-	grabber.SetExposure( exposure );
-	
+//	grabber.SetFPS(fps, 0);
+//	grabber.SetResolution( imgCols, imgRows );
+//	grabber.SetExposure( exposure );
+//
 	//
 	// Now use a basic renderer to display all of the cameras.
 	//
@@ -266,61 +283,61 @@ int main(int argc, char* argv[])
 	
 	
 	bool record = false;
-	while( !tdata.done )
-	{
-		
-		
-		
-		//
-		// Display. Probably too slow to do this while also grabbing!
-		// So will need some threading to put the grabbing in a thread.
-		//
-		auto fnos = grabber.GetFrameNumbers();
-		for( unsigned cc = 0; cc < bgrImgs.size(); ++cc )
-		{
-			long int bufIdx = fnos[cc] % tdata.buffersNeeded;
-			cv::cvtColor( tdata.rawBuffers[cc][bufIdx], bgrImgs[cc], cv::COLOR_BayerGB2BGR );
-// 			bgrImgs[cc] = grabber.currentFrames[cc];
-			imgCards[cc]->GetTexture()->UploadImage( bgrImgs[cc] );
-			
-		}
-		
-		renderer->Step(tdata.done, record);
-		
-		if( record )
-		{
-			record = false;
-			grabber.StopTrigger(0); // not so important now too be honest.
-			
-			auto fnos = grabber.GetFrameNumbers();
-			auto earliest = fnos[0];
-			for( unsigned cc = 0; cc < fnos.size(); ++cc )
-			{
-				earliest = std::min( earliest, fnos[cc] );
-			}
-			int startIdx = earliest % tdata.buffersNeeded;
-			
-			for( unsigned ic = 0; ic < tdata.buffersNeeded; ++ic )
-			{
-				int bufIndx = startIdx + ic;
-				
-				if( bufIndx >= tdata.buffersNeeded )
-					bufIndx = bufIndx - tdata.buffersNeeded;
-				
-				for( unsigned cc = 0; cc < tdata.rawBuffers.size(); ++cc )
-				{
-					if( tdata.bufferFrameIdx[cc][ bufIndx ] == 0 )
-						continue;
-					std::stringstream ss;
-					ss << "/data/raid0/recTest/" << std::setw(2) << std::setfill('0') << cc << "/"
-					   << std::setw(12) << std::setfill('0') << tdata.bufferFrameIdx[cc][ bufIndx ] << ".charImg";
-					SaveImage( tdata.rawBuffers[cc][ bufIndx ], ss.str() );
-				}
-			}
-			
-			grabber.StartTrigger(0);
-		}
-	}
+//	while( !tdata.done )
+//	{
+//
+//
+//
+//		//
+//		// Display. Probably too slow to do this while also grabbing!
+//		// So will need some threading to put the grabbing in a thread.
+//		//
+//		auto fnos = grabber.GetFrameNumbers();
+//		for( unsigned cc = 0; cc < bgrImgs.size(); ++cc )
+//		{
+//			long int bufIdx = fnos[cc] % tdata.buffersNeeded;
+//			cv::cvtColor( tdata.rawBuffers[cc][bufIdx], bgrImgs[cc], cv::COLOR_BayerGB2BGR );
+//// 			bgrImgs[cc] = grabber.currentFrames[cc];
+//			imgCards[cc]->GetTexture()->UploadImage( bgrImgs[cc] );
+//
+//		}
+//
+//		renderer->Step(tdata.done, record);
+//
+//		if( record )
+//		{
+//			record = false;
+//			grabber.StopTrigger(0); // not so important now too be honest.
+//
+//			auto fnos = grabber.GetFrameNumbers();
+//			auto earliest = fnos[0];
+//			for( unsigned cc = 0; cc < fnos.size(); ++cc )
+//			{
+//				earliest = std::min( earliest, fnos[cc] );
+//			}
+//			int startIdx = earliest % tdata.buffersNeeded;
+//
+//			for( unsigned ic = 0; ic < tdata.buffersNeeded; ++ic )
+//			{
+//				int bufIndx = startIdx + ic;
+//
+//				if( bufIndx >= tdata.buffersNeeded )
+//					bufIndx = bufIndx - tdata.buffersNeeded;
+//
+//				for( unsigned cc = 0; cc < tdata.rawBuffers.size(); ++cc )
+//				{
+//					if( tdata.bufferFrameIdx[cc][ bufIndx ] == 0 )
+//						continue;
+//					std::stringstream ss;
+//					ss << "/data/raid0/recTest/" << std::setw(2) << std::setfill('0') << cc << "/"
+//					   << std::setw(12) << std::setfill('0') << tdata.bufferFrameIdx[cc][ bufIndx ] << ".charImg";
+//					SaveImage( tdata.rawBuffers[cc][ bufIndx ], ss.str() );
+//				}
+//			}
+//
+//			grabber.StartTrigger(0);
+//		}
+//	}
 	
 }
 

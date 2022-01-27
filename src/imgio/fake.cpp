@@ -4,7 +4,7 @@
 
 #include "fake.h"
 
-FakeGrabber::FakeGrabber(int boardInfo)
+FakeGrabber::FakeGrabber(int value)
 {
-
+    cout << "Initialising fake grabber" << endl;
 }
