@@ -5,7 +5,20 @@
 #ifndef MC_GRABBER_FAKE_H
 #define MC_GRABBER_FAKE_H
 
+//
+//
+// Framework includes
+//
 #include "grabber.h"
+//
+// System includes
+//
+#include <vector>
+#include <iostream>
+#include <string>
+#include <chrono>
+using std::cout;
+using std::endl;
 
 class FakeGrabber: public AbstractGrabber 
 {
@@ -20,6 +33,8 @@ public:
         // alwayus just return 4 for now.
         return 4;
     }
+
+    void SetFPS(int FPS);
 //    void StartAcquisition( int bufferFrames, int masterBoard ) {};
 //    void StopAcquisition() {};
 //    void StartTrigger( int masterBoard ) {};

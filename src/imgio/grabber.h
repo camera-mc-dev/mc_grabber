@@ -5,24 +5,6 @@
 #ifndef MC_GRABBER_GRABBER_H
 #define MC_GRABBER_GRABBER_H
 
-//
-// Framework includes
-//
-#include "misc/types.h"
-#include <cv.hpp>
-
-
-//
-// System includes
-//
-#include <vector>
-#include <iostream>
-#include <string>
-#include <chrono>
-using std::cout;
-using std::endl;
-
-
 
 class AbstractGrabber 
 {

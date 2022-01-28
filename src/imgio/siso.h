@@ -16,6 +16,8 @@
 // Framework includes
 //
 #include "grabber.h"
+#include "misc/types.h"
+#include <cv.hpp>
 
 //
 // System includes
