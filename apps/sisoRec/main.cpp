@@ -1,6 +1,7 @@
 #ifdef USE_SISO
 
-//#define GRABBER_SAVE_AS_HDF5
+// #define GRABBER_SAVE_AS_HDF5
+
 
 #include <iostream>
 #include <thread>
@@ -24,8 +25,9 @@ using std::endl;
 
 #include <chrono>
 
+void GetSaveRoots( GUIThreadData &gtdata );
 
-void PrepSaveDirectories( const std::vector<std::string> outDir, unsigned numCameras );
+void PrepSaveDirectories( const std::vector<std::string> outDir, unsigned numCameras, GUIThreadData gtdata );
 
 
 
@@ -97,6 +99,12 @@ int main(int argc, char* argv[])
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	
 	
+	// Find out where we're saving images to.
+	GetSaveRoots( gtdata );
+	
+	
+	
+	
 	// create the image sender
 	ImageSender isender(ioService, 90210);
 	
@@ -163,7 +171,7 @@ int main(int argc, char* argv[])
 			gdtdata.renderer = renderer;
 			gdtdata.gridNo = &tdata.calibGrabNo;
 			gdtdata.grids  = &tdata.grids;
-			gdtdata.outDir = "/data/raid0/recording/";
+			gdtdata.outDir = gtdata.saveRoot0;
 			
 			auto gridThread = std::thread(GridDetectThread, &gdtdata);
 			unsigned numVis = 0;
@@ -292,8 +300,8 @@ int main(int argc, char* argv[])
 					//
 					std::stringstream outDir0, outDir1;
 					
-					outDir0 << "/data/raid0/recording/" << gtdata.window->GetSaveDirectory();
-					outDir1 << "/data/raid1/recording/" << gtdata.window->GetSaveDirectory();
+					outDir0 << gtdata.saveRoot0 << gtdata.window->GetSaveDirectory();
+					outDir1 << gtdata.saveRoot1 << gtdata.window->GetSaveDirectory();
 					
 					if( gtdata.window->GetTrialNumber() % 2 == 0 )
 					{
@@ -309,7 +317,7 @@ int main(int argc, char* argv[])
 					
 					
 					unsigned numCams = tdata.rawBuffers.size();
-					PrepSaveDirectories( {tdata.outDir0, tdata.outDir1}, numCams );
+					PrepSaveDirectories( {tdata.outDir0, tdata.outDir1}, numCams, gtdata );
 					
 					
 					
@@ -384,9 +392,9 @@ int main(int argc, char* argv[])
 					GrabThreadData &tdata = gtdata.window->gdata;
 					buffRecord = false;
 					
-					std::string outDir = "/data/raid0/recording/" + gtdata.window->GetSaveDirectory();
+					std::string outDir = gtdata.saveRoot0 + gtdata.window->GetSaveDirectory();
 					unsigned numCams = tdata.rawBuffers.size();
-					PrepSaveDirectories( {outDir}, numCams );
+					PrepSaveDirectories( {outDir}, numCams, gtdata );
 					
 					auto fnos = grabber.GetFrameNumbers();
 					auto earliest = fnos[0];
@@ -510,7 +518,7 @@ int main(int argc, char* argv[])
 
 
 
-void PrepSaveDirectories( const std::vector<std::string> outDirs, unsigned numCameras )
+void PrepSaveDirectories( const std::vector<std::string> outDirs, unsigned numCameras, GUIThreadData gtdata )
 {
 	assert( outDirs.size() <= 2 );
 	for( unsigned dc = 0; dc < outDirs.size(); ++dc )
@@ -526,8 +534,8 @@ void PrepSaveDirectories( const std::vector<std::string> outDirs, unsigned numCa
 			if( !boost::filesystem::is_directory( p ))
 			{
 				cout << "Error! save location exists but is not a directory!" << endl;
-				cout << "Saving to /data/raid0/rescued/" << endl;
-				outDir = "/data/raid0/rescued/";
+				cout << "Saving to " << gtdata.saveRoot0 << "/rescued/" << endl;
+				outDir = gtdata.saveRoot0 + "rescued/";
 				
 				boost::filesystem::path p(outDir);
 				boost::filesystem::create_directories(p);
@@ -838,6 +846,72 @@ void SaveOdd(GrabThreadData *tdata)
 	tfi << "exit" << endl;
 }
 
+
+
+void GetSaveRoots( GUIThreadData &gtdata )
+{
+	std::string userHome;
+#if defined(__APPLE__) || defined( __gnu_linux__ )
+	struct passwd* pwd = getpwuid(getuid());
+	if (pwd)
+	{
+		userHome = pwd->pw_dir;
+	}
+	else
+	{
+		// try the $HOME environment variable
+		userHome = getenv("HOME");
+	}
+#else
+	throw std::runtime_error("yeah, I've not done this for Windows or unknown unix!");
+#endif
+	
+	std::stringstream ss;
+	ss << userHome << "/.mc_dev.grabber.cfg";
+	boost::filesystem::path p(ss.str());
+	try
+	{
+		if( !boost::filesystem::exists(p) )
+		{
+			// create a default config file with conservative guesses.
+			libconfig::Config cfg;
+			auto &cfgRoot = cfg.getRoot();
+			
+			cfgRoot.add("saveRoot0", libconfig::Setting::TypeString);
+			cfgRoot.add("saveRoot1", libconfig::Setting::TypeString);
+			
+			cfg.writeFile( ss.str().c_str() );
+		}
+		
+		libconfig::Config cfg;
+		cfg.readFile( ss.str().c_str() );
+		
+		gtdata.saveRoot0 = (const char*) cfg.lookup("saveRoot0");
+		gtdata.saveRoot1 = (const char*) cfg.lookup("saveRoot1");
+		
+		cfg.lookup("saveRoot0") = "/data/raid0/recording/";
+		cfg.lookup("saveRoot1") = "/data/raid1/recording/";
+	}
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
+	}
+	catch( libconfig::ParseException &e )
+	{
+		cout << "Parse error:" << endl;
+		cout << e.what() << endl;
+		cout << e.getError() << endl;
+		cout << e.getFile() << endl;
+		cout << e.getLine() << endl;
+		exit(0);
+	}
+	
+	
+	
+}
 
 
 #endif

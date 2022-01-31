@@ -256,6 +256,9 @@ struct GUIThreadData
 	Glib::RefPtr<Gtk::Application> app;
 	
 	ControlsWindow *window;
+	
+	std::string saveRoot0;
+	std::string saveRoot1;
 };
 
 void GUIThread( GUIThreadData *gtdata );
