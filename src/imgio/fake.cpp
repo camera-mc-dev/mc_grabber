@@ -4,7 +4,12 @@
 
 #include "fake.h"
 
-FakeGrabber::FakeGrabber(int value)
+FakeGrabber::FakeGrabber(int numCams)
 {
-    cout << "Initialising fake grabber" << endl;
+    auto sp = CreateSource(std::string("/media/reuben/HDD/Work/test.mp4"));
 }
+
+// void FakeGrabber::SetFPS(int in_FPS)
+// {
+    
+// }

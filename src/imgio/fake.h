@@ -10,6 +10,9 @@
 // Framework includes
 //
 #include "grabber.h"
+#include "imgio/sourceFactory.h"
+#include "imgio/vidsrc.h"
+
 //
 // System includes
 //
@@ -19,12 +22,14 @@
 #include <chrono>
 using std::cout;
 using std::endl;
+#include <cv.hpp>
+
 
 class FakeGrabber: public AbstractGrabber 
 {
 public:
 
-    FakeGrabber(int value);
+    FakeGrabber(int numCams);
 
     void PrintCameraInfo() {};
 
@@ -33,8 +38,9 @@ public:
         // alwayus just return 4 for now.
         return 4;
     }
+    
+    //void SetFPS( int in_FPS);
 
-    void SetFPS(int FPS);
 //    void StartAcquisition( int bufferFrames, int masterBoard ) {};
 //    void StopAcquisition() {};
 //    void StartTrigger( int masterBoard ) {};
