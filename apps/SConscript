@@ -38,7 +38,7 @@ srcEnv.Append(LIBPATH = ["%s/../../mc_imgproc/%s/src"%(scfpath, buildDir)])
 
 srcEnv.Append(CPPPATH = ["%s/../src"%(scfpath)] )
 srcEnv.Append(LIBPATH = ["%s/../%s/src"%(scfpath, buildDir)])
-srcEnv.Prepend(LIBS = ["MC-core", "MC-imgproc", "MC-grabber"])
+srcEnv.Prepend(LIBS = ["MC-grabber", "MC-imgproc", "MC-core"])
 
 # now find the source files.
 # find any .cpp files in the current directory.
