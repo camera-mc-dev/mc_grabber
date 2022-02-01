@@ -11,7 +11,6 @@
 //
 #include "grabber.h"
 #include "imgio/sourceFactory.h"
-#include "imgio/vidsrc.h"
 
 //
 // System includes
@@ -22,8 +21,15 @@
 #include <chrono>
 using std::cout;
 using std::endl;
-#include <cv.hpp>
 
+#include <cv.hpp>
+using namespace cv;
+
+// class FakeCamera
+// {
+//     FakeCamera(std::string path);
+//     ~FakeCamera();
+// };
 
 class FakeGrabber: public AbstractGrabber 
 {
