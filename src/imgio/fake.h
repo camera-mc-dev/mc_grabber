@@ -21,15 +21,8 @@
 #include <chrono>
 using std::cout;
 using std::endl;
-
 #include <cv.hpp>
 using namespace cv;
-
-// class FakeCamera
-// {
-//     FakeCamera(std::string path);
-//     ~FakeCamera();
-// };
 
 class FakeGrabber: public AbstractGrabber 
 {
@@ -44,7 +37,11 @@ public:
         // alwayus just return 4 for now.
         return 4;
     }
-    
+
+    std::vector< cv::Mat > currentFrames;
+
+    void GetCurrent();
+
     //void SetFPS( int in_FPS);
 
 //    void StartAcquisition( int bufferFrames, int masterBoard ) {};
@@ -56,6 +53,9 @@ public:
 //    bool GetNumberedFrame( frameindex_t frameIdx, int timeout ) = 0;
 //    bool GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< cv::Mat* > dsts ) = 0;
 //    std::vector< frameindex_t > GetFrameNumbers(){};
+private:
+    std::vector <SourcePair> sps;
+
 };
 
 
