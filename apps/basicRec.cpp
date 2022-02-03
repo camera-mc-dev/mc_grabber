@@ -9,6 +9,8 @@
 
 #include "imgio/siso.h"
 #include "imgio/loadsave.h"
+#include "imgio/fake.h"
+#include "imgio/grabber.h"
 
 //
 // Very trivial renderer that tells us if we pressed the space button,
@@ -54,7 +56,7 @@ protected:
 struct ThreadData
 {
 	// pointer to the grabber
-	SiSoGrabber *grabber;
+	AbstractGrabber *grabber;
 	
 	// the recording buffer
 	int currentBufferIndx;
@@ -91,14 +93,14 @@ void GrabThread( ThreadData *tdata )
 			dsts[cc] = &tdata->rawBuffers[cc][bufIdx];
 			tdata->bufferFrameIdx[cc][bufIdx] = fno;
 		}
+
 		tdata->grabber->GetNumberedFrame( fno, 2, dsts );
 		auto fnos = tdata->grabber->GetFrameNumbers();
-		
-		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
-		{			
-			cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
-		}
-		cout << "---" << endl;
+		// for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
+		// {			
+		// 	cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
+		// }
+		// cout << "---" << endl;
 		
 		
 		
@@ -153,8 +155,7 @@ int main(int argc, char* argv[])
 	
 	
 	cout << "Create Grabber..." << endl;
-	SiSoGrabber grabber( boardInfo );
-	
+	FakeGrabber grabber(0);
 	grabber.PrintCameraInfo();
 	
 	grabber.SetFPS(fps, 0);
@@ -254,6 +255,7 @@ int main(int argc, char* argv[])
 	//
 	// Start the thread to start filling the recording buffer.
 	//
+
 	auto gthread = std::thread(GrabThread, &tdata);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	//
@@ -280,8 +282,9 @@ int main(int argc, char* argv[])
 		{
 			long int bufIdx = fnos[cc] % tdata.buffersNeeded;
 			cv::cvtColor( tdata.rawBuffers[cc][bufIdx], bgrImgs[cc], cv::COLOR_BayerGB2BGR );
-// 			bgrImgs[cc] = grabber.currentFrames[cc];
+			//bgrImgs[cc] = grabber.currentFrames[cc];
 			imgCards[cc]->GetTexture()->UploadImage( bgrImgs[cc] );
+
 			
 		}
 		
@@ -312,7 +315,7 @@ int main(int argc, char* argv[])
 					if( tdata.bufferFrameIdx[cc][ bufIndx ] == 0 )
 						continue;
 					std::stringstream ss;
-					ss << "/data/raid0/recTest/" << std::setw(2) << std::setfill('0') << cc << "/"
+					ss << "/home/reuben/test/" << std::setw(2) << std::setfill('0') << cc << "/"
 					   << std::setw(12) << std::setfill('0') << tdata.bufferFrameIdx[cc][ bufIndx ] << ".charImg";
 					SaveImage( tdata.rawBuffers[cc][ bufIndx ], ss.str() );
 				}

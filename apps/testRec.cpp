@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 	long int maxSingleWindowHeight = 800;
 
 	FakeGrabber grabber(0);
-
+	grabber.PrintCameraInfo();
 	//
 	// Now use a basic renderer to display all of the cameras.
 	//

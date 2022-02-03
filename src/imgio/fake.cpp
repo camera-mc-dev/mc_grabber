@@ -3,20 +3,24 @@
 //
 
 #include "fake.h"
-
-FakeGrabber::FakeGrabber(int numCams)
+FakeGrabber::FakeGrabber(std::vector<SiSoBoardInfo> boardInfo)
+{
+    FakeGrabber(0);
+}
+FakeGrabber::FakeGrabber(int foo)
 {
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
         //NOTE: If the source does not exist, CreateSource does not throw an error.
-        sps.push_back(CreateSource(std::string("/home/rjl67/futurama_s01e01.mp4")));
+        source_pairs.push_back(CreateSource(std::string("/media/reuben/HDD/Work/test.mp4")));
+        camFrames.push_back(0);
     }
 
 
-    // for (unsigned cc=0; cc < sps[0].source->GetNumImages(); cc++)
+    // for (unsigned i=0; i < source_pairs[0].source->GetNumImages(); i++)
     // {
-    //     Mat frame = sps[0].source->GetCurrent();
-    //     sps[0].source->Advance();
+    //     Mat frame = source_pairs[0].source->GetCurrent();
+    //     source_pairs[0].source->Advance();
     //     imshow("this image", frame);
     //     if( waitKey(10) == 27 ) break;
     // }
@@ -29,7 +33,7 @@ void FakeGrabber::GetCurrent()
     {
         for (unsigned i = 0; i < GetNumCameras(); i++)
         {
-             currentFrames.push_back(sps[i].source->GetCurrent());
+             currentFrames.push_back(source_pairs[i].source->GetCurrent());
         }
 
     }
@@ -37,17 +41,41 @@ void FakeGrabber::GetCurrent()
     {
         for (unsigned i = 0; i < GetNumCameras(); i++)
         {
-             currentFrames[i] = sps[i].source->GetCurrent();
+             currentFrames[i] = source_pairs[i].source->GetCurrent();
         }
     }
 
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
-        sps[i].source->Advance();
+        source_pairs[i].source->Advance();
     }
 }
-
-// void FakeGrabber::SetFPS(int in_FPS)
-// {
+bool FakeGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< Mat* > dsts ) 
+{
+    GetCurrent();
     
-// }
+    for (unsigned i = 0; i < GetNumCameras(); i++)
+    {
+        int camHeight = currentFrames[i].rows;
+        int camWidth = currentFrames[i].cols;
+        assert( dsts[i]->rows == camHeight && dsts[i]->cols == camWidth);
+        memcpy( dsts[i]->data, currentFrames[i].data, camHeight*camWidth );
+    }
+
+    return true;
+}
+
+frameindex_t FakeGrabber::GetSyncFrame(int timeout)
+{
+    //cout << "current frame id " << source_pairs[0].source->GetCurrentFrameID() << endl;
+    return (frameindex_t) source_pairs[0].source->GetCurrentFrameID();
+}
+
+std::vector< frameindex_t > FakeGrabber::GetFrameNumbers()
+{
+    for (unsigned i = 0; i < GetNumCameras(); i++)
+        {
+             camFrames[i] = source_pairs[i].source->GetCurrentFrameID();
+        }
+    return camFrames;
+}

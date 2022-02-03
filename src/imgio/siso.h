@@ -29,17 +29,6 @@
 using std::cout;
 using std::endl;
 
-//
-// I don't see anything in the SDK to ask about what grabbers
-// are available. So the user will have to tell us about them.
-// Probably would have to do that anyway...
-//
-struct SiSoBoardInfo
-{
-	int boardIndx;
-	std::string grabberConfig;
-};
-
 class SiSoGrabber: public AbstractGrabber
 {
 public:
