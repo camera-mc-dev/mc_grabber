@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
 		tdata.rawBuffers[cc].resize( tdata.buffersNeeded );
 		for( unsigned bc = 0; bc < tdata.buffersNeeded; ++bc )
 		{
-			tdata.rawBuffers[cc][bc] = cv::Mat( imgRows, imgCols, CV_8UC1, cv::Scalar(0) );
+			tdata.rawBuffers[cc][bc] = cv::Mat( imgRows, imgCols, CV_8UC3, cv::Scalar(0) );
 		}
 		
 		tdata.bufferFrameIdx[cc].assign( tdata.buffersNeeded, 0);
@@ -281,7 +281,7 @@ int main(int argc, char* argv[])
 		for( unsigned cc = 0; cc < bgrImgs.size(); ++cc )
 		{
 			long int bufIdx = fnos[cc] % tdata.buffersNeeded;
-			cv::cvtColor( tdata.rawBuffers[cc][bufIdx], bgrImgs[cc], cv::COLOR_BayerGB2BGR );
+			cv::cvtColor( tdata.rawBuffers[cc][bufIdx], bgrImgs[cc], cv::COLOR_RGB2BGR );
 			//bgrImgs[cc] = grabber.currentFrames[cc];
 			imgCards[cc]->GetTexture()->UploadImage( bgrImgs[cc] );
 

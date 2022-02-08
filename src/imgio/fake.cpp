@@ -16,15 +16,6 @@ FakeGrabber::FakeGrabber(int foo)
         camFrames.push_back(0);
     }
 
-
-    // for (unsigned i=0; i < source_pairs[0].source->GetNumImages(); i++)
-    // {
-    //     Mat frame = source_pairs[0].source->GetCurrent();
-    //     source_pairs[0].source->Advance();
-    //     imshow("this image", frame);
-    //     if( waitKey(10) == 27 ) break;
-    // }
-
 }
 
 void FakeGrabber::GetCurrent()
@@ -47,7 +38,7 @@ void FakeGrabber::GetCurrent()
 
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
-        source_pairs[i].source->Advance();
+        if (!source_pairs[i].source->Advance()){source_pairs[i].source->JumpToFrame(0);};
     }
 }
 bool FakeGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< Mat* > dsts ) 
