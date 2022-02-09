@@ -3,17 +3,14 @@
 //
 
 #include "fake.h"
-FakeGrabber::FakeGrabber(std::vector<SiSoBoardInfo> boardInfo)
-{
-    FakeGrabber(0);
-}
-FakeGrabber::FakeGrabber(int foo)
+FakeGrabber::FakeGrabber(string pathToSource)
 {
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
         //NOTE: If the source does not exist, CreateSource does not throw an error.
-        source_pairs.push_back(CreateSource(std::string("/home/rjl67/test.mp4")));
+        source_pairs.push_back(CreateSource(pathToSource));
         camFrames.push_back(0);
+        this->fake = true;
     }
 
 }

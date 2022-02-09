@@ -26,9 +26,7 @@ using std::endl;
 class FakeGrabber: public AbstractGrabber 
 {
 public:
-
-    FakeGrabber(std::vector<SiSoBoardInfo> boardInfo );
-    FakeGrabber(int foo);
+    FakeGrabber(string pathToSource);
 
     void PrintCameraInfo() override 
     {
@@ -51,16 +49,15 @@ public:
 
     std::vector< frameindex_t > GetFrameNumbers();
 
-    /////////////////////////////////////////////////////////////////////////
-    // unimplemented functions
-    /////////////////////////////////////////////////////////////////////////
-    void SetResolution( long int cols, long int rows ){};
-    void SetResolution( int cam, long int cols, long int rows ){};
-    void SetExposure( long int exposure ){};
-    void SetExposure( int cam, long int exposure ){};
-    void SetFPS( int in_FPS, int masterBoard ){};
-
-    //overrides
+    //
+    // overrides
+    //
+    
+    void SetExposure( long int exposure ) override {};
+    void SetExposure( int cam, long int exposure )override {};
+    void SetResolution( long int cols, long int rows ) override {};
+    void SetResolution( int cam, long int cols, long int rows ) override {};
+    void SetFPS( int in_FPS, int masterBoard )override {};
     void StartAcquisition( int bufferFrames, int masterBoard ) override {};
     void StopAcquisition() override {};
     void StartTrigger( int masterBoard ) override {};

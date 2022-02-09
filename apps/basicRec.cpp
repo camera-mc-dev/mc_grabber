@@ -8,9 +8,9 @@
 #include "commonConfig/commonConfig.h"
 
 #include "imgio/siso.h"
-#include "imgio/loadsave.h"
-#include "imgio/fake.h"
 #include "imgio/grabber.h"
+#include "imgio/fake.h"
+#include "imgio/loadsave.h"
 
 //
 // Very trivial renderer that tells us if we pressed the space button,
@@ -93,14 +93,14 @@ void GrabThread( ThreadData *tdata )
 			dsts[cc] = &tdata->rawBuffers[cc][bufIdx];
 			tdata->bufferFrameIdx[cc][bufIdx] = fno;
 		}
-
 		tdata->grabber->GetNumberedFrame( fno, 2, dsts );
 		auto fnos = tdata->grabber->GetFrameNumbers();
-		// for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
-		// {			
-		// 	cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
-		// }
-		// cout << "---" << endl;
+		
+		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
+		{			
+			cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
+		}
+		cout << "---" << endl;
 		
 		
 		
@@ -116,7 +116,7 @@ void GrabThread( ThreadData *tdata )
 
 int main(int argc, char* argv[])
 {
-	if( argc != 7 )
+	if( argc < 7 )
 	{
 		cout << "Basic buffered recording of camera feeds." << endl;
 		cout << "Usage: " << endl;
@@ -131,6 +131,13 @@ int main(int argc, char* argv[])
 	long int imgCols   = atoi(argv[5]);
 	long int imgRows   = atoi(argv[6]);
 	
+	// optional parameters
+	std::string videoPath;
+
+	if(argc > 7)
+	{
+		videoPath = argv[7];
+	}
 	CommonConfig ccfg;
 	//
 	// first off, create the grabber and find out how many cameras we have
@@ -155,12 +162,21 @@ int main(int argc, char* argv[])
 	
 	
 	cout << "Create Grabber..." << endl;
-	FakeGrabber grabber(0);
-	grabber.PrintCameraInfo();
+	AbstractGrabber* grabber;
+	if (videoPath.empty())
+	{
+		grabber = new SiSoGrabber(boardInfo);
+	}
+	else
+	{
+		grabber = new FakeGrabber(videoPath);
+	}
 	
-	grabber.SetFPS(fps, 0);
-	grabber.SetResolution( imgCols, imgRows );
-	grabber.SetExposure( exposure );
+	grabber->PrintCameraInfo();
+	
+	grabber->SetFPS(fps, 0);
+	grabber->SetResolution( imgCols, imgRows );
+	grabber->SetExposure( exposure );
 	
 	//
 	// Now use a basic renderer to display all of the cameras.
@@ -168,11 +184,11 @@ int main(int argc, char* argv[])
 	// decide how many rows and columns we want to show.
 	unsigned numRows = 1;
 	unsigned numCols = 1;
-	if( grabber.GetNumCameras() > 16)
+	if( grabber->GetNumCameras() > 16)
 		throw std::runtime_error("I'm just refusing to show that many images!");
 	else
 	{
-		numRows = numCols = (int)ceil( sqrt(grabber.GetNumCameras()) );
+		numRows = numCols = (int)ceil( sqrt(grabber->GetNumCameras()) );
 	}
 
 	cout << "num rows: " << numRows << endl;
@@ -207,7 +223,7 @@ int main(int argc, char* argv[])
 	renderer->Get2dBgCamera()->SetOrthoProjection(0, renW, 0, renH, -10, 10 );
 	
 	std::vector< std::shared_ptr<Rendering::MeshNode> > imgCards;
-	for( unsigned cc = 0; cc < grabber.GetNumCameras(); ++cc )
+	for( unsigned cc = 0; cc < grabber->GetNumCameras(); ++cc )
 	{
 		std::shared_ptr<Rendering::MeshNode> mn;
 		cv::Mat img(imgRows, imgCols, CV_8UC1, cv::Scalar(0) );
@@ -235,17 +251,17 @@ int main(int argc, char* argv[])
 	//
 	ThreadData tdata;
 	tdata.done = false;
-	tdata.grabber = &grabber;
+	tdata.grabber = grabber;
 	tdata.currentBufferIndx = 0;
 	tdata.buffersNeeded = fps * recTime;
-	tdata.rawBuffers.resize( grabber.GetNumCameras() );
-	tdata.bufferFrameIdx.resize( grabber.GetNumCameras() );
+	tdata.rawBuffers.resize( grabber->GetNumCameras() );
+	tdata.bufferFrameIdx.resize( grabber->GetNumCameras() );
 	for( unsigned cc = 0; cc < tdata.rawBuffers.size(); ++cc )
 	{
 		tdata.rawBuffers[cc].resize( tdata.buffersNeeded );
 		for( unsigned bc = 0; bc < tdata.buffersNeeded; ++bc )
 		{
-			tdata.rawBuffers[cc][bc] = cv::Mat( imgRows, imgCols, CV_8UC3, cv::Scalar(0) );
+			tdata.rawBuffers[cc][bc] = cv::Mat( imgRows, imgCols, CV_8UC1, cv::Scalar(0) );
 		}
 		
 		tdata.bufferFrameIdx[cc].assign( tdata.buffersNeeded, 0);
@@ -255,13 +271,12 @@ int main(int argc, char* argv[])
 	//
 	// Start the thread to start filling the recording buffer.
 	//
-
 	auto gthread = std::thread(GrabThread, &tdata);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	//
 	// Now we should be able to grab images and display them on the renderer
 	//
-	std::vector< cv::Mat > bgrImgs( grabber.GetNumCameras() );
+	std::vector< cv::Mat > bgrImgs( grabber->GetNumCameras() );
 	
 	
 
@@ -277,14 +292,13 @@ int main(int argc, char* argv[])
 		// Display. Probably too slow to do this while also grabbing!
 		// So will need some threading to put the grabbing in a thread.
 		//
-		auto fnos = grabber.GetFrameNumbers();
+		auto fnos = grabber->GetFrameNumbers();
 		for( unsigned cc = 0; cc < bgrImgs.size(); ++cc )
 		{
 			long int bufIdx = fnos[cc] % tdata.buffersNeeded;
-			cv::cvtColor( tdata.rawBuffers[cc][bufIdx], bgrImgs[cc], cv::COLOR_RGB2BGR );
-			//bgrImgs[cc] = grabber.currentFrames[cc];
+			cv::cvtColor( tdata.rawBuffers[cc][bufIdx], bgrImgs[cc], cv::COLOR_BayerGB2BGR );
+// 			bgrImgs[cc] = grabber.currentFrames[cc];
 			imgCards[cc]->GetTexture()->UploadImage( bgrImgs[cc] );
-
 			
 		}
 		
@@ -293,9 +307,9 @@ int main(int argc, char* argv[])
 		if( record )
 		{
 			record = false;
-			grabber.StopTrigger(0); // not so important now too be honest.
+			grabber->StopTrigger(0); // not so important now too be honest.
 			
-			auto fnos = grabber.GetFrameNumbers();
+			auto fnos = grabber->GetFrameNumbers();
 			auto earliest = fnos[0];
 			for( unsigned cc = 0; cc < fnos.size(); ++cc )
 			{
@@ -315,13 +329,13 @@ int main(int argc, char* argv[])
 					if( tdata.bufferFrameIdx[cc][ bufIndx ] == 0 )
 						continue;
 					std::stringstream ss;
-					ss << "/home/reuben/test/" << std::setw(2) << std::setfill('0') << cc << "/"
+					ss << "/data/raid0/recTest/" << std::setw(2) << std::setfill('0') << cc << "/"
 					   << std::setw(12) << std::setfill('0') << tdata.bufferFrameIdx[cc][ bufIndx ] << ".charImg";
 					SaveImage( tdata.rawBuffers[cc][ bufIndx ], ss.str() );
 				}
 			}
 			
-			grabber.StartTrigger(0);
+			grabber->StartTrigger(0);
 		}
 	}
 	
