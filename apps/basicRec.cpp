@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
 	{
 		cout << "Basic buffered recording of camera feeds." << endl;
 		cout << "Usage: " << endl;
-		cout << argv[0] << " <number of boards> <FPS> <recording time (s)> <exposure (ms)> <x-resolution> <y-resolution> " << endl;
+		cout << argv[0] << " <number of boards> <FPS> <recording time (s)> <exposure (ms)> <x-resolution> <y-resolution> <path to video (optional)>" << endl;
 		exit(0);
 	}
 	
