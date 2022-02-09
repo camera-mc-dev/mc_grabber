@@ -12,7 +12,7 @@ FakeGrabber::FakeGrabber(int foo)
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
         //NOTE: If the source does not exist, CreateSource does not throw an error.
-        source_pairs.push_back(CreateSource(std::string("/media/reuben/HDD/Work/test.mp4")));
+        source_pairs.push_back(CreateSource(std::string("/home/rjl67/test.mp4")));
         camFrames.push_back(0);
     }
 
@@ -50,7 +50,7 @@ bool FakeGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vec
         int camHeight = currentFrames[i].rows;
         int camWidth = currentFrames[i].cols;
         assert( dsts[i]->rows == camHeight && dsts[i]->cols == camWidth);
-        memcpy( dsts[i]->data, currentFrames[i].data, camHeight*camWidth );
+        dsts[i]->data = currentFrames[i].data;
     }
 
     return true;
