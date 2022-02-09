@@ -15,7 +15,7 @@ public:
 
 	bool Step( bool &buffRecord, bool &liveRecord );
 	
-	void Prep( SiSoGrabber *grabber );
+	void Prep( AbstractGrabber *grabber );
 	
 	void Update( std::vector< cv::Mat > &bgrImgs, std::map<int, bool> &dispCams );
 	
@@ -44,7 +44,7 @@ protected:
 };
 
 
-void PrepRenderWindow(SiSoGrabber *grabber, unsigned &width, unsigned &height);
+void PrepRenderWindow(AbstractGrabber *grabber, unsigned &width, unsigned &height);
 
 
 

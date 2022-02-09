@@ -11,7 +11,7 @@
 
 #include "commonConfig/commonConfig.h"
 
-void PrepRenderWindow(SiSoGrabber *grabber, unsigned &width, unsigned &height)
+void PrepRenderWindow(AbstractGrabber *grabber, unsigned &width, unsigned &height)
 {
 	long int imgCols, imgRows;
 	grabber->GetResolution( 0, imgCols, imgRows );
@@ -52,7 +52,7 @@ RecRenderer::RecRenderer(unsigned width, unsigned height, std::string title) : B
 }
 
 
-void RecRenderer::Prep( SiSoGrabber *grabber )
+void RecRenderer::Prep( AbstractGrabber *grabber )
 {
 	grabber->GetResolution( 0, imgCols, imgRows );
 	for( unsigned cc = 0; cc < grabber->GetNumCameras(); ++cc )

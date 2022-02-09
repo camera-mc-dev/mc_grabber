@@ -17,6 +17,7 @@ using std::endl;
 #include "imgproc/debayer/debayer.h"
 
 #include "imgio/hdf5source.h"
+#include "imgio/fake.h"
 
 #include <boost/filesystem.hpp>
 #include <iomanip>
@@ -56,7 +57,7 @@ int main(int argc, char* argv[])
 	if( argc < 2 )
 	{
 		cout << "Usage: " << endl;
-		cout << argv[0] << " <number of framegrabbers>" << endl;
+		cout << argv[0] << " <number of framegrabbers> <video path (optional)>" << endl;
 		return 0;
 	}
 	
@@ -65,6 +66,12 @@ int main(int argc, char* argv[])
 	boost::asio::io_service ioService;
 	
 	int numBoards      = atoi(argv[1]);
+	
+	// optional parameters
+	string videoPath;
+	if (argc >= 2){
+		videoPath = argv[2];
+	}
 	bool fpsWarningActive = false;
 	
 	std::vector<SiSoBoardInfo> boardInfo(numBoards);
@@ -85,16 +92,24 @@ int main(int argc, char* argv[])
 	}
 	
 	cout << "Create Grabber..." << endl;
-	SiSoGrabber grabber( boardInfo );
+	AbstractGrabber* grabber;
+	if (videoPath.empty())
+	{
+		grabber = new SiSoGrabber(boardInfo);
+	}
+	else
+	{
+		grabber = new FakeGrabber(videoPath);	
+	}
 	
-	grabber.PrintCameraInfo();
-	grabber.SetOutput1StateLow(0);
+	grabber->PrintCameraInfo();
+	grabber->SetOutput1StateLow(0);
 	
 	
 	// 1) Launch the GTKMM GUI thread for controls
 	GUIThreadData gtdata;
 	gtdata.done = false;
-	gtdata.grabber = &grabber;
+	gtdata.grabber = grabber;
 	auto guiThread = std::thread(GUIThread, &gtdata);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	
@@ -142,14 +157,14 @@ int main(int argc, char* argv[])
 			
 			// Create renderer
 			unsigned winW, winH;
-			PrepRenderWindow( &grabber, winW, winH );
+			PrepRenderWindow( grabber, winW, winH );
 			
 			cout << winW << " " << winH << endl;
 			
 			
 			std::shared_ptr<RecRenderer> renderer;
 			Rendering::RendererFactory::Create( renderer, winW,winH, "SISO/JAI camera recorder" );
-			renderer->Prep( &grabber );
+			renderer->Prep( grabber );
 			
 			// display something if we are live recording
 			renderer->Get2dFgCamera()->SetOrthoProjection(0, 1, 0, 1, -10, 10 );
@@ -182,7 +197,7 @@ int main(int argc, char* argv[])
 			tdata.savingEven = false;
 // 			tdata.mutOdd.unlock();
 // 			tdata.mutEven.unlock();
-			tdata.saveProgress.assign( grabber.GetNumCameras(), 0.0f );
+			tdata.saveProgress.assign( grabber->GetNumCameras(), 0.0f );
 			tdata.needSavingThreads = true;
 			std::thread saveEvenThread( SaveEven, &tdata );
 			std::thread saveOddThread(  SaveOdd,  &tdata );
@@ -190,7 +205,7 @@ int main(int argc, char* argv[])
 			
 			bool liveRecord = false;
 			
-			std::vector< cv::Mat > bgrImgs( grabber.GetNumCameras() );
+			std::vector< cv::Mat > bgrImgs( grabber->GetNumCameras() );
 			
 			std::map<int, bool> dispCams;
 			tdata.meanfps = -1.0f;
@@ -234,7 +249,7 @@ int main(int argc, char* argv[])
 				
 				gtdata.window->GetCameraDisplayInfo( dispCams );
 				
-				auto fnos = grabber.GetFrameNumbers();
+				auto fnos = grabber->GetFrameNumbers();
 				GrabThreadData &gdata = gtdata.window->gdata;
 				for( unsigned cc = 0; cc < bgrImgs.size(); ++cc )
 				{
@@ -261,12 +276,12 @@ int main(int argc, char* argv[])
 				if( buffRecord )
 				{
 					// just so we can see the progress bars for cameras that have not started.
-					tdata.saveProgress.assign( grabber.GetNumCameras(), 0.01f );
+					tdata.saveProgress.assign( grabber->GetNumCameras(), 0.01f );
 					
 					buffRecord = false;
 					liveRecord = false;
-					grabber.StopTrigger(0);
-					grabber.SetOutput1StateHigh(0);
+					grabber->StopTrigger(0);
+					grabber->SetOutput1StateHigh(0);
 				
 					auto t0 = std::chrono::steady_clock::now();
 	
@@ -275,7 +290,7 @@ int main(int argc, char* argv[])
 					
 					std::vector< std::shared_ptr<Rendering::MeshNode> > progRects;
 					Eigen::Vector4f rcol; rcol << 1.0, 0.0, 0.0, 1.0;
-					progRects.resize( grabber.GetNumCameras() );
+					progRects.resize( grabber->GetNumCameras() );
 					float barHeight = 0.25 / progRects.size();
 					transMatrix3D T = transMatrix3D::Identity();
 					T(0,3) = -0.5;
@@ -321,7 +336,7 @@ int main(int argc, char* argv[])
 					
 					
 					
-					auto fnos = grabber.GetFrameNumbers();
+					auto fnos = grabber->GetFrameNumbers();
 					auto earliest = fnos[0];
 					for( unsigned cc = 0; cc < fnos.size(); ++cc )
 					{
@@ -382,9 +397,9 @@ int main(int argc, char* argv[])
 					
 					for( unsigned cc = 0; cc < tdata.saveProgress.size(); ++cc )
 						progRects[cc]->RemoveFromParent();
-					grabber.StartTrigger(0);
-					grabber.SetOutput1StateLow(0);
-					tdata.saveProgress.assign( grabber.GetNumCameras(), 0.0f );
+					grabber->StartTrigger(0);
+					grabber->SetOutput1StateLow(0);
+					tdata.saveProgress.assign( grabber->GetNumCameras(), 0.0f );
 				}
 				
 				if( liveRecord )
@@ -396,7 +411,7 @@ int main(int argc, char* argv[])
 					unsigned numCams = tdata.rawBuffers.size();
 					PrepSaveDirectories( {outDir}, numCams, gtdata );
 					
-					auto fnos = grabber.GetFrameNumbers();
+					auto fnos = grabber->GetFrameNumbers();
 					auto earliest = fnos[0];
 					for( unsigned cc = 0; cc < fnos.size(); ++cc )
 					{

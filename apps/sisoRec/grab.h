@@ -13,7 +13,7 @@
 struct GrabThreadData
 {
 	// pointer to the grabber
-	SiSoGrabber *grabber;
+	AbstractGrabber *grabber;
 	
 	// the recording buffer
 	int currentBufferIndx;

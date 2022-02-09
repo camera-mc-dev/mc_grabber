@@ -28,7 +28,7 @@ void GUIThread( GUIThreadData *gtdata )
 
 
 
-ControlsWindow::ControlsWindow(SiSoGrabber *in_grabber)
+ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 {
 	// TODO: Get input from the grabber class.
 	grabber = in_grabber;

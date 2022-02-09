@@ -18,7 +18,7 @@
 class ControlsWindow : public Gtk::Window
 {
 public:
-	ControlsWindow(SiSoGrabber *in_grabber);
+	ControlsWindow(AbstractGrabber *in_grabber);
 	~ControlsWindow();
 	
 	// we use this to signal to the main thread that we 
@@ -221,7 +221,7 @@ protected:
 	//
 	// Access to the grabber class.
 	//
-	SiSoGrabber *grabber;
+	AbstractGrabber *grabber;
 	int numCameras;
 	
 	
@@ -252,7 +252,7 @@ protected:
 struct GUIThreadData
 {
 	bool done = false;
-	SiSoGrabber *grabber;
+	AbstractGrabber *grabber;
 	Glib::RefPtr<Gtk::Application> app;
 	
 	ControlsWindow *window;
