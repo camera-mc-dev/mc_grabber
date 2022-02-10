@@ -33,7 +33,6 @@ class SiSoGrabber: public AbstractGrabber
 {
 public:
 	
-	enum baseGain_t {baseGain00, baseGain06, baseGain12};
 	
 	// Initialise libraries etc...
 	SiSoGrabber( std::vector<SiSoBoardInfo> boardInfo );
@@ -56,8 +55,8 @@ public:
 	void SetGain( int cam, double gain );
 	
 	// Sets the analog base gain
-	void SetBaseGain( baseGain_t value );
-	void SetBaseGain( int cam, baseGain_t value );
+	void SetBaseGain( baseGain_t value ) override;
+	void SetBaseGain( int cam, baseGain_t value ) override;
 	
 
 	// Sets the desired framerate

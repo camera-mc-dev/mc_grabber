@@ -26,53 +26,143 @@ using std::endl;
 class FakeGrabber: public AbstractGrabber 
 {
 public:
-    FakeGrabber(string pathToSource);
-
-    void PrintCameraInfo() override 
-    {
-        cout << "num active source_pairs " << source_pairs.size() << endl;
-    };
-
-    unsigned GetNumCameras()
-    {
-        // always just return 4 for now.
-        return 4;
-    }
-
-    std::vector< Mat > currentFrames;
-
-    void GetCurrent();
-
-    bool GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< Mat* > dsts );
-
-    frameindex_t GetSyncFrame( int timeout );
-
-    std::vector< frameindex_t > GetFrameNumbers();
-
-    //
-    // overrides
-    //
-    
-    void SetExposure( long int exposure ) override {};
-    void SetExposure( int cam, long int exposure )override {};
-    void SetResolution( long int cols, long int rows ) override {};
-    void SetResolution( int cam, long int cols, long int rows ) override {};
-    void SetFPS( int in_FPS, int masterBoard )override {};
-    void StartAcquisition( int bufferFrames, int masterBoard ) override {};
-    void StopAcquisition() override {};
-    void StartTrigger( int masterBoard ) override {};
-    void StopTrigger( int masterBoard ) override {};
-    bool GetCurrentEnsureSynch( int timeout ) override {return 0;};
-    
-    bool GetNumberedFrame( frameindex_t frameIdx, int timeout ) override {return 0;};
-    
-    
-
-
+	FakeGrabber(string pathToSource);
+	
+	void PrintCameraInfo() override 
+	{
+	    cout << "num active source_pairs " << source_pairs.size() << endl;
+	}
+	
+	unsigned GetNumCameras()
+	{
+	    // always just return 4 for now.
+	    return 4;
+	}
+	
+	std::vector< Mat > currentFrames;
+	
+	void GetCurrent();
+	
+	bool GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< Mat* > dsts );
+	
+	frameindex_t GetSyncFrame( int timeout );
+	
+	std::vector< frameindex_t > GetFrameNumbers();
+	
+	//
+	// overrides
+	//
+	void SetExposure( long int exposure ) override
+	{
+		// we have no physical camera, so no exposure to set.
+	};
+	
+	void SetExposure( int cam, long int exposure )override
+	{
+		// we have no physical camera, so no exposure to set.
+	};
+	
+	
+	void SetResolution( long int cols, long int rows ) override
+	{
+		// we have no physical camera, but we have a single image source 
+		// faked to be some number of cameras, and we can thus 
+		// scale that source to some desired image size.
+		desiredCols = cols;
+		desiredRows = rows;
+	}
+	
+	void SetResolution( int cam, long int cols, long int rows ) override
+	{
+		desiredCols = cols;
+		desiredRows = rows;
+	}
+	
+	void SetFPS( int in_FPS, int masterBoard )override
+	{
+		// we could in theory have a grabbing thread that is handling acquisition from our image 
+		// source, and we could have it doing that based on some trigger.... but for now we'll
+		// just ignore FPS
+	}
+	
+	void StartAcquisition( int bufferFrames, int masterBoard ) override
+	{
+		// nothing to do unless we go down the route of having a seperate grabbing thread.
+	}
+	
+	void StopAcquisition() override
+	{
+		// nothing to do unless we go down the route of having a seperate grabbing thread.
+	}
+	
+	void StartTrigger( int masterBoard ) override
+	{
+		// nothing to do unless we go down the route of having a seperate grabbing thread.
+	}
+	
+	void StopTrigger( int masterBoard ) override
+	{
+		// nothing to do unless we go down the route of having a seperate grabbing thread.
+	}
+	
+	bool GetCurrentEnsureSynch( int timeout ) override
+	{
+		// not currently used.
+		return true;
+	}
+	
+	bool GetNumberedFrame( frameindex_t frameIdx, int timeout ) override
+	{
+		// not currently used.
+		return true;
+	}
+	
+	
+	void SetOutput1StateHigh( int board ) override
+	{
+		// nothing to do.
+	}
+	
+	void SetOutput1StateLow( int board ) override
+	{
+		// nothing to do.
+	}
+	
+	void GetResolution( int cam, long int &cols, long int &rows )
+	{
+		cols = desiredCols;
+		rows = desiredRows;
+	}
+	
+	void SetGain( double gain ) override
+	{
+		// nothing to do.
+	}
+	
+	void SetGain( int cam, double gain ) override
+	{
+		// nothing to do.
+	}
+	
+	void SetBaseGain( baseGain_t value ) override
+	{
+		// nothing to do.
+	}
+	
+	void SetBaseGain( int cam, baseGain_t value ) override
+	{
+		// nothing to do
+	}
+	
+	
+	
+	
+	
 private:
-   std::vector <SourcePair> source_pairs;
-   std::vector< frameindex_t > camFrames;
-
+	std::vector <SourcePair> source_pairs;
+	std::vector< frameindex_t > camFrames;
+	
+	long int desiredRows, desiredCols;
 };
 
 

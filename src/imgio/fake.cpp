@@ -38,6 +38,8 @@ void FakeGrabber::GetCurrent()
         if (!source_pairs[i].source->Advance()){source_pairs[i].source->JumpToFrame(0);};
     }
 }
+
+
 bool FakeGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< Mat* > dsts ) 
 {
     GetCurrent();
