@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 	
 	// optional parameters
 	string videoPath;
-	if (argc >= 2){
+	if (argc > 2){
 		videoPath = argv[2];
 	}
 	bool fpsWarningActive = false;
@@ -112,7 +112,6 @@ int main(int argc, char* argv[])
 	gtdata.grabber = grabber;
 	auto guiThread = std::thread(GUIThread, &gtdata);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	
 	
 	// Find out where we're saving images to.
 	GetSaveRoots( gtdata );
