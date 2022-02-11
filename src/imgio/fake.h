@@ -22,6 +22,26 @@
 using std::cout;
 using std::endl;
 
+//
+// Want a fake camera s.th we can launch it in a thread. Pausing the grabber thread seems to cause issues with GTK.
+//
+class FakeCamera
+{
+public:
+	FakeCamera(std::string pathToSource);
+	
+	~FakeCamera()
+	{
+		kill = true;
+	};
+
+protected:
+	Mat currentFrame;
+	int currentFrameIdx;
+	int fps = 100;
+	bool kill = false;
+
+};
 
 class FakeGrabber: public AbstractGrabber 
 {
@@ -80,9 +100,7 @@ public:
 	
 	void SetFPS( int in_FPS, int masterBoard )override
 	{
-		// we could in theory have a grabbing thread that is handling acquisition from our image 
-		// source, and we could have it doing that based on some trigger.... but for now we'll
-		// just ignore FPS
+		fps = in_FPS;
 	}
 	
 	void StartAcquisition( int bufferFrames, int masterBoard ) override
@@ -163,6 +181,7 @@ private:
 	std::vector< frameindex_t > camFrames;
 	
 	long int desiredRows, desiredCols;
+	int fps = 24;
 };
 
 

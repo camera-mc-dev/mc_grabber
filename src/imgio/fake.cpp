@@ -3,6 +3,19 @@
 //
 
 #include "fake.h"
+
+
+FakeCamera::FakeCamera(std::string pathToSource)
+{
+    SourcePair source_pair = CreateSource(pathToSource);
+    while(!this->kill)
+    {
+        currentFrame = source_pair.source->GetCurrent();
+        currentFrameIdx = source_pair.source->GetCurrentFrameID();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000/fps));
+    }
+}
+
 FakeGrabber::FakeGrabber(string pathToSource)
 {
     for (unsigned i = 0; i < GetNumCameras(); i++)
