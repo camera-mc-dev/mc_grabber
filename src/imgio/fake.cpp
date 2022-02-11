@@ -4,13 +4,24 @@
 
 #include "fake.h"
 
+void RunFakeCamera(FakeCamera* camera, std::string pathToSource)
+{
+    camera->run();
+}
 
 FakeCamera::FakeCamera(std::string pathToSource)
 {
-    SourcePair source_pair = CreateSource(pathToSource);
-    while(!this->kill)
+    source_pair = CreateSource(pathToSource);
+}
+
+void FakeCamera::run()
+{
+     while(!this->kill)
     {
         currentFrame = source_pair.source->GetCurrent();
+        if (!source_pair.source->Advance()){
+            source_pair.source->JumpToFrame(0);
+        }
         currentFrameIdx = source_pair.source->GetCurrentFrameID();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000/fps));
     }
@@ -18,13 +29,34 @@ FakeCamera::FakeCamera(std::string pathToSource)
 
 FakeGrabber::FakeGrabber(string pathToSource)
 {
+
+    std::vector<std::thread> threads;
+    std::vector<FakeCamera> cameras;
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
+        //FakeCamera camera(pathToSource);
+        cameras.push_back(FakeCamera(pathToSource));
+        threads.push_back(std::thread(RunFakeCamera, &cameras[i], pathToSource));
         //NOTE: If the source does not exist, CreateSource does not throw an error.
         source_pairs.push_back(CreateSource(pathToSource));
         camFrames.push_back(0);
         this->fake = true;
     }
+    while(1)
+    {
+        for (unsigned i = 0; i < GetNumCameras(); i++)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            cout << "cam num" << i  << " " << cameras[i].GetCurrentFrame() << endl;
+        }
+
+    }
+    for (unsigned i = 0; i < GetNumCameras(); i++)
+    {
+        threads[i].join();
+    }
+    
+
 
 }
 

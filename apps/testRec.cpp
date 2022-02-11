@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 	long int maxSingleWindowWidth = 1000;
 	long int maxSingleWindowHeight = 800;
 
-	FakeGrabber grabber(0);
+	FakeGrabber grabber("/media/reuben/HDD/Work/test.mp4");
 	grabber.PrintCameraInfo();
 	//
 	// Now use a basic renderer to display all of the cameras.

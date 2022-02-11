@@ -29,17 +29,23 @@ class FakeCamera
 {
 public:
 	FakeCamera(std::string pathToSource);
+	void run();
 	
-	~FakeCamera()
+	int GetCurrentFrame()
 	{
-		kill = true;
-	};
+		return currentFrameIdx;
+	}
+
+	// issues with threading. having too a thread for each camera seems a little too unreliable.
+	// This function will be called from the chrono
+	void Advance() {};
 
 protected:
 	Mat currentFrame;
 	int currentFrameIdx;
 	int fps = 100;
 	bool kill = false;
+	SourcePair source_pair;
 
 };
 
@@ -56,7 +62,7 @@ public:
 	unsigned GetNumCameras()
 	{
 	    // always just return 4 for now.
-	    return 4;
+	    return 2;
 	}
 	
 	std::vector< Mat > currentFrames;
@@ -184,5 +190,6 @@ private:
 	int fps = 24;
 };
 
+void PrintThreadNum(int threadNum);
 
 #endif //MC_GRABBER_FAKE_H
