@@ -4,9 +4,16 @@
 
 #include "fake.h"
 
-void RunFakeCamera(FakeCamera* camera, std::string pathToSource)
+void RunFakeCamera(std::vector <FakeCamera> * cameras, bool* done, int fps)
 {
-    camera->run();
+    while(!*done)
+    {
+        for (unsigned i = 0 ; i < cameras[0].size(); i++)
+        {
+            cameras[0][i].Advance();
+        }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000/fps));
+    }
 }
 
 FakeCamera::FakeCamera(std::string pathToSource)
@@ -14,50 +21,32 @@ FakeCamera::FakeCamera(std::string pathToSource)
     source_pair = CreateSource(pathToSource);
 }
 
-void FakeCamera::run()
+void FakeCamera::Advance()
 {
-     while(!this->kill)
+    currentFrame = source_pair.source->GetCurrent();
+    if (!source_pair.source->Advance())
     {
-        currentFrame = source_pair.source->GetCurrent();
-        if (!source_pair.source->Advance()){
-            source_pair.source->JumpToFrame(0);
-        }
-        currentFrameIdx = source_pair.source->GetCurrentFrameID();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000/fps));
+        source_pair.source->JumpToFrame(0);
     }
+    currentFrameIdx = source_pair.source->GetCurrentFrameID();
+
+}
+
+Mat FakeCamera::GetCurrentFrame()
+{
+    return currentFrame;
 }
 
 FakeGrabber::FakeGrabber(string pathToSource)
 {
-
-    std::vector<std::thread> threads;
-    std::vector<FakeCamera> cameras;
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
-        //FakeCamera camera(pathToSource);
         cameras.push_back(FakeCamera(pathToSource));
-        threads.push_back(std::thread(RunFakeCamera, &cameras[i], pathToSource));
         //NOTE: If the source does not exist, CreateSource does not throw an error.
         source_pairs.push_back(CreateSource(pathToSource));
         camFrames.push_back(0);
         this->fake = true;
     }
-    while(1)
-    {
-        for (unsigned i = 0; i < GetNumCameras(); i++)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            cout << "cam num" << i  << " " << cameras[i].GetCurrentFrame() << endl;
-        }
-
-    }
-    for (unsigned i = 0; i < GetNumCameras(); i++)
-    {
-        threads[i].join();
-    }
-    
-
-
 }
 
 void FakeGrabber::GetCurrent()
@@ -66,7 +55,7 @@ void FakeGrabber::GetCurrent()
     {
         for (unsigned i = 0; i < GetNumCameras(); i++)
         {
-             currentFrames.push_back(source_pairs[i].source->GetCurrent());
+             currentFrames.push_back(cameras[i].GetCurrentFrame());
         }
 
     }
@@ -74,13 +63,8 @@ void FakeGrabber::GetCurrent()
     {
         for (unsigned i = 0; i < GetNumCameras(); i++)
         {
-             currentFrames[i] = source_pairs[i].source->GetCurrent();
+             currentFrames[i] = cameras[i].GetCurrentFrame();
         }
-    }
-
-    for (unsigned i = 0; i < GetNumCameras(); i++)
-    {
-        if (!source_pairs[i].source->Advance()){source_pairs[i].source->JumpToFrame(0);};
     }
 }
 
@@ -102,7 +86,6 @@ bool FakeGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vec
 
 frameindex_t FakeGrabber::GetSyncFrame(int timeout)
 {
-    //cout << "current frame id " << source_pairs[0].source->GetCurrentFrameID() << endl;
     return (frameindex_t) source_pairs[0].source->GetCurrentFrameID();
 }
 
@@ -114,3 +97,12 @@ std::vector< frameindex_t > FakeGrabber::GetFrameNumbers()
         }
     return camFrames;
 }
+
+void FakeGrabber::StartAcquisition()
+{
+    chronoThread = std::thread(RunFakeCamera, &cameras, &done, fps);
+}
+
+// Some code for testing the camera thread. 
+
+// }

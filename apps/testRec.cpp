@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
 
 	FakeGrabber grabber("/media/reuben/HDD/Work/test.mp4");
 	grabber.PrintCameraInfo();
+	grabber.StartAcquisition();
 	//
 	// Now use a basic renderer to display all of the cameras.
 	//

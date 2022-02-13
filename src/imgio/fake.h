@@ -28,17 +28,23 @@ using std::endl;
 class FakeCamera
 {
 public:
+
 	FakeCamera(std::string pathToSource);
-	void run();
-	
-	int GetCurrentFrame()
+
+	int GetCurrentFrameIdx()
 	{
 		return currentFrameIdx;
 	}
 
-	// issues with threading. having too a thread for each camera seems a little too unreliable.
-	// This function will be called from the chrono
-	void Advance() {};
+	Mat GetCurrentFrame();
+
+	// issues with threading. having a thread for each camera seems a little too unreliable.
+	// This function is called from the chrono thread. 
+
+	// I've now said the word thread too many times...
+
+	void Advance();
+
 
 protected:
 	Mat currentFrame;
@@ -53,16 +59,26 @@ class FakeGrabber: public AbstractGrabber
 {
 public:
 	FakeGrabber(string pathToSource);
-	
+
+	~FakeGrabber()
+	{
+		done = true;
+		chronoThread.join();
+	}
+
 	void PrintCameraInfo() override 
 	{
-	    cout << "num active source_pairs " << source_pairs.size() << endl;
+		for (unsigned j = 0; j < GetNumCameras(); j++)
+        {
+            cout << cameras[j].GetCurrentFrameIdx() << endl;
+        }
+    
 	}
 	
 	unsigned GetNumCameras()
 	{
 	    // always just return 4 for now.
-	    return 2;
+	    return 4;
 	}
 	
 	std::vector< Mat > currentFrames;
@@ -109,14 +125,19 @@ public:
 		fps = in_FPS;
 	}
 	
-	void StartAcquisition( int bufferFrames, int masterBoard ) override
+	void StartAcquisition( int bufferFrames, int masterBoard ) override 
 	{
-		// nothing to do unless we go down the route of having a seperate grabbing thread.
+		// Calls this here so we dont need to change too many function calls in the mainfiles. 
+		StartAcquisition();
 	}
 	
-	void StopAcquisition() override
+	// 
+	// Starts the chronothread which runs the Advance() method for FakeCameras.
+	//
+	void StartAcquisition();
+	void StopAcquisition() override 
 	{
-		// nothing to do unless we go down the route of having a seperate grabbing thread.
+		// ending chronoThread handled by destructor so dont do anything here.
 	}
 	
 	void StartTrigger( int masterBoard ) override
@@ -178,18 +199,14 @@ public:
 		// nothing to do
 	}
 	
-	
-	
-	
-	
 private:
 	std::vector <SourcePair> source_pairs;
 	std::vector< frameindex_t > camFrames;
-	
+	std::vector<FakeCamera> cameras;
+	std::thread chronoThread;
 	long int desiredRows, desiredCols;
 	int fps = 24;
+	bool done = false;
 };
-
-void PrintThreadNum(int threadNum);
 
 #endif //MC_GRABBER_FAKE_H
