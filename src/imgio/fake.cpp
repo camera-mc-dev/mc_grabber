@@ -17,6 +17,11 @@ void RunFakeCamera(std::vector <FakeCamera> * cameras, bool* done, int fps)
     }
 }
 
+
+//
+// Fake Camera
+//
+
 FakeCamera::FakeCamera(std::string pathToSource)
 {
     source_pair = CreateSource(pathToSource);
@@ -47,15 +52,17 @@ Mat FakeCamera::GetCurrentFrame()
     return currentFrame;
 }
 
+//
+// Fake Grabber
+//
+
 FakeGrabber::FakeGrabber(string pathToSource)
 {
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
         cameras.push_back(FakeCamera(pathToSource));
-        //NOTE: If the source does not exist, CreateSource does not throw an error.
-        source_pairs.push_back(CreateSource(pathToSource));
         camFrames.push_back(0);
-        this->fake = true;
+        fake = true;
     }
 }
 
@@ -108,8 +115,7 @@ std::vector< frameindex_t > FakeGrabber::GetFrameNumbers()
 
 void FakeGrabber::StartAcquisition()
 {
+    done = false;
     chronoThread = std::thread(RunFakeCamera, &cameras, &done, fps);
-    //sleep for 5 frames to avoid race conditions (i.e read/writing to same memory)
-    std::this_thread::sleep_for(std::chrono::milliseconds(5*1000/fps));
 
 }

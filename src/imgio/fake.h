@@ -33,6 +33,7 @@ public:
 	FakeCamera(std::string pathToSource);
 
 	int GetCurrentFrameIdx();
+
 	Mat GetCurrentFrame();
 
 	// issues with threading. having a thread for each camera seems a little too unreliable.
@@ -43,13 +44,18 @@ public:
 protected:
 	Mat currentFrame;
 	int currentFrameIdx;
-	int fps = 200;
+	int fps = 24;
+	
 	// gets updated when the camera is done writing to memory. 
 	bool frameReady = false;
+	
 	SourcePair source_pair;
 
 };
-
+//
+// A Fake grabber that takes a path to an mp4 as input and runs 
+// it as a camera. 
+//
 class FakeGrabber: public AbstractGrabber 
 {
 public:
@@ -86,9 +92,6 @@ public:
 	
 	std::vector< frameindex_t > GetFrameNumbers();
 	
-	//
-	// overrides
-	//
 	void SetExposure( long int exposure ) override
 	{
 		// we have no physical camera, so no exposure to set.
@@ -136,7 +139,8 @@ public:
 
 	void StopAcquisition() override 
 	{
-		// ending chronoThread handled by destructor so dont do anything here.
+		done = true;
+		chronoThread.join();
 	}
 	
 	void StartTrigger( int masterBoard ) override
@@ -199,10 +203,12 @@ public:
 	}
 	
 private:
-	std::vector <SourcePair> source_pairs;
+
 	std::vector< frameindex_t > camFrames;
 	std::vector<FakeCamera> cameras;
+	
 	std::thread chronoThread;
+	
 	long int desiredRows, desiredCols;
 	int fps = 24;
 	bool done = false;
