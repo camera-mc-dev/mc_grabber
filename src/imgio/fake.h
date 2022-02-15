@@ -23,7 +23,8 @@ using std::cout;
 using std::endl;
 
 //
-// Want a fake camera s.th we can launch it in a thread. Pausing the grabber thread seems to cause issues with GTK.
+// A Fake camera that we can launch in a  seperate thread. 
+// Pausing the grabber thread seems to cause issues with GTK.
 //
 class FakeCamera
 {
@@ -31,26 +32,20 @@ public:
 
 	FakeCamera(std::string pathToSource);
 
-	int GetCurrentFrameIdx()
-	{
-		return currentFrameIdx;
-	}
-
+	int GetCurrentFrameIdx();
 	Mat GetCurrentFrame();
 
 	// issues with threading. having a thread for each camera seems a little too unreliable.
-	// This function is called from the chrono thread. 
-
-	// I've now said the word thread too many times...
-
+	// This function is called from the chrono thread and advances all the cameras on the same call. 
 	void Advance();
 
 
 protected:
 	Mat currentFrame;
 	int currentFrameIdx;
-	int fps = 100;
-	bool kill = false;
+	int fps = 200;
+	// gets updated when the camera is done writing to memory. 
+	bool frameReady = false;
 	SourcePair source_pair;
 
 };
@@ -70,7 +65,7 @@ public:
 	{
 		for (unsigned j = 0; j < GetNumCameras(); j++)
         {
-            cout << cameras[j].GetCurrentFrameIdx() << endl;
+            cout << "num active cameras" << GetNumCameras() << endl;
         }
     
 	}
@@ -125,9 +120,12 @@ public:
 		fps = in_FPS;
 	}
 	
+	// 
+	// acts as a wrapper for StartAquision() so we dont need to change too many function calls in the mainfiles.
+	//
 	void StartAcquisition( int bufferFrames, int masterBoard ) override 
 	{
-		// Calls this here so we dont need to change too many function calls in the mainfiles. 
+		
 		StartAcquisition();
 	}
 	
@@ -135,6 +133,7 @@ public:
 	// Starts the chronothread which runs the Advance() method for FakeCameras.
 	//
 	void StartAcquisition();
+
 	void StopAcquisition() override 
 	{
 		// ending chronoThread handled by destructor so dont do anything here.

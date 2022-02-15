@@ -4,6 +4,7 @@
 
 #include "fake.h"
 
+// tried tying this function in to a class but i get a "static function" error.
 void RunFakeCamera(std::vector <FakeCamera> * cameras, bool* done, int fps)
 {
     while(!*done)
@@ -23,17 +24,26 @@ FakeCamera::FakeCamera(std::string pathToSource)
 
 void FakeCamera::Advance()
 {
+    frameReady = false;
     currentFrame = source_pair.source->GetCurrent();
     if (!source_pair.source->Advance())
     {
         source_pair.source->JumpToFrame(0);
     }
     currentFrameIdx = source_pair.source->GetCurrentFrameID();
+    frameReady = true;
 
 }
-
+int FakeCamera::GetCurrentFrameIdx()
+{
+    return currentFrameIdx;
+}
 Mat FakeCamera::GetCurrentFrame()
 {
+    while(!frameReady)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
     return currentFrame;
 }
 
@@ -75,9 +85,7 @@ bool FakeGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vec
     
     for (unsigned i = 0; i < GetNumCameras(); i++)
     {
-        int camHeight = currentFrames[i].rows;
-        int camWidth = currentFrames[i].cols;
-        assert( dsts[i]->rows == camHeight && dsts[i]->cols == camWidth);
+        assert( dsts[i]->rows == desiredRows && dsts[i]->cols == desiredCols);
         dsts[i]->data = currentFrames[i].data;
     }
 
@@ -86,14 +94,14 @@ bool FakeGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vec
 
 frameindex_t FakeGrabber::GetSyncFrame(int timeout)
 {
-    return (frameindex_t) source_pairs[0].source->GetCurrentFrameID();
+    return (frameindex_t) cameras[0].GetCurrentFrameIdx();
 }
 
 std::vector< frameindex_t > FakeGrabber::GetFrameNumbers()
 {
     for (unsigned i = 0; i < GetNumCameras(); i++)
         {
-             camFrames[i] = source_pairs[i].source->GetCurrentFrameID();
+             camFrames[i] = cameras[i].GetCurrentFrameIdx();
         }
     return camFrames;
 }
@@ -101,8 +109,7 @@ std::vector< frameindex_t > FakeGrabber::GetFrameNumbers()
 void FakeGrabber::StartAcquisition()
 {
     chronoThread = std::thread(RunFakeCamera, &cameras, &done, fps);
+    //sleep for 5 frames to avoid race conditions (i.e read/writing to same memory)
+    std::this_thread::sleep_for(std::chrono::milliseconds(5*1000/fps));
+
 }
-
-// Some code for testing the camera thread. 
-
-// }
