@@ -27,7 +27,6 @@ void GUIThread( GUIThreadData *gtdata )
 }
 
 
-
 ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 {
 	// TODO: Get input from the grabber class.
@@ -46,12 +45,12 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//
 	xResLabel.set_text("width");
 	xResScale.set_range(64, 2560);
-	xResScale.set_value(1920);
+	xResScale.set_value(480);
 	xResScale.set_hexpand(true);
 	
 	yResLabel.set_text("height");
 	yResScale.set_range(2,2048);
-	yResScale.set_value(1080);
+	yResScale.set_value(360);
 	yResScale.set_hexpand(true);
 	
 	fpsLabel.set_text("fps");
@@ -353,34 +352,49 @@ void ControlsWindow::StartGrabbing()
 
 void ControlsWindow::StopGrabbing()
 {
-	cout << "Stop Grabbing" << endl;
+	StopGrabbing(this);
+}
+
+gboolean ControlsWindow::StopGrabbing(gpointer self)
+	{
+		ControlsWindow * window  = (ControlsWindow*) self;
+		window->startGrabButton.set_sensitive(true);
+		window->fpsScale.set_sensitive(true);
+		window->xResScale.set_sensitive(true);
+		window->yResScale.set_sensitive(true);
+		window->durScale.set_sensitive(true);
+		window->baseGainButton.set_sensitive(true);
+		window->calibModeCheckBtn.set_sensitive(true);
 	
-	startGrabButton.set_sensitive(true);
-	fpsScale.set_sensitive(true);
-	xResScale.set_sensitive(true);
-	yResScale.set_sensitive(true);
-	durScale.set_sensitive(true);
-	baseGainButton.set_sensitive(true);
-	calibModeCheckBtn.set_sensitive(true);
+		window->obsFpsB.set_text("(not grabbing)");	
 	
-	obsFpsB.set_text("(not grabbing)");	
-	
-	stopGrabButton.set_sensitive(false);
+		window->stopGrabButton.set_sensitive(false);
+
+		window->StopGrabThread();
+
+
+		if( window->calibModeCheckBtn.get_active() )
+		{
+			window->FinaliseCalibrationSession();
+		}
+		window->ClearGtData();
+		return FALSE;
+	}
+
+void ControlsWindow::StopGrabThread()
+{
 	grabbing = false;
 	
 	gdata.done = true;
 	
 	gthread.join();
-	
-	if( calibModeCheckBtn.get_active() )
-	{
-		FinaliseCalibrationSession();
-	}
-	
+}
+
+void ControlsWindow::ClearGtData()
+{
 	gdata.rawBuffers.clear();
 	gdata.bufferFrameIdx.clear();
 }
-
 
 void ControlsWindow::CalibModeToggle()
 {
@@ -444,20 +458,25 @@ void ControlsWindow::SetGainsAndExposures()
 		grabber->SetGain(cc, gain);
 	}
 }
-
 void ControlsWindow::SetAllGainsAndExposures()
 {
+	SetAllGainsAndExposures(this);
+}
+gboolean ControlsWindow::SetAllGainsAndExposures(gpointer self)
+{
 	cout << "Set all gains and exposures..." << endl;
-	long int exp = allCamExpScale.get_value();
-	double gain  = allCamGainScale.get_value();
+	ControlsWindow * window  = (ControlsWindow*) self;
+	long int exp = window->allCamExpScale.get_value();
+	double gain  = window->allCamGainScale.get_value();
 	
-	for( unsigned cc = 0; cc < grabber->GetNumCameras(); ++cc )
+	for( unsigned cc = 0; cc < window->grabber->GetNumCameras(); ++cc )
 	{
-		camExpScales[cc].set_value(exp);
-		camGainScales[cc].set_value(gain);
+		window->camExpScales[cc].set_value(exp);
+		window->camGainScales[cc].set_value(gain);
 	}
 	
-	SetGainsAndExposures();
+	window->SetGainsAndExposures();
+	return FALSE;
 }
 
 void ControlsWindow::SetAllBaseGains()

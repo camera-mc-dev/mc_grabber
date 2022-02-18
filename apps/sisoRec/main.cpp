@@ -21,6 +21,7 @@ using std::endl;
 
 #include <boost/filesystem.hpp>
 #include <iomanip>
+#include "gdk/gdk.h"
 
 #include "commonConfig/commonConfig.h"
 
@@ -69,7 +70,7 @@ int main(int argc, char* argv[])
 	
 	// optional parameters
 	string videoPath;
-	if (argc >= 2){
+	if (argc > 2){
 		videoPath = argv[2];
 	}
 	bool fpsWarningActive = false;
@@ -113,7 +114,6 @@ int main(int argc, char* argv[])
 	auto guiThread = std::thread(GUIThread, &gtdata);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	
-	
 	// Find out where we're saving images to.
 	GetSaveRoots( gtdata );
 	
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 	sendImgs[0] = cv::Mat(100, 100, CV_8UC1, cv::Scalar(128) );
 	isender.SetImages("SiSo Rec image", sendImgs );
 	
-	gtdata.window->SetAllGainsAndExposures();
+	gdk_threads_add_idle(ControlsWindow::SetAllGainsAndExposures, gtdata.window);
 	
 	// loop infinitely, responding to requests from the controls thread.
 	while( !gtdata.done )
@@ -265,8 +265,7 @@ int main(int argc, char* argv[])
 				bool buffRecord = false;
 				if( renderer->Step( buffRecord, liveRecord ) )
 				{
-					// renderer asked to be closed, so stop grabbing.
-					gtdata.window->StopGrabbing();
+					gdk_threads_add_idle(ControlsWindow::StopGrabbing, gtdata.window);
 				}
 				
 				
@@ -392,8 +391,7 @@ int main(int argc, char* argv[])
 					float saveTime = std::chrono::duration <double> (t2-t1).count();
 					caplog << trialName << " " << capTime << " " << " " << saveTime << endl;
 					caplog.close(); 					
-
-					gtdata.window->IncrementTrialNumber();
+					gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
 					
 					for( unsigned cc = 0; cc < tdata.saveProgress.size(); ++cc )
 						progRects[cc]->RemoveFromParent();

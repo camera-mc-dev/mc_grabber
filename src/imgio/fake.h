@@ -22,15 +22,58 @@
 using std::cout;
 using std::endl;
 
+//
+// A Fake camera that we can launch in a  seperate thread. 
+// Pausing the grabber thread seems to cause issues with GTK.
+//
+class FakeCamera
+{
+public:
 
+	FakeCamera(std::string pathToSource);
+
+	int GetCurrentFrameIdx();
+
+	Mat GetCurrentFrame();
+
+	// issues with threading. having a thread for each camera seems a little too unreliable.
+	// This function is called from the chrono thread and advances all the cameras on the same call. 
+	void Advance();
+
+
+protected:
+	Mat currentFrame;
+	int currentFrameIdx;
+	int fps = 24;
+	
+	// gets updated when the camera is done writing to memory. 
+	bool frameReady = false;
+	
+	SourcePair source_pair;
+
+};
+//
+// A Fake grabber that takes a path to an mp4 as input and runs 
+// it as a camera. 
+//
 class FakeGrabber: public AbstractGrabber 
 {
 public:
 	FakeGrabber(string pathToSource);
-	
+
+	~FakeGrabber()
+	{
+		done = true;
+		chronoThread.join();
+	}
+
 	void PrintCameraInfo() override 
 	{
-	    cout << "num active source_pairs " << source_pairs.size() << endl;
+		for (unsigned j = 0; j < GetNumCameras(); j++)
+        {
+            cout << "num active cameras" << GetNumCameras() << endl;
+        }
+    
 	}
 	
 	unsigned GetNumCameras()
@@ -49,9 +92,6 @@ public:
 	
 	std::vector< frameindex_t > GetFrameNumbers();
 	
-	//
-	// overrides
-	//
 	void SetExposure( long int exposure ) override
 	{
 		// we have no physical camera, so no exposure to set.
@@ -80,19 +120,27 @@ public:
 	
 	void SetFPS( int in_FPS, int masterBoard )override
 	{
-		// we could in theory have a grabbing thread that is handling acquisition from our image 
-		// source, and we could have it doing that based on some trigger.... but for now we'll
-		// just ignore FPS
+		fps = in_FPS;
 	}
 	
-	void StartAcquisition( int bufferFrames, int masterBoard ) override
+	// 
+	// acts as a wrapper for StartAquision() so we dont need to change too many function calls in the mainfiles.
+	//
+	void StartAcquisition( int bufferFrames, int masterBoard ) override 
 	{
-		// nothing to do unless we go down the route of having a seperate grabbing thread.
+		
+		StartAcquisition();
 	}
 	
-	void StopAcquisition() override
+	// 
+	// Starts the chronothread which runs the Advance() method for FakeCameras.
+	//
+	void StartAcquisition();
+
+	void StopAcquisition() override 
 	{
-		// nothing to do unless we go down the route of having a seperate grabbing thread.
+		done = true;
+		chronoThread.join();
 	}
 	
 	void StartTrigger( int masterBoard ) override
@@ -154,16 +202,16 @@ public:
 		// nothing to do
 	}
 	
-	
-	
-	
-	
 private:
-	std::vector <SourcePair> source_pairs;
+
 	std::vector< frameindex_t > camFrames;
+	std::vector<FakeCamera> cameras;
+	
+	std::thread chronoThread;
 	
 	long int desiredRows, desiredCols;
+	int fps = 24;
+	bool done = false;
 };
-
 
 #endif //MC_GRABBER_FAKE_H
