@@ -139,7 +139,9 @@ public:
 	Gtk::SpinButton shareSpinner;
 
 protected:
+	// wrapper for static function call
 	void StopGrabbing();
+	void SetAllGainsAndExposures();
 	//
 	// for time based events.
 	//
@@ -150,12 +152,20 @@ protected:
 	//
 public:
 	void StartGrabbing();
-	static gboolean StopGrabbing(gpointer data);
+	
+	// when called from seperate thread, needs to be called with 
+	// gdk_threads_add_idle in order to avoid crashes.
+	static gboolean StopGrabbing(gpointer self);
+	
 	void StopGrabThread();
 	void ClearGtData();
 	void CalibModeToggle();
 	void SetGainsAndExposures();
-	void SetAllGainsAndExposures();
+	
+	// when called from seperate thread, needs to be called with 
+	// gdk_threads_add_idle in order to avoid crashes.
+	static gboolean SetAllGainsAndExposures(gpointer self);
+	
 	void SetAllBaseGains();
 	
 	bool IsCalibMode()
@@ -208,13 +218,15 @@ public:
 		return fpsScale.get_value();
 	}
 	
-	void IncrementTrialNumber()
+	static gboolean IncrementTrialNumber(gpointer self)
 	{
-		int v = trialNumberSpin.get_value();
+		ControlsWindow * window  = (ControlsWindow*) self;
+		int v = window->trialNumberSpin.get_value();
 		v+=1;
-		trialNumberSpin.set_range(0, 99);
-		trialNumberSpin.set_value(v);
-		trialNumberSpin.set_increments(1,1);
+		window->trialNumberSpin.set_range(0, 99);
+		window->trialNumberSpin.set_value(v);
+		window->trialNumberSpin.set_increments(1,1);
+		return FALSE;
 	}
 
 	void FinaliseCalibrationSession();

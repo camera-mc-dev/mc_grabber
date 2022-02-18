@@ -355,9 +355,9 @@ void ControlsWindow::StopGrabbing()
 	StopGrabbing(this);
 }
 
-gboolean ControlsWindow::StopGrabbing(gpointer data)
+gboolean ControlsWindow::StopGrabbing(gpointer self)
 	{
-		ControlsWindow * window  = (ControlsWindow*) data;
+		ControlsWindow * window  = (ControlsWindow*) self;
 		window->startGrabButton.set_sensitive(true);
 		window->fpsScale.set_sensitive(true);
 		window->xResScale.set_sensitive(true);
@@ -377,6 +377,8 @@ gboolean ControlsWindow::StopGrabbing(gpointer data)
 		{
 			window->FinaliseCalibrationSession();
 		}
+		window->ClearGtData();
+		return FALSE;
 	}
 
 void ControlsWindow::StopGrabThread()
@@ -456,20 +458,25 @@ void ControlsWindow::SetGainsAndExposures()
 		grabber->SetGain(cc, gain);
 	}
 }
-
 void ControlsWindow::SetAllGainsAndExposures()
 {
+	SetAllGainsAndExposures(this);
+}
+gboolean ControlsWindow::SetAllGainsAndExposures(gpointer self)
+{
 	cout << "Set all gains and exposures..." << endl;
-	long int exp = allCamExpScale.get_value();
-	double gain  = allCamGainScale.get_value();
+	ControlsWindow * window  = (ControlsWindow*) self;
+	long int exp = window->allCamExpScale.get_value();
+	double gain  = window->allCamGainScale.get_value();
 	
-	for( unsigned cc = 0; cc < grabber->GetNumCameras(); ++cc )
+	for( unsigned cc = 0; cc < window->grabber->GetNumCameras(); ++cc )
 	{
-		camExpScales[cc].set_value(exp);
-		camGainScales[cc].set_value(gain);
+		window->camExpScales[cc].set_value(exp);
+		window->camGainScales[cc].set_value(gain);
 	}
 	
-	SetGainsAndExposures();
+	window->SetGainsAndExposures();
+	return FALSE;
 }
 
 void ControlsWindow::SetAllBaseGains()
