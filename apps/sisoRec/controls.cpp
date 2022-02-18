@@ -352,29 +352,32 @@ void ControlsWindow::StartGrabbing()
 
 void ControlsWindow::StopGrabbing()
 {
-	cout << "Stop Grabbing" << endl;
-	
-	startGrabButton.set_sensitive(true);
-	fpsScale.set_sensitive(true);
-	xResScale.set_sensitive(true);
-	yResScale.set_sensitive(true);
-	durScale.set_sensitive(true);
-	baseGainButton.set_sensitive(true);
-	calibModeCheckBtn.set_sensitive(true);
-	
-	obsFpsB.set_text("(not grabbing)");	
-	
-	stopGrabButton.set_sensitive(false);
-	
-	StopGrabThread();
-
-	if( calibModeCheckBtn.get_active() )
-	{
-		FinaliseCalibrationSession();
-	}
-	
-	ClearGtData();
+	StopGrabbing(this);
 }
+
+gboolean ControlsWindow::StopGrabbing(gpointer data)
+	{
+		ControlsWindow * window  = (ControlsWindow*) data;
+		window->startGrabButton.set_sensitive(true);
+		window->fpsScale.set_sensitive(true);
+		window->xResScale.set_sensitive(true);
+		window->yResScale.set_sensitive(true);
+		window->durScale.set_sensitive(true);
+		window->baseGainButton.set_sensitive(true);
+		window->calibModeCheckBtn.set_sensitive(true);
+	
+		window->obsFpsB.set_text("(not grabbing)");	
+	
+		window->stopGrabButton.set_sensitive(false);
+
+		window->StopGrabThread();
+
+
+		if( window->calibModeCheckBtn.get_active() )
+		{
+			window->FinaliseCalibrationSession();
+		}
+	}
 
 void ControlsWindow::StopGrabThread()
 {

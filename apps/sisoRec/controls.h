@@ -150,6 +150,7 @@ protected:
 	//
 public:
 	void StartGrabbing();
+	static gboolean StopGrabbing(gpointer data);
 	void StopGrabThread();
 	void ClearGtData();
 	void CalibModeToggle();

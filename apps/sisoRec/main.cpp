@@ -53,35 +53,6 @@ void SaveEven(GrabThreadData *data);
 void SaveOdd(GrabThreadData *data);
 
 
-// list of static functions to update GTK window from mainthread.
-namespace UpdateGTKWindow
-{
-	gboolean StopGrabbing(gpointer data)
-	{
-		ControlsWindow * window  = (ControlsWindow*) data;
-		window->startGrabButton.set_sensitive(true);
-		window->fpsScale.set_sensitive(true);
-		window->xResScale.set_sensitive(true);
-		window->yResScale.set_sensitive(true);
-		window->durScale.set_sensitive(true);
-		window->baseGainButton.set_sensitive(true);
-		window->calibModeCheckBtn.set_sensitive(true);
-	
-		window->obsFpsB.set_text("(not grabbing)");	
-	
-		window->stopGrabButton.set_sensitive(false);
-
-		window->StopGrabThread();
-
-
-		if( window->calibModeCheckBtn.get_active() )
-		{
-			window->FinaliseCalibrationSession();
-		}
-	}
-}
-
-
 int main(int argc, char* argv[])
 {
 	if( argc < 2 )
@@ -294,7 +265,7 @@ int main(int argc, char* argv[])
 				bool buffRecord = false;
 				if( renderer->Step( buffRecord, liveRecord ) )
 				{
-					gdk_threads_add_idle(UpdateGTKWindow::StopGrabbing, gtdata.window);
+					gdk_threads_add_idle(ControlsWindow::StopGrabbing, gtdata.window);
 				}
 				
 				
