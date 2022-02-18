@@ -139,6 +139,7 @@ public:
 	Gtk::SpinButton shareSpinner;
 
 protected:
+	void StopGrabbing();
 	//
 	// for time based events.
 	//
@@ -149,7 +150,8 @@ protected:
 	//
 public:
 	void StartGrabbing();
-	void StopGrabbing();
+	void StopGrabThread();
+	void ClearGtData();
 	void CalibModeToggle();
 	void SetGainsAndExposures();
 	void SetAllGainsAndExposures();
@@ -214,6 +216,7 @@ public:
 		trialNumberSpin.set_increments(1,1);
 	}
 
+	void FinaliseCalibrationSession();
 
 protected:
 	//
@@ -236,7 +239,7 @@ protected:
 	
 	
 	void InitialiseCalibrationSession();
-	void FinaliseCalibrationSession();
+	
 	void LoadGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 	void SaveGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 };

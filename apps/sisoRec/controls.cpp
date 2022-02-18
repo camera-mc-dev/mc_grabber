@@ -353,17 +353,40 @@ void ControlsWindow::StartGrabbing()
 void ControlsWindow::StopGrabbing()
 {
 	cout << "Stop Grabbing" << endl;
-	grabbing = false;
 	
-	gdata.done = true;
+	startGrabButton.set_sensitive(true);
+	fpsScale.set_sensitive(true);
+	xResScale.set_sensitive(true);
+	yResScale.set_sensitive(true);
+	durScale.set_sensitive(true);
+	baseGainButton.set_sensitive(true);
+	calibModeCheckBtn.set_sensitive(true);
 	
-	gthread.join();
+	obsFpsB.set_text("(not grabbing)");	
 	
+	stopGrabButton.set_sensitive(false);
+	
+	StopGrabThread();
+
 	if( calibModeCheckBtn.get_active() )
 	{
 		FinaliseCalibrationSession();
 	}
 	
+	ClearGtData();
+}
+
+void ControlsWindow::StopGrabThread()
+{
+	grabbing = false;
+	
+	gdata.done = true;
+	
+	gthread.join();
+}
+
+void ControlsWindow::ClearGtData()
+{
 	gdata.rawBuffers.clear();
 	gdata.bufferFrameIdx.clear();
 }
