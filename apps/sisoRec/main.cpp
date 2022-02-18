@@ -21,6 +21,7 @@ using std::endl;
 
 #include <boost/filesystem.hpp>
 #include <iomanip>
+#include "gdk/gdk.h"
 
 #include "commonConfig/commonConfig.h"
 
@@ -50,6 +51,27 @@ void CreateGridNodes(
 
 void SaveEven(GrabThreadData *data);
 void SaveOdd(GrabThreadData *data);
+
+
+// list of static functions to update GTK window from mainthread.
+namespace UpdateGTKWindow
+{
+	gboolean StopGrabbingConfig(gpointer data)
+	{
+		ControlsWindow * window  = (ControlsWindow*) data;
+		window->startGrabButton.set_sensitive(true);
+		window->fpsScale.set_sensitive(true);
+		window->xResScale.set_sensitive(true);
+		window->yResScale.set_sensitive(true);
+		window->durScale.set_sensitive(true);
+		window->baseGainButton.set_sensitive(true);
+		window->calibModeCheckBtn.set_sensitive(true);
+	
+		window->obsFpsB.set_text("(not grabbing)");	
+	
+		window->stopGrabButton.set_sensitive(false);
+	}
+}
 
 
 int main(int argc, char* argv[])
@@ -264,7 +286,8 @@ int main(int argc, char* argv[])
 				bool buffRecord = false;
 				if( renderer->Step( buffRecord, liveRecord ) )
 				{
-					// renderer asked to be closed, so stop grabbing.
+					//ControlsWindow* window;
+					gdk_threads_add_idle(UpdateGTKWindow::StopGrabbingConfig, gtdata.window);
 					gtdata.window->StopGrabbing();
 				}
 				

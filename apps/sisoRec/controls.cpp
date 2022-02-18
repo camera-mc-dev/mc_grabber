@@ -27,7 +27,6 @@ void GUIThread( GUIThreadData *gtdata )
 }
 
 
-
 ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 {
 	// TODO: Get input from the grabber class.
@@ -354,18 +353,6 @@ void ControlsWindow::StartGrabbing()
 void ControlsWindow::StopGrabbing()
 {
 	cout << "Stop Grabbing" << endl;
-	
-	startGrabButton.set_sensitive(true);
-	fpsScale.set_sensitive(true);
-	xResScale.set_sensitive(true);
-	yResScale.set_sensitive(true);
-	durScale.set_sensitive(true);
-	baseGainButton.set_sensitive(true);
-	calibModeCheckBtn.set_sensitive(true);
-	
-	obsFpsB.set_text("(not grabbing)");	
-	
-	stopGrabButton.set_sensitive(false);
 	grabbing = false;
 	
 	gdata.done = true;
@@ -380,7 +367,6 @@ void ControlsWindow::StopGrabbing()
 	gdata.rawBuffers.clear();
 	gdata.bufferFrameIdx.clear();
 }
-
 
 void ControlsWindow::CalibModeToggle()
 {

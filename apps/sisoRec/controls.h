@@ -63,8 +63,6 @@ public:
 	
 	GrabThreadData gdata;
 	
-protected:
-	
 	//
 	// Widgets
 	//
@@ -92,11 +90,10 @@ protected:
 	Gtk::Entry       sessionNameEntry;
 	Gtk::Entry       trialNameEntry;
 	Gtk::SpinButton  trialNumberSpin;
-	Gtk::Button      startGrabButton;
 	Gtk::Button      stopGrabButton;
 	Gtk::CheckButton calibModeCheckBtn;
 	Gtk::CheckButton gridDetectCheckBtn;
-	
+	Gtk::Button      startGrabButton;
 	Gtk::Label       gridLabel;
 	Gtk::SpinButton  gridRowsSpin, gridColsSpin;
 	Gtk::CheckButton gridLightOnDarkCheck;
@@ -141,6 +138,7 @@ protected:
 	Gtk::Label      shareLabel;
 	Gtk::SpinButton shareSpinner;
 
+protected:
 	//
 	// for time based events.
 	//
@@ -243,12 +241,6 @@ protected:
 	void SaveGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 };
 
-
-
-
-
-
-
 struct GUIThreadData
 {
 	bool done = false;
@@ -262,11 +254,6 @@ struct GUIThreadData
 };
 
 void GUIThread( GUIThreadData *gtdata );
-
-
-
-
-
 
 #endif
 // #endif
