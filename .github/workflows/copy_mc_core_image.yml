@@ -25,19 +25,19 @@ jobs:
       - uses: actions/checkout@v2
       
       - name: copy file via ssh key
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY_DOCKER }}
-          passphrase: ${{ secrets.PASSPHRASE_DOCKER }}
-          #port: ${{ secrets.PORT }}
-          source: "/Users/dockerimagehost/CONTENT/mc_core.tar"
-          target: "mc_core"
+#         uses: appleboy/scp-action@master
+#         with:
+#           host: ${{ secrets.HOST }}
+#           username: ${{ secrets.USERNAME }}
+#           key_path: id_rsa_docker_pass
+#           passphrase: ${{ secrets.PASSPHRASE_DOCKER }}
+#           #port: ${{ secrets.PORT }}
+#           source: "/Users/dockerimagehost/CONTENT/mc_core.tar"
+#           target: "mc_core"
 
 #       # Runs a single command using the runners shell
 #       - name: Run a one-line script
-        #run: scp ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/Users/dockerimagehost/CONTENT/mc_core.tar .
+        run: scp -i id_rsa_docker_pass ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/Users/dockerimagehost/CONTENT/mc_core.tar .
 
 #       # Runs a set of commands using the runners shell
 #       - name: Run a multi-line script
