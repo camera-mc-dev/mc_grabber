@@ -32,7 +32,7 @@ jobs:
           key: ${{ secrets.ID_RSA_DOCKER }}
           #port: ${{ secrets.PORT }}
           source: "/Users/dockerimagehost/CONTENT/mc_core.tar"
-          target: "mc_core.tar"
+          target: "mc_core"
 
 #       # Runs a single command using the runners shell
 #       - name: Run a one-line script
