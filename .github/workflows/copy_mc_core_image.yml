@@ -36,7 +36,7 @@ jobs:
 
 #       # Runs a single command using the runners shell
 #       - name: Run a one-line script
-        run: scp -i ${{secrets.ID_RSA_DOCKER}} ${{secrets.USERNAME}}@${{secrets.HOST}}:/Users/dockerimagehost/CONTENT/mc_core.tar .
+        run: scp ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/Users/dockerimagehost/CONTENT/mc_core.tar .
 
 #       # Runs a set of commands using the runners shell
 #       - name: Run a multi-line script
