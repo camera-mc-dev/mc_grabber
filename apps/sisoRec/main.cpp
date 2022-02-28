@@ -12,6 +12,7 @@ using std::endl;
 #include "controls.h"
 #include "renderer.h"
 #include "gridDetect.h"
+#include "config.h"
 
 #include "misc/imgSender.h"
 #include "imgproc/debayer/debayer.h"
@@ -55,6 +56,10 @@ void SaveOdd(GrabThreadData *data);
 
 int main(int argc, char* argv[])
 {
+	ConfigParser config = ConfigParser("/");
+	config.WriteToFile();
+	return 0;
+
 	if( argc < 2 )
 	{
 		cout << "Usage: " << endl;
