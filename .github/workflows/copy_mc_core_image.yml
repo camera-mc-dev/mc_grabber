@@ -33,9 +33,8 @@ jobs:
           if_key_exists: fail # replace / ignore / fail; optional (defaults to fail)
       - name: Copies the file
         run: |
-          ls -a
           scp -i /home/runner/.ssh/id_rsa_docker -r ${{secrets.USERNAME}}@${{secrets.HOST}}:/Users/${{secrets.USERNAME}}/CONTENT .
-
+          cat CONTENT/tst
           
 #       - name: Run sshpass commands
 #   uses: matheusvanzan/sshpass-action@v2
