@@ -29,8 +29,8 @@ jobs:
         with:
           host: ${{ secrets.HOST }}
           user: ${{ secrets.USERNAME }}
-          key: ${{ secrets.ID_RSA_DOCKER }}
-          run: scp -r -f /Users/dockerimagehost/CONTENT
+          pass: ${{ secrets.PASSPHRASE_DOCKER }}
+          run: scp -f ${{secrets.USERNAME}}@${{secrets.HOST}}/Users/${{secrets.USERNAME}}/CONTENT/mc_core.tar .
 
           
 #       - name: Run sshpass commands
