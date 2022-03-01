@@ -28,7 +28,7 @@ jobs:
         with:
           key: ${{ secrets.KEY }}
           name: id_rsa_docker # optional
-          known_hosts: asd123
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
           #config: ${{ secrets.CONFIG }} # ssh_config; optional
           if_key_exists: fail # replace / ignore / fail; optional (defaults to fail)
       - name: Copies the file
