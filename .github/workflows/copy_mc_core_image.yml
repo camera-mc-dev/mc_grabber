@@ -23,14 +23,16 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
-      - name: copy file via ssh key
-        uses: matheusvanzan/sshpass-action@v2
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
         with:
-          host: ${{ secrets.HOST }}
-          user: ${{ secrets.USERNAME }}
-          pass: ${{ secrets.PASSPHRASE_DOCKER }}
-          run: scp -f ${{secrets.USERNAME}}@${{secrets.HOST}}/Users/${{secrets.USERNAME}}/CONTENT/mc_core.tar .
+          key: ${{ secrets.KEY }}
+          name: id_rsa_docker # optional
+          #known_hosts: ${{ secrets.KNOWN_HOSTS }}
+          #config: ${{ secrets.CONFIG }} # ssh_config; optional
+          if_key_exists: fail # replace / ignore / fail; optional (defaults to fail)
+      - name: Copies the file
+        run: scp -i .ssh/id_rsa_docker -r ${{secrets.USERNAME}}@${{secrets.HOST}}:/Users/${{secrets.USERNAME}}/CONTENT
 
           
 #       - name: Run sshpass commands
