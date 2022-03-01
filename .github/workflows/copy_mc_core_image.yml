@@ -30,7 +30,7 @@ jobs:
           host: ${{ secrets.HOST }}
           user: ${{ secrets.USERNAME }}
           key: ${{ secrets.ID_RSA_DOCKER }}
-          run: scp ${{secrets}}@${{secrets.HOST}}:/Users/${{USERNAME}}/CONTENTS/mc_core.tar .
+          run: scp ${{secrets}}@${{secrets.HOST}}:/Users/${{secrets.USERNAME}}/CONTENTS/mc_core.tar .
 
           
 #       - name: Run sshpass commands
