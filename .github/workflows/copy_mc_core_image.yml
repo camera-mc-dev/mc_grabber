@@ -32,8 +32,8 @@ jobs:
           #config: ${{ secrets.CONFIG }} # ssh_config; optional
           if_key_exists: fail # replace / ignore / fail; optional (defaults to fail)
       - name: Copies the file
-        run: ls -a
-        #run: scp -r ${{secrets.USERNAME}}@${{secrets.HOST}}:/Users/${{secrets.USERNAME}}/CONTENT .
+        #run: ls -a
+        run: scp -i /home/runner/.ssh/id_rsa_docker -r ${{secrets.USERNAME}}@${{secrets.HOST}}:/Users/${{secrets.USERNAME}}/CONTENT .
 
           
 #       - name: Run sshpass commands
