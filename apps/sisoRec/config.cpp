@@ -8,56 +8,65 @@ ConfigParser::ConfigParser(string saveRoot)
 		throw std::runtime_error(error);
 	}
 
-	configPath = rootPath / boost::filesystem::path rootPath(configFileName);
-	boost::filesystem::path p(ss.str());
-		try
+	configPath = rootPath / boost::filesystem::path(configFileName);
+	libconfig::Config cfg;
+	try
+	{
+
+		if( !boost::filesystem::exists(configPath))
 		{
-			if( !boost::filesystem::exists(configPath))
-			{
-				// create a config file with the default settings.
-				libconfig::Config cfg;
-				auto &cfgRoot = cfg.getRoot();
-				
-				cfgRoot.add("dataRoot", libconfig::Setting::TypeString);
-				cfgRoot.add("shadersRoot", libconfig::Setting::TypeString);
-				cfgRoot.add("coreDataRoot", libconfig::Setting::TypeString);
-				cfgRoot.add("scriptsRoot", libconfig::Setting::TypeString);
-
-				cfgRoot.add("maxSingleWindowWidth", libconfig::Setting::TypeInt );
-				cfgRoot.add("maxSingleWindowHeight", libconfig::Setting::TypeInt );
-				
-				cfg.lookup("dataRoot")     = userHome + "/programming/mc_dev/data";
-				cfg.lookup("shadersRoot") = userHome + "/programming/mc_dev/shaders";
-				cfg.lookup("coreDataRoot") = userHome + "/programming/mc_dev/data";
-				cfg.lookup("scriptsRoot")  = userHome + "/programming/mc_dev/python";
-				
-				cfg.lookup("maxSingleWindowWidth") = 1000;
-				cfg.lookup("maxSingleWindowHeight") = 800;
-				
-				cfg.writeFile( ss.str().c_str() );
-			}
-			libconfig::Config cfg;
-			cfg.readFile( ss.str().c_str() );
+			// create a config file with the default settings.
 			
-			dataRoot     = (const char*) cfg.lookup("dataRoot");
-			shadersRoot  = (const char*) cfg.lookup("shadersRoot");
-			coreDataRoot = (const char*) cfg.lookup("coreDataRoot");
-			scriptsRoot  = (const char*) cfg.lookup("scriptsRoot");
+			auto &cfgRoot = cfg.getRoot();
 			
-			maxSingleWindowWidth  = cfg.lookup("maxSingleWindowWidth");
-			maxSingleWindowHeight = cfg.lookup("maxSingleWindowHeight");
+			// create entries
+			cfgRoot.add("width", libconfig::Setting::TypeInt);
+			cfgRoot.add("height", libconfig::Setting::TypeInt);
 
+			// update entries
+			cfg.lookup("width") = 1920;
+			cfg.lookup("height") = 1080;
+			
+			cfg.writeFile( configPath.string().c_str() );
+		}
 
-	cout << saveRoot << endl;
-	ReadFromFile();
+		libconfig::Config cfg;
+		cfg.readFile( configPath.string().c_str() );
+		videoWidth  = cfg.lookup("width");
+		videoHeight = cfg.lookup("height");
+		
+	}
+	
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
+	}
+	
 }
 
-void ConfigParser::WriteToFile()
+void ConfigParser::Save()
 {
-	cout << "writing to file (not really)" << endl;
-}
+	libconfig::Config cfg;
+	try
+	{
+		
+		cfg.readFile( configPath.string().c_str() );
+		
+		// update entries
+		cfg.lookup("width") = videoWidth;
+		cfg.lookup("height") = videoHeight;
+		
+		cfg.writeFile( configPath.string().c_str() );
+	}
 
-void ConfigParser::ReadFromFile()
-{
-	cout << "reading from file (not really)" << endl;
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
+	}
 }

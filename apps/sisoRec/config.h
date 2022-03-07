@@ -19,10 +19,9 @@ public:
 
 	// read if it exists
 	ConfigParser(std::string saveRoot); 
-	
-	// call explicitly from mainfile?
-	void WriteToFile();
 
+	// update the values in the config from memory
+	void Save();
 	
 	
 	string trialName;
@@ -36,8 +35,8 @@ public:
 	std::vector<CameraSettings> camSettings;
 
 protected:
-	void ReadFromFile();
-	std::string configFilename = "config.cfg";
+	std::string configFileName = ".config.cfg";
+	boost::filesystem::path configPath;
 
 };
 

@@ -12,7 +12,6 @@ using std::endl;
 #include "controls.h"
 #include "renderer.h"
 #include "gridDetect.h"
-#include "config.h"
 
 #include "misc/imgSender.h"
 #include "imgproc/debayer/debayer.h"
@@ -24,6 +23,7 @@ using std::endl;
 #include <iomanip>
 #include "gdk/gdk.h"
 
+#include "config.h"
 #include "commonConfig/commonConfig.h"
 
 #include <chrono>
@@ -56,8 +56,9 @@ void SaveOdd(GrabThreadData *data);
 
 int main(int argc, char* argv[])
 {
-	ConfigParser config = ConfigParser("/");
-	config.WriteToFile();
+	ConfigParser config = ConfigParser(".");
+	config.videoHeight = 10;
+	config.Save();
 	return 0;
 
 	if( argc < 2 )
