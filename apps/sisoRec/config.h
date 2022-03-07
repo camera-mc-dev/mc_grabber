@@ -2,10 +2,15 @@
 
 #include "libconfig.h++"
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include<vector>
 #include <boost/filesystem.hpp>
 
+#include <ctime>
+
 using namespace::std;
+namespace fs = boost::filesystem;
 
 struct CameraSettings
 {
@@ -25,6 +30,8 @@ public:
 	
 	
 	string trialName;
+	string sessionName;
+
 	int numTrials;
 	
 	int fps;
@@ -36,7 +43,7 @@ public:
 
 protected:
 	std::string configFileName = ".config.cfg";
-	boost::filesystem::path configPath;
+	boost::filesystem::path rootPath;
 
 };
 
