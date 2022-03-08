@@ -14,11 +14,12 @@
 #include "imgio/siso.h"
 
 #include "grab.h"
+#include "config.h"
 
 class ControlsWindow : public Gtk::Window
 {
 public:
-	ControlsWindow(AbstractGrabber *in_grabber);
+	ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config);
 	~ControlsWindow();
 	
 	// we use this to signal to the main thread that we 
@@ -138,6 +139,12 @@ public:
 	Gtk::Label      shareLabel;
 	Gtk::SpinButton shareSpinner;
 
+
+	//
+	// for storing gtk settings to disk
+	//
+	ConfigParser * sessionConfig;
+
 protected:
 	// wrapper for static function call
 	void StopGrabbing();
@@ -146,7 +153,7 @@ protected:
 	// for time based events.
 	//
 	sigc::connection fpsTimerConnection;
-	
+
 	//
 	// Signal handlers
 	//

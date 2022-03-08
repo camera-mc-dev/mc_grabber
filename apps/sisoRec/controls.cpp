@@ -13,7 +13,9 @@ void GUIThread( GUIThreadData *gtdata )
 	int argc=0; char** argv = NULL;
 	auto app = Gtk::Application::create(argc, argv, "recording controls");
 	
-	ControlsWindow window( gtdata->grabber );
+	ConfigParser * config = new ConfigParser(gtdata->saveRoot0);
+	
+	ControlsWindow window( gtdata->grabber, config);
 	window.set_default_size(400, 200);
 	
 	gtdata->window = &window;
@@ -22,13 +24,17 @@ void GUIThread( GUIThreadData *gtdata )
 	
 	
 	gtdata->done = true;
-	
+	gtdata->window->sessionConfig->Save();
+
 	return;
 }
 
 
-ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
+ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config)
 {
+	// update the config parsers
+	sessionConfig = config;
+
 	// TODO: Get input from the grabber class.
 	grabber = in_grabber;
 	numCameras = grabber->GetNumCameras();
@@ -45,12 +51,12 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//
 	xResLabel.set_text("width");
 	xResScale.set_range(64, 2560);
-	xResScale.set_value(480);
+	xResScale.set_value(sessionConfig->videoWidth);
 	xResScale.set_hexpand(true);
 	
 	yResLabel.set_text("height");
 	yResScale.set_range(2,2048);
-	yResScale.set_value(360);
+	yResScale.set_value(sessionConfig->videoHeight);
 	yResScale.set_hexpand(true);
 	
 	fpsLabel.set_text("fps");
@@ -71,14 +77,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	sessionNameLabel.set_text("Session:");
 	trialNameLabel.set_text("Trial:");
 	
-	time_t rawNow;
-	time(&rawNow);
-	auto now = localtime(&rawNow);
-	std::stringstream defSessionName;
-	defSessionName << now->tm_year + 1900 << "-"
-	               << std::setw(2) << std::setfill('0') << now->tm_mon+1 << "-"
-	               << std::setw(2) << std::setfill('0') << now->tm_mday;
-	sessionNameEntry.set_text( defSessionName.str() );
+	sessionNameEntry.set_text(sessionConfig->sessionName);
 	trialNameEntry.set_text("test");
 	
 	trialNumberSpin.set_range(0, 99);

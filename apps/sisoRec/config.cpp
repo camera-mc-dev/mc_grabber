@@ -29,8 +29,8 @@ ConfigParser::ConfigParser(string saveRoot)
 		}
 		else
 		{
-			videoWidth = 1920;
-			videoHeight = 1080;
+			videoWidth = 480;
+			videoHeight = 360;
 		}
 
 		
