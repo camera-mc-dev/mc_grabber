@@ -26,11 +26,19 @@ ConfigParser::ConfigParser(string saveRoot)
 			cfg.readFile( configPath.string().c_str() );
 			videoWidth  = cfg.lookup("width");
 			videoHeight = cfg.lookup("height");
+			fps         = cfg.lookup("fps");
+			duration    = cfg.lookup("duration");
+			trialName   = (const char*) cfg.lookup("trialname");
+			trialNum    = cfg.lookup("trialnum");
 		}
 		else
 		{
-			videoWidth = 480;
+			videoWidth  = 480;
 			videoHeight = 360;
+			fps         = 200;
+			duration    = 10;
+			trialName   = "test";
+			trialNum    = 0;
 		}
 
 		
@@ -68,15 +76,23 @@ void ConfigParser::Save()
 			// create entries
 			cfgRoot.add("width", libconfig::Setting::TypeInt);
 			cfgRoot.add("height", libconfig::Setting::TypeInt);
-			
+			cfgRoot.add("fps", libconfig::Setting::TypeInt);
+			cfgRoot.add("duration", libconfig::Setting::TypeInt);
+			cfgRoot.add("trialname", libconfig::Setting::TypeString);
+			cfgRoot.add("trialnum", libconfig::Setting::TypeInt);
+
 			cfg.writeFile( configPath.string().c_str() );
 		}
 
 		cfg.readFile( configPath.string().c_str() );
 		
 		// update entries
-		cfg.lookup("width") = videoWidth;
-		cfg.lookup("height") = videoHeight;
+		cfg.lookup("width")     = videoWidth;
+		cfg.lookup("height")    = videoHeight;
+		cfg.lookup("fps")       = fps;
+		cfg.lookup("duration")  = duration;
+		cfg.lookup("trialname") = trialName;
+		cfg.lookup("trialnum")  = trialNum;
 		
 		cfg.writeFile( configPath.string().c_str() );
 	}

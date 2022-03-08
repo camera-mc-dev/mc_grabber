@@ -225,6 +225,8 @@ public:
 		return fpsScale.get_value();
 	}
 	
+	void UpdateSessionConfig();
+	
 	static gboolean IncrementTrialNumber(gpointer self)
 	{
 		ControlsWindow * window  = (ControlsWindow*) self;

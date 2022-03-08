@@ -32,10 +32,10 @@ public:
 	string trialName;
 	string sessionName;
 
-	int numTrials;
+	int trialNum;
 	
 	int fps;
-	
+	int duration;
 	int videoWidth;
 	int videoHeight;
 

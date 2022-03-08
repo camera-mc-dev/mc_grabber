@@ -24,7 +24,7 @@ void GUIThread( GUIThreadData *gtdata )
 	
 	
 	gtdata->done = true;
-	gtdata->window->sessionConfig->Save();
+	gtdata->window->UpdateSessionConfig();
 
 	return;
 }
@@ -61,7 +61,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config
 	
 	fpsLabel.set_text("fps");
 	fpsScale.set_range(1,200);
-	fpsScale.set_value(200);
+	fpsScale.set_value(sessionConfig->fps);
 	fpsScale.set_hexpand(true);
 
 	obsFpsA.set_text("observed fps:");
@@ -71,17 +71,17 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config
 	
 	durLabel.set_text("duration (s)");
 	durScale.set_range(1,20);
-	durScale.set_value(10);
+	durScale.set_value(sessionConfig->duration);
 	durScale.set_hexpand(true);
 	
 	sessionNameLabel.set_text("Session:");
 	trialNameLabel.set_text("Trial:");
 	
 	sessionNameEntry.set_text(sessionConfig->sessionName);
-	trialNameEntry.set_text("test");
+	trialNameEntry.set_text(sessionConfig->trialName);
 	
 	trialNumberSpin.set_range(0, 99);
-	trialNumberSpin.set_value(0);
+	trialNumberSpin.set_value(sessionConfig->trialNum);
 	trialNumberSpin.set_increments(1,1);
 	
 	
@@ -262,6 +262,17 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config
 
 ControlsWindow::~ControlsWindow()
 {
+}
+
+void ControlsWindow::UpdateSessionConfig()
+{
+	sessionConfig->videoWidth = xResScale.get_value();
+	sessionConfig->videoHeight = yResScale.get_value();
+	sessionConfig->fps = fpsScale.get_value();
+	sessionConfig->duration = durScale.get_value();
+	sessionConfig->trialNum = trialNumberSpin.get_value();
+	sessionConfig->trialName = trialNameEntry.get_text();
+	sessionConfig->Save();
 }
 
 void ControlsWindow::StartGrabbing()
