@@ -13,7 +13,7 @@ void GUIThread( GUIThreadData *gtdata )
 	int argc=0; char** argv = NULL;
 	auto app = Gtk::Application::create(argc, argv, "recording controls");
 	
-	ConfigParser * config = new ConfigParser(gtdata->saveRoot0);
+	ConfigParser * config = new ConfigParser(gtdata->saveRoot0, gtdata->grabber->GetNumCameras());
 	
 	ControlsWindow window( gtdata->grabber, config);
 	window.set_default_size(400, 200);
@@ -160,11 +160,11 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config
 		camGainLabels[cc].set_hexpand(false);
 		camExpScales[cc].set_hexpand(true);
 		camGainScales[cc].set_hexpand(true);
-		camExpScales[cc].set_value(250);
-		camGainScales[cc].set_value(1);
+		camExpScales[cc].set_value(sessionConfig->camSettings[cc].exposure);
+		camGainScales[cc].set_value(sessionConfig->camSettings[cc].gain);
 		
 		camDisplayedChecks[cc].set_label("displayed");
-		camDisplayedChecks[cc].set_active(true);
+		camDisplayedChecks[cc].set_active(sessionConfig->camSettings[cc].displayed);
 		
 		camGrids[cc].set_hexpand(true);
 		camGrids[cc].attach( camExpLabels[cc] , 0, 0, 1, 1 );

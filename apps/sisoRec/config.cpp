@@ -1,9 +1,9 @@
 #include "config.h"
 
-ConfigParser::ConfigParser(string saveRoot)
+ConfigParser::ConfigParser(string saveRoot, int numCameras)
 {
 	rootPath = fs::path(saveRoot);
-	
+	this->numCameras = numCameras;
 	time_t rawNow;
 	time(&rawNow);
 	auto now = localtime(&rawNow);
@@ -39,6 +39,7 @@ ConfigParser::ConfigParser(string saveRoot)
 			duration    = 10;
 			trialName   = "test";
 			trialNum    = 0;
+			SetCameraSettings();
 		}
 
 		
@@ -53,6 +54,7 @@ ConfigParser::ConfigParser(string saveRoot)
 	}
 	
 }
+
 
 void ConfigParser::Save()
 {
@@ -69,7 +71,7 @@ void ConfigParser::Save()
 	{
 		if(!fs::exists(configPath))
 		{
-			// create a config file with the default settings.
+			// create a config file.
 			
 			auto &cfgRoot = cfg.getRoot();
 			
@@ -104,4 +106,27 @@ void ConfigParser::Save()
 		cout << e.getPath() << endl;
 		exit(0);
 	}
+}
+
+void ConfigParser::SetCameraSettings()
+{
+	for (unsigned i=0; i < numCameras; i++)
+	{
+		CameraSettings camSetting;
+		camSetting.exposure = 250;
+		camSetting.gain = 1;
+		camSetting.displayed = true;
+		camSettings.push_back(camSetting);
+	}
+
+}
+
+void ConfigParser::GenerateCameraEntries()
+{
+
+}
+
+void ConfigParser::ReadCameraEntries()
+{
+
 }

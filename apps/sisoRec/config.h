@@ -14,8 +14,9 @@ namespace fs = boost::filesystem;
 
 struct CameraSettings
 {
-	float exposure;
-	float gain;
+	int exposure;
+	int gain;
+	bool displayed;
 };
 
 class ConfigParser
@@ -23,7 +24,7 @@ class ConfigParser
 public:
 
 	// read if it exists
-	ConfigParser(std::string saveRoot); 
+	ConfigParser(std::string saveRoot, int numCameras); 
 
 	// update the values in the config from memory
 	void Save();
@@ -44,6 +45,11 @@ public:
 protected:
 	std::string configFileName = ".config.cfg";
 	boost::filesystem::path rootPath;
+	int numCameras;
+	
+	void SetCameraSettings();
+	void GenerateCameraEntries();
+	void ReadCameraEntries();
 
 };
 
