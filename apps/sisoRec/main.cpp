@@ -117,11 +117,14 @@ int main(int argc, char* argv[])
 	GUIThreadData gtdata;
 	gtdata.done = false;
 	gtdata.grabber = grabber;
+
+	// Find out where we're saving images to.
+	GetSaveRoots( gtdata );
+	
 	auto guiThread = std::thread(GUIThread, &gtdata);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	
-	// Find out where we're saving images to.
-	GetSaveRoots( gtdata );
+	
 	
 	
 	

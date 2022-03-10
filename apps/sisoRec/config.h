@@ -1,6 +1,7 @@
 #ifdef USE_SISO
 
 #include "libconfig.h++"
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -48,8 +49,8 @@ protected:
 	int numCameras;
 	
 	void SetCameraSettings();
-	void GenerateCameraEntries();
-	void ReadCameraEntries();
+	void UpdateCameraEntries(fs::path configPath);
+	void ReadCameraEntries(libconfig::Config cfg);
 
 };
 

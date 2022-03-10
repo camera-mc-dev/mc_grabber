@@ -82,7 +82,7 @@ void ConfigParser::Save()
 			cfgRoot.add("duration", libconfig::Setting::TypeInt);
 			cfgRoot.add("trialname", libconfig::Setting::TypeString);
 			cfgRoot.add("trialnum", libconfig::Setting::TypeInt);
-
+			
 			cfg.writeFile( configPath.string().c_str() );
 		}
 
@@ -95,6 +95,8 @@ void ConfigParser::Save()
 		cfg.lookup("duration")  = duration;
 		cfg.lookup("trialname") = trialName;
 		cfg.lookup("trialnum")  = trialNum;
+		
+		
 		
 		cfg.writeFile( configPath.string().c_str() );
 	}
@@ -121,12 +123,26 @@ void ConfigParser::SetCameraSettings()
 
 }
 
-void ConfigParser::GenerateCameraEntries()
+void ConfigParser::UpdateCameraEntries(fs::path configPath)
 {
+	libconfig::Config cfg;
+	auto &cfgRoot = cfg.getRoot();
+
+	libconfig::Setting &camExposures = cfgRoot.add("camexposures", libconfig::Setting::TypeArray);
+	libconfig::Setting &camGains = cfgRoot.add("camgains", libconfig::Setting::TypeArray);
+	libconfig::Setting &camsDisplayed = cfgRoot.add("camsdisplayed", libconfig::Setting::TypeArray);
+	
+	for (unsigned i=0; i < numCameras; i++)
+	{
+		camExposures.add(libconfig::Setting::TypeInt) = camSettings[i].exposure;
+		camGains.add(libconfig::Setting::TypeInt) = camSettings[i].gain;
+		camsDisplayed.add(libconfig::Setting::TypeBoolean) = camSettings[i].displayed;
+	}
+	
 
 }
 
-void ConfigParser::ReadCameraEntries()
+void ConfigParser::ReadCameraEntries(libconfig::Config cfg)
 {
 
 }
