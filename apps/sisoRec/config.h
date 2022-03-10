@@ -16,7 +16,7 @@ namespace fs = boost::filesystem;
 struct CameraSettings
 {
 	int exposure;
-	int gain;
+	float gain;
 	bool displayed;
 };
 

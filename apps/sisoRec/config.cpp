@@ -139,7 +139,7 @@ void ConfigParser::UpdateCameraEntries()
 	for (unsigned i=0; i < numCameras; i++)
 	{
 		camExposures.add(libconfig::Setting::TypeInt) = camSettings[i].exposure;
-		camGains.add(libconfig::Setting::TypeInt) = camSettings[i].gain;
+		camGains.add(libconfig::Setting::TypeFloat) = camSettings[i].gain;
 		camsDisplayed.add(libconfig::Setting::TypeBoolean) = camSettings[i].displayed;
 	}
 	
