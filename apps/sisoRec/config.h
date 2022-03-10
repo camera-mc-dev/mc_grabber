@@ -45,12 +45,13 @@ public:
 
 protected:
 	std::string configFileName = ".config.cfg";
+	std::string camerasFileName = ".cameras.cfg";
 	boost::filesystem::path rootPath;
 	int numCameras;
 	
 	void SetCameraSettings();
-	void UpdateCameraEntries(fs::path configPath);
-	void ReadCameraEntries(libconfig::Config cfg);
+	void UpdateCameraEntries();
+	void ReadCameraEntries();
 
 };
 

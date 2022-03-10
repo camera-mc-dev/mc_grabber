@@ -30,6 +30,7 @@ ConfigParser::ConfigParser(string saveRoot, int numCameras)
 			duration    = cfg.lookup("duration");
 			trialName   = (const char*) cfg.lookup("trialname");
 			trialNum    = cfg.lookup("trialnum");
+			ReadCameraEntries();
 		}
 		else
 		{
@@ -87,7 +88,7 @@ void ConfigParser::Save()
 		}
 
 		cfg.readFile( configPath.string().c_str() );
-		
+
 		// update entries
 		cfg.lookup("width")     = videoWidth;
 		cfg.lookup("height")    = videoHeight;
@@ -95,10 +96,9 @@ void ConfigParser::Save()
 		cfg.lookup("duration")  = duration;
 		cfg.lookup("trialname") = trialName;
 		cfg.lookup("trialnum")  = trialNum;
-		
-		
-		
 		cfg.writeFile( configPath.string().c_str() );
+		
+		UpdateCameraEntries();
 	}
 
 	catch( libconfig::SettingException &e)
@@ -123,8 +123,12 @@ void ConfigParser::SetCameraSettings()
 
 }
 
-void ConfigParser::UpdateCameraEntries(fs::path configPath)
+void ConfigParser::UpdateCameraEntries()
 {
+	// there might be a better way of doing this
+	// the way libconfig seems to want to update arrays, it seems safer to overwrite the entire file
+	// For this, its better to have a discrete file for the camera settings so the other settings are kept untouched.
+
 	libconfig::Config cfg;
 	auto &cfgRoot = cfg.getRoot();
 
@@ -139,10 +143,47 @@ void ConfigParser::UpdateCameraEntries(fs::path configPath)
 		camsDisplayed.add(libconfig::Setting::TypeBoolean) = camSettings[i].displayed;
 	}
 	
+	fs::path camerasConfigPath = rootPath / fs::path(sessionName) / fs::path(camerasFileName);
+	cfg.writeFile( camerasConfigPath.string().c_str() );
+
 
 }
 
-void ConfigParser::ReadCameraEntries(libconfig::Config cfg)
+void ConfigParser::ReadCameraEntries()
 {
+	fs::path camerasConfigPath = rootPath / fs::path(sessionName) / fs::path(camerasFileName);
+	
+	SetCameraSettings();
+	
+	// adding this here to prevent segfaults if there was an error when writing
+	if (!fs::exists(camerasConfigPath))
+	{
+		cout << camerasConfigPath << " not found, using default settings for the cameras." << endl;
+		return;
+	}
+	
+	libconfig::Config cfg;
+	cfg.readFile( camerasConfigPath.string().c_str() );
+	try
+	{
+		libconfig::Setting &camExposures = cfg.lookup("camexposures"); 
+		libconfig::Setting &camGains = cfg.lookup("camgains");
+		libconfig::Setting &camsDisplayed = cfg.lookup("camsdisplayed");
+		
+		for (unsigned i = 0; i < numCameras; i++)
+		{
+			camSettings[i].exposure = camExposures[i];
+			camSettings[i].gain = camGains[i];
+			camSettings[i].displayed = camsDisplayed[i];
+		}
 
+	}
+
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
+	}
 }

@@ -272,6 +272,14 @@ void ControlsWindow::UpdateSessionConfig()
 	sessionConfig->duration = durScale.get_value();
 	sessionConfig->trialNum = trialNumberSpin.get_value();
 	sessionConfig->trialName = trialNameEntry.get_text();
+	
+	for( unsigned cc = 0; cc < numCameras; ++cc )
+	{
+		sessionConfig->camSettings[cc].exposure = camExpScales[cc].get_value();
+		sessionConfig->camSettings[cc].gain = camGainScales[cc].get_value();
+		sessionConfig->camSettings[cc].displayed = camDisplayedChecks[cc].get_active();	
+	}
+	
 	sessionConfig->Save();
 }
 

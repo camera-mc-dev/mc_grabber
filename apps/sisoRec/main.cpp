@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 	sendImgs[0] = cv::Mat(100, 100, CV_8UC1, cv::Scalar(128) );
 	isender.SetImages("SiSo Rec image", sendImgs );
 	
-	gdk_threads_add_idle(ControlsWindow::SetAllGainsAndExposures, gtdata.window);
+	//gdk_threads_add_idle(ControlsWindow::SetAllGainsAndExposures, gtdata.window);
 	
 	// loop infinitely, responding to requests from the controls thread.
 	while( !gtdata.done )
