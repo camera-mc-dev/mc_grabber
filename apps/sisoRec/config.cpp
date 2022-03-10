@@ -34,8 +34,8 @@ ConfigParser::ConfigParser(string saveRoot, int numCameras)
 		}
 		else
 		{
-			videoWidth  = 480;
-			videoHeight = 360;
+			videoWidth  = 1920;
+			videoHeight = 1080;
 			fps         = 200;
 			duration    = 10;
 			trialName   = "test";

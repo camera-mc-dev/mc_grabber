@@ -24,10 +24,11 @@ class ConfigParser
 {
 public:
 
-	// read if it exists
+	// reads the .config and .camera config files in a directory with the days date if it exists.
+	// otherwise it will return the default settings
 	ConfigParser(std::string saveRoot, int numCameras); 
 
-	// update the values in the config from memory
+	// updates the values in the config files from memory
 	void Save();
 	
 	
@@ -44,8 +45,12 @@ public:
 	std::vector<CameraSettings> camSettings;
 
 protected:
+	// where the main settings are stored (width,height,fps,duration etc)
 	std::string configFileName = ".config.cfg";
+
+	// where the arrays of camera configurations are stored (exposure, gain etc)
 	std::string camerasFileName = ".cameras.cfg";
+	
 	boost::filesystem::path rootPath;
 	int numCameras;
 	
