@@ -16,6 +16,17 @@
 #include "grab.h"
 #include "config.h"
 
+class SignalHandler
+{
+public:
+	SignalHandler() {};
+	~SignalHandler() {};
+	std::condition_variable cv;
+	std::mutex mtx;
+	bool ready=false;
+
+};
+
 class ControlsWindow : public Gtk::Window
 {
 public:
@@ -276,6 +287,7 @@ struct GUIThreadData
 	
 	std::string saveRoot0;
 	std::string saveRoot1;
+	SignalHandler * signalHandler;
 };
 
 void GUIThread( GUIThreadData *gtdata );

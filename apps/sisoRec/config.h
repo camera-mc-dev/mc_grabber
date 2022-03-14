@@ -1,4 +1,5 @@
-#ifdef USE_SISO
+#ifndef CONFIG_PARSER
+#define CONFIG_PARSER
 
 #include "libconfig.h++"
 #include <cstdlib>
@@ -79,6 +80,25 @@ protected:
 	void UpdateRootConfig();
 
 
+};
+
+
+#include <gtkmm/button.h>
+#include <gtkmm/window.h>
+
+class ConfigDialogue : public Gtk::Window
+{
+
+public:
+  ConfigDialogue(ConfigParser * config);
+  virtual ~ConfigDialogue();
+
+protected:
+  //Signal handlers:
+  void on_button_clicked();
+
+  //Member widgets:
+  Gtk::Button m_button;
 };
 
 #endif

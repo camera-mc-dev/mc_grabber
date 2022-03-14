@@ -278,3 +278,28 @@ void ConfigParser::UpdateRootConfig()
 
 
 }
+
+ConfigDialogue::ConfigDialogue(ConfigParser * config)
+{
+  // Sets the border width of the window.
+  set_border_width(10);
+
+  m_button.set_label("Hello world");
+  m_button.signal_clicked().connect(sigc::mem_fun(*this,
+              &ConfigDialogue::on_button_clicked));
+
+  // This packs the button into the Window (a container).
+  add(m_button);
+
+  // The final step is to display this newly created widget...
+  m_button.show();
+}
+
+ConfigDialogue::~ConfigDialogue()
+{
+}
+
+void ConfigDialogue::on_button_clicked()
+{
+  std::cout << "Hello World" << std::endl;
+}

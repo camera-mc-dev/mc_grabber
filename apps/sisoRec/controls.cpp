@@ -10,22 +10,33 @@
 void GUIThread( GUIThreadData *gtdata )
 {
 	int argc=0; char** argv = NULL;
-	auto app = Gtk::Application::create(argc, argv, "recording controls");
+
+	// tell the main thread to pause until this thread is ready
+	SignalHandler * handler = new SignalHandler();
+	gtdata->signalHandler = handler;
 	
 	ConfigParser * config = new ConfigParser(gtdata->grabber->GetNumCameras());
+
+	auto appd = Gtk::Application::create(argc, argv, "org.gtkmm.example");
+	ConfigDialogue dialogue(config);
 	
+	appd->run(dialogue);
+
+	auto app = Gtk::Application::create(argc, argv, "recording controls");
+
 	ControlsWindow window( gtdata->grabber, config);
 	window.set_default_size(400, 200);
-	
+
 	gtdata->window = &window;
-	
+
+	gtdata->signalHandler->ready = true;
+	gtdata->signalHandler->cv.notify_all();
+
 	app->run(window);
-	
-	
+
 	gtdata->done = true;
 	gtdata->window->UpdateSessionConfig();
 
-	return;
 }
 
 
