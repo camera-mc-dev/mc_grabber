@@ -7,13 +7,12 @@
 #include <iomanip>
 #include <boost/filesystem.hpp>
 
-
 void GUIThread( GUIThreadData *gtdata )
 {
 	int argc=0; char** argv = NULL;
 	auto app = Gtk::Application::create(argc, argv, "recording controls");
 	
-	ConfigParser * config = new ConfigParser(gtdata->saveRoot0, gtdata->grabber->GetNumCameras());
+	ConfigParser * config = new ConfigParser(gtdata->grabber->GetNumCameras());
 	
 	ControlsWindow window( gtdata->grabber, config);
 	window.set_default_size(400, 200);

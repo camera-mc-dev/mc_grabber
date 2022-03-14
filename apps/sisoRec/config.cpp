@@ -1,8 +1,10 @@
 #include "config.h"
 
-ConfigParser::ConfigParser(string saveRoot, int numCameras)
+ConfigParser::ConfigParser(int numCameras)
 {
-	rootPath = fs::path(saveRoot);
+	GetRootConfig();
+
+	rootPath = fs::path(saveRoot0);
 	this->numCameras = numCameras;
 	time_t rawNow;
 	time(&rawNow);
@@ -108,6 +110,8 @@ void ConfigParser::Save()
 		cout << e.getPath() << endl;
 		exit(0);
 	}
+
+	UpdateRootConfig();
 }
 
 void ConfigParser::SetCameraSettings()
@@ -186,4 +190,91 @@ void ConfigParser::ReadCameraEntries()
 		cout << e.getPath() << endl;
 		exit(0);
 	}
+}
+
+void ConfigParser::GetRootConfig()
+{
+#if defined(__APPLE__) || defined( __gnu_linux__ )
+	struct passwd* pwd = getpwuid(getuid());
+	if (pwd)
+	{
+		userHome = pwd->pw_dir;
+	}
+	else
+	{
+		// try the $HOME environment variable
+		userHome = getenv("HOME");
+	}
+#else
+	throw std::runtime_error("yeah, I've not done this for Windows or unknown unix!");
+#endif
+	
+	std::stringstream ss;
+	ss << userHome << "/.mc_dev.grabber.cfg";
+	boost::filesystem::path p(ss.str());
+	
+	if( !boost::filesystem::exists(p) )
+	{
+		throw std::runtime_error("No root config found at: " + p.string());	
+	}
+	try
+	{
+		libconfig::Config cfg;
+		cfg.readFile( ss.str().c_str() );
+		
+		saveRoot0 = (const char*) cfg.lookup("saveRoot0");
+		saveRoot1 = (const char*) cfg.lookup("saveRoot1");
+		if (cfg.exists("prevSaveDir"))
+		{
+			prevSaveDir = (const char*) cfg.lookup("prevSaveDir");
+		}
+		else
+		{
+			prevSaveDir = "";
+		}
+
+	}
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
+	}
+}
+
+void ConfigParser::UpdateRootConfig()
+{
+	std::stringstream ss;
+	ss << userHome << "/.mc_dev.grabber.cfg";
+	boost::filesystem::path p(ss.str());
+
+	try
+	{
+		libconfig::Config cfg;
+		auto &cfgRoot = cfg.getRoot();
+		
+		cfgRoot.add("saveRoot0", libconfig::Setting::TypeString);
+		cfgRoot.add("saveRoot1", libconfig::Setting::TypeString);
+		cfgRoot.add("prevSaveDir", libconfig::Setting::TypeString);
+		cfg.writeFile( ss.str().c_str() );
+		
+		cfg.readFile( ss.str().c_str() );
+		cfg.lookup("saveRoot0") = saveRoot0;
+		cfg.lookup("saveRoot1") = saveRoot1;
+		cfg.lookup("prevSaveDir") = prevSaveDir;
+		cfg.writeFile( ss.str().c_str() );
+
+
+
+	}
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
+	}
+
+
 }
