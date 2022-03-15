@@ -12,6 +12,7 @@
 
 #include <ctime>
 
+
 using namespace::std;
 namespace fs = boost::filesystem;
 
@@ -32,7 +33,10 @@ public:
 
 	// updates the values in the config files from memory
 	void Save();
+
+	void Load();
 	
+	bool showDialogue = false;
 	
 	string trialName;
 	string sessionName;
@@ -80,25 +84,6 @@ protected:
 	void UpdateRootConfig();
 
 
-};
-
-
-#include <gtkmm/button.h>
-#include <gtkmm/window.h>
-
-class ConfigDialogue : public Gtk::Window
-{
-
-public:
-  ConfigDialogue(ConfigParser * config);
-  virtual ~ConfigDialogue();
-
-protected:
-  //Signal handlers:
-  void on_button_clicked();
-
-  //Member widgets:
-  Gtk::Button m_button;
 };
 
 #endif

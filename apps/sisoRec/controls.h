@@ -275,6 +275,8 @@ protected:
 	
 	void LoadGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 	void SaveGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
+
+	void ShowDialogue();
 };
 
 struct GUIThreadData

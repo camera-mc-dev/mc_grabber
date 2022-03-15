@@ -5,7 +5,9 @@ ConfigParser::ConfigParser(int numCameras)
 	GetRootConfig();
 
 	rootPath = fs::path(saveRoot0);
+	
 	this->numCameras = numCameras;
+	
 	time_t rawNow;
 	time(&rawNow);
 	auto now = localtime(&rawNow);
@@ -16,15 +18,29 @@ ConfigParser::ConfigParser(int numCameras)
 	
 	sessionName = defSessionName.str();
 	
-	fs::path configPath = rootPath / fs::path(sessionName) / fs::path(configFileName);
+	if (sessionName == prevSaveDir)
+	{
+		showDialogue=true;
+	}
 	
+	videoWidth  = 480;
+	videoHeight = 360;
+	fps         = 200;
+	duration    = 10;
+	trialName   = "test";
+	trialNum    = 0;
+	SetCameraSettings();	
+}
+
+void ConfigParser::Load()
+{
+	fs::path configPath = rootPath / fs::path(sessionName) / fs::path(configFileName);
 	libconfig::Config cfg;
 	
 	try
 	{
 		if (fs::exists(configPath))
 		{
-			libconfig::Config cfg;
 			cfg.readFile( configPath.string().c_str() );
 			videoWidth  = cfg.lookup("width");
 			videoHeight = cfg.lookup("height");
@@ -34,18 +50,6 @@ ConfigParser::ConfigParser(int numCameras)
 			trialNum    = cfg.lookup("trialnum");
 			ReadCameraEntries();
 		}
-		else
-		{
-			videoWidth  = 1920;
-			videoHeight = 1080;
-			fps         = 200;
-			duration    = 10;
-			trialName   = "test";
-			trialNum    = 0;
-			SetCameraSettings();
-		}
-
-		
 	}
 	
 	catch( libconfig::SettingException &e)
@@ -54,10 +58,9 @@ ConfigParser::ConfigParser(int numCameras)
 		cout << e.what() << endl;
 		cout << e.getPath() << endl;
 		exit(0);
-	}
-	
-}
+	}	
 
+}
 
 void ConfigParser::Save()
 {
@@ -262,7 +265,7 @@ void ConfigParser::UpdateRootConfig()
 		cfg.readFile( ss.str().c_str() );
 		cfg.lookup("saveRoot0") = saveRoot0;
 		cfg.lookup("saveRoot1") = saveRoot1;
-		cfg.lookup("prevSaveDir") = prevSaveDir;
+		cfg.lookup("prevSaveDir") = sessionName;
 		cfg.writeFile( ss.str().c_str() );
 
 
@@ -277,29 +280,4 @@ void ConfigParser::UpdateRootConfig()
 	}
 
 
-}
-
-ConfigDialogue::ConfigDialogue(ConfigParser * config)
-{
-  // Sets the border width of the window.
-  set_border_width(10);
-
-  m_button.set_label("Hello world");
-  m_button.signal_clicked().connect(sigc::mem_fun(*this,
-              &ConfigDialogue::on_button_clicked));
-
-  // This packs the button into the Window (a container).
-  add(m_button);
-
-  // The final step is to display this newly created widget...
-  m_button.show();
-}
-
-ConfigDialogue::~ConfigDialogue()
-{
-}
-
-void ConfigDialogue::on_button_clicked()
-{
-  std::cout << "Hello World" << std::endl;
 }

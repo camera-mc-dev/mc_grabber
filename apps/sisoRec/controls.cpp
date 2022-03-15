@@ -15,13 +15,9 @@ void GUIThread( GUIThreadData *gtdata )
 	SignalHandler * handler = new SignalHandler();
 	gtdata->signalHandler = handler;
 	
+	// create the config parser
 	ConfigParser * config = new ConfigParser(gtdata->grabber->GetNumCameras());
-
-	auto appd = Gtk::Application::create(argc, argv, "org.gtkmm.example");
-	ConfigDialogue dialogue(config);
 	
-	appd->run(dialogue);
-
 	auto app = Gtk::Application::create(argc, argv, "recording controls");
 
 	ControlsWindow window( gtdata->grabber, config);
@@ -44,6 +40,10 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config
 {
 	// update the config parsers
 	sessionConfig = config;
+	if (config->showDialogue)
+	{
+		ShowDialogue();
+	}
 
 	// TODO: Get input from the grabber class.
 	grabber = in_grabber;
@@ -634,4 +634,33 @@ void ControlsWindow::SaveGrids( std::string fn, std::vector< std::vector< Circle
 	}
 }
 
+
+void ControlsWindow::ShowDialogue()
+{
+	Gtk::MessageDialog dialog(*this, "Previous session with todays date was found. Should I reload it?",
+	      false /* use_markup */, Gtk::MESSAGE_QUESTION,
+	      Gtk::BUTTONS_OK_CANCEL);
+	dialog.set_secondary_text(
+	      "Warning: Saying Cancel here may result in undesired behaviour (e.g trial numbers will not be incremented).");
+	int result = dialog.run();
+
+	//Handle the response:
+	switch(result)
+	{
+		case(Gtk::RESPONSE_OK):
+		{
+		  sessionConfig->Load();
+		  break;
+		}
+		case(Gtk::RESPONSE_CANCEL):
+		{
+		  break;
+		}
+		default:
+		{
+		  std::cout << "Unexpected button clicked." << std::endl;
+		  break;
+		}
+	}
+}
 #endif
