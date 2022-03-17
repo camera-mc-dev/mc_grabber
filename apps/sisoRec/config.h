@@ -34,21 +34,27 @@ public:
 	// updates the values in the config files from memory
 	void Save();
 
-	void Load();
-	
-	bool showDialogue = false;
-	
+	// entries from .config.cfg and .cameras.cfg
 	string trialName;
 	string sessionName;
-
 	int trialNum;
-	
 	int fps;
 	int duration;
 	int videoWidth;
 	int videoHeight;
-
+	std::string sessionDate;
 	std::vector<CameraSettings> camSettings;
+
+	// sets the above variables to defaults
+	void GenerateDefaultConfig();
+
+	// tries to load a config in the directory specified by rootPath/sessionName.
+	// returns false if there was an error (i.e the directory doesnt exist or there is something wrong with the session config files.)
+	bool Load();
+	
+	// checked by the controls window to open a dialogue asking whether to "reload" the old session.
+	// (actually the old session is always loaded if it exists, its just overwritten by generatedefaultconfig if the answer is no.)
+	bool showDialogue = false;
 
 protected:
 	// where the main settings are stored (width,height,fps,duration etc)
@@ -75,7 +81,8 @@ protected:
 	std::string userHome;
 	std::string saveRoot0;
 	std::string saveRoot1;
-	std::string prevSaveDir; 
+	std::string prevSaveDir;
+	std::string currentDate;
 
 	//updates the variables above from the root config
 	void GetRootConfig();

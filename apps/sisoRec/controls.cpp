@@ -637,11 +637,12 @@ void ControlsWindow::SaveGrids( std::string fn, std::vector< std::vector< Circle
 
 void ControlsWindow::ShowDialogue()
 {
-	Gtk::MessageDialog dialog(*this, "Previous session with todays date was found. Should I reload it?",
+	Gtk::MessageDialog dialog(*this, "Previous session with todays date was found. Should this be reloaded?",
 	      false /* use_markup */, Gtk::MESSAGE_QUESTION,
 	      Gtk::BUTTONS_OK_CANCEL);
 	dialog.set_secondary_text(
 	      "Warning: Saying Cancel here may result in undesired behaviour (e.g trial numbers will not be incremented).");
+	dialog.set_default_response(Gtk::RESPONSE_OK);
 	int result = dialog.run();
 
 	//Handle the response:
@@ -649,11 +650,11 @@ void ControlsWindow::ShowDialogue()
 	{
 		case(Gtk::RESPONSE_OK):
 		{
-		  sessionConfig->Load();
 		  break;
 		}
 		case(Gtk::RESPONSE_CANCEL):
 		{
+		  sessionConfig->GenerateDefaultConfig();
 		  break;
 		}
 		default:

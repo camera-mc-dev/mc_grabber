@@ -3,26 +3,35 @@
 ConfigParser::ConfigParser(int numCameras)
 {
 	GetRootConfig();
-
+	sessionName = prevSaveDir;
 	rootPath = fs::path(saveRoot0);
-	
 	this->numCameras = numCameras;
-	
 	time_t rawNow;
 	time(&rawNow);
 	auto now = localtime(&rawNow);
-	std::stringstream defSessionName;
-	defSessionName << now->tm_year + 1900 << "-"
-	               << std::setw(2) << std::setfill('0') << now->tm_mon+1 << "-"
-	               << std::setw(2) << std::setfill('0') << now->tm_mday;
+	std::stringstream date;
+	date << now->tm_year + 1900 << "-"
+         << std::setw(2) << std::setfill('0') << now->tm_mon+1 << "-"
+         << std::setw(2) << std::setfill('0') << now->tm_mday;
+	currentDate = date.str();
 	
-	sessionName = defSessionName.str();
-	
-	if (sessionName == prevSaveDir)
-	{
+	if (Load() && (date.str() == sessionDate))
+	{	
+		cout << "date found in file" << sessionDate << endl;
 		showDialogue=true;
 	}
-	
+	else
+	{
+		GenerateDefaultConfig();
+	}
+		
+}
+void ConfigParser::GenerateDefaultConfig()
+{
+
+	cout << "Generating default config" << endl;
+	sessionDate = currentDate;
+	sessionName = currentDate; 
 	videoWidth  = 480;
 	videoHeight = 360;
 	fps         = 200;
@@ -31,15 +40,13 @@ ConfigParser::ConfigParser(int numCameras)
 	trialNum    = 0;
 	SetCameraSettings();	
 }
-
-void ConfigParser::Load()
+bool ConfigParser::Load()
 {
 	fs::path configPath = rootPath / fs::path(sessionName) / fs::path(configFileName);
 	libconfig::Config cfg;
-	
-	try
+	if (fs::exists(configPath))
 	{
-		if (fs::exists(configPath))
+		try
 		{
 			cfg.readFile( configPath.string().c_str() );
 			videoWidth  = cfg.lookup("width");
@@ -48,17 +55,23 @@ void ConfigParser::Load()
 			duration    = cfg.lookup("duration");
 			trialName   = (const char*) cfg.lookup("trialname");
 			trialNum    = cfg.lookup("trialnum");
+			sessionDate = (const char*) cfg.lookup("sessionDate");
 			ReadCameraEntries();
 		}
+		catch(libconfig::SettingException &e)
+		{
+			cout << "Setting error: " << endl;
+			cout << e.what() << endl;
+			cout << e.getPath() << endl;
+			return false;
+		}
+		return true;
+
 	}
-	
-	catch( libconfig::SettingException &e)
+	else
 	{
-		cout << "Setting error: " << endl;
-		cout << e.what() << endl;
-		cout << e.getPath() << endl;
-		exit(0);
-	}	
+		return false;
+	}
 
 }
 
@@ -67,8 +80,8 @@ void ConfigParser::Save()
 	libconfig::Config cfg;
 	fs::path p = rootPath / fs::path(sessionName);
 	if (!fs::exists(p)){
-		string error = "could not find path specified: " + p.string();
-		throw std::runtime_error(error);
+		cout << "could not find path specified: " << p.string() << endl;
+		return;
 	}
 
 	fs::path configPath = p / fs::path(configFileName);
@@ -88,6 +101,7 @@ void ConfigParser::Save()
 			cfgRoot.add("duration", libconfig::Setting::TypeInt);
 			cfgRoot.add("trialname", libconfig::Setting::TypeString);
 			cfgRoot.add("trialnum", libconfig::Setting::TypeInt);
+			cfgRoot.add("sessionDate", libconfig::Setting::TypeString);
 			
 			cfg.writeFile( configPath.string().c_str() );
 		}
@@ -95,12 +109,13 @@ void ConfigParser::Save()
 		cfg.readFile( configPath.string().c_str() );
 
 		// update entries
-		cfg.lookup("width")     = videoWidth;
-		cfg.lookup("height")    = videoHeight;
-		cfg.lookup("fps")       = fps;
-		cfg.lookup("duration")  = duration;
-		cfg.lookup("trialname") = trialName;
-		cfg.lookup("trialnum")  = trialNum;
+		cfg.lookup("width")       = videoWidth;
+		cfg.lookup("height")      = videoHeight;
+		cfg.lookup("fps")         = fps;
+		cfg.lookup("duration")    = duration;
+		cfg.lookup("trialname")   = trialName;
+		cfg.lookup("trialnum")    = trialNum;
+	    cfg.lookup("sessionDate") = sessionDate;
 		cfg.writeFile( configPath.string().c_str() );
 		
 		UpdateCameraEntries();
@@ -227,6 +242,8 @@ void ConfigParser::GetRootConfig()
 		
 		saveRoot0 = (const char*) cfg.lookup("saveRoot0");
 		saveRoot1 = (const char*) cfg.lookup("saveRoot1");
+
+		// adding this for backwards compatibility
 		if (cfg.exists("prevSaveDir"))
 		{
 			prevSaveDir = (const char*) cfg.lookup("prevSaveDir");
