@@ -17,7 +17,6 @@ ConfigParser::ConfigParser(int numCameras)
 	
 	if (Load() && (date.str() == sessionDate))
 	{	
-		cout << "date found in file" << sessionDate << endl;
 		showDialogue=true;
 	}
 	else
