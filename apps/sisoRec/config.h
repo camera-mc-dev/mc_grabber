@@ -75,7 +75,7 @@ protected:
 	void UpdateCameraEntries();
 
 	// reads the camera entries from .camera.cfg 
-	void ReadCameraEntries();
+	bool ReadCameraEntries();
 
 	// entries from .mc.grabber.cfg
 	std::string userHome;

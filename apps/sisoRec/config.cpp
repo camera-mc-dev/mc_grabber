@@ -55,7 +55,10 @@ bool ConfigParser::Load()
 			trialName   = (const char*) cfg.lookup("trialname");
 			trialNum    = cfg.lookup("trialnum");
 			sessionDate = (const char*) cfg.lookup("sessionDate");
-			ReadCameraEntries();
+			if (!ReadCameraEntries())
+			{
+				return false;
+			}
 		}
 		catch(libconfig::SettingException &e)
 		{
@@ -170,7 +173,7 @@ void ConfigParser::UpdateCameraEntries()
 
 }
 
-void ConfigParser::ReadCameraEntries()
+bool ConfigParser::ReadCameraEntries()
 {
 	fs::path camerasConfigPath = rootPath / fs::path(sessionName) / fs::path(camerasFileName);
 	
@@ -180,7 +183,7 @@ void ConfigParser::ReadCameraEntries()
 	if (!fs::exists(camerasConfigPath))
 	{
 		cout << camerasConfigPath << " not found, using default settings for the cameras." << endl;
-		return;
+		return false;
 	}
 	
 	libconfig::Config cfg;
@@ -205,8 +208,9 @@ void ConfigParser::ReadCameraEntries()
 		cout << "Setting error: " << endl;
 		cout << e.what() << endl;
 		cout << e.getPath() << endl;
-		exit(0);
+		return false;
 	}
+return true;
 }
 
 void ConfigParser::GetRootConfig()

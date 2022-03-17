@@ -79,7 +79,7 @@ public:
 	unsigned GetNumCameras()
 	{
 	    // always just return 4 for now.
-	    return 4;
+	    return 6;
 	}
 	
 	std::vector< Mat > currentFrames;
