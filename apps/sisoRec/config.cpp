@@ -14,8 +14,8 @@ ConfigParser::ConfigParser(int numCameras)
          << std::setw(2) << std::setfill('0') << now->tm_mon+1 << "-"
          << std::setw(2) << std::setfill('0') << now->tm_mday;
 	currentDate = date.str();
-	
-	if (Load() && (date.str() == sessionDate))
+	bool loaded = Load();
+	if (loaded && (sessionDate == currentDate))
 	{	
 		showDialogue=true;
 	}
