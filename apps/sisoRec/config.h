@@ -90,6 +90,8 @@ protected:
 	// overwrites the root config, adding the prevsavedir setting
 	void UpdateRootConfig();
 
+	string GenerateSessionName(string sessionName, int dirNumber = 1);
+
 
 };
 

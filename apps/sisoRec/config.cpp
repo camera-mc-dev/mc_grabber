@@ -30,7 +30,7 @@ void ConfigParser::GenerateDefaultConfig()
 
 	cout << "Generating default config" << endl;
 	sessionDate = currentDate;
-	sessionName = currentDate; 
+	sessionName = GenerateSessionName(currentDate); 
 	videoWidth  = 480;
 	videoHeight = 360;
 	fps         = 200;
@@ -116,7 +116,7 @@ void ConfigParser::Save()
 		cfg.lookup("duration")    = duration;
 		cfg.lookup("trialname")   = trialName;
 		cfg.lookup("trialnum")    = trialNum;
-	    cfg.lookup("sessionDate") = sessionDate;
+	    cfg.lookup("sessionDate") = currentDate;
 		cfg.writeFile( configPath.string().c_str() );
 		
 		UpdateCameraEntries();
@@ -299,4 +299,24 @@ void ConfigParser::UpdateRootConfig()
 	}
 
 
+}
+
+string ConfigParser::GenerateSessionName(string sessionName, int dirNumber)
+{
+	if (fs::exists(rootPath / fs::path(sessionName)))
+	{
+		
+		stringstream ss;
+		ss << currentDate << "(" << dirNumber << ")";
+		sessionName = ss.str();
+		dirNumber += 1;
+		// reccur function until it finds a session name
+		// that doesnt exist yet.
+		return GenerateSessionName(sessionName,dirNumber);
+
+	}
+	else
+	{
+		return sessionName;
+	}
 }
