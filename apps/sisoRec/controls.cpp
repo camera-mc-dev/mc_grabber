@@ -15,12 +15,9 @@ void GUIThread( GUIThreadData *gtdata )
 	SignalHandler * handler = new SignalHandler();
 	gtdata->signalHandler = handler;
 	
-	// create the config parser
-	ConfigParser * config = new ConfigParser(gtdata->grabber->GetNumCameras());
-	
 	auto app = Gtk::Application::create(argc, argv, "recording controls");
 
-	ControlsWindow window( gtdata->grabber, config);
+	ControlsWindow window( gtdata->grabber);
 	window.set_default_size(400, 200);
 
 	gtdata->window = &window;
@@ -36,11 +33,12 @@ void GUIThread( GUIThreadData *gtdata )
 }
 
 
-ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config)
+ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 {
-	// update the config parsers
-	sessionConfig = config;
-	if (config->showDialogue)
+	// Generate the config parser
+	sessionConfig = new ConfigParser(in_grabber->GetNumCameras());
+	// check if the config has found a pre-existing session for today
+	if (sessionConfig->showDialogue)
 	{
 		ShowDialogue();
 	}
@@ -296,6 +294,10 @@ void ControlsWindow::UpdateSessionConfig()
 void ControlsWindow::StartGrabbing()
 {
 	cout << "Start grabbing" << endl;
+
+	// save the session config so we can reload incase of crash
+	UpdateSessionConfig();
+
 	meanfps = -1.0;
 	
 	startGrabButton.set_sensitive(false);

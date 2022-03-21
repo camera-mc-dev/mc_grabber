@@ -82,8 +82,7 @@ void ConfigParser::Save()
 	libconfig::Config cfg;
 	fs::path p = rootPath / fs::path(sessionName);
 	if (!fs::exists(p)){
-		cout << "could not find path specified: " << p.string() << endl;
-		return;
+		fs::create_directory(p);
 	}
 
 	fs::path configPath = p / fs::path(configFileName);

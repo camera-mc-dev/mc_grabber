@@ -30,7 +30,7 @@ public:
 class ControlsWindow : public Gtk::Window
 {
 public:
-	ControlsWindow(AbstractGrabber *in_grabber, ConfigParser *config);
+	ControlsWindow(AbstractGrabber *in_grabber);
 	~ControlsWindow();
 	
 	// we use this to signal to the main thread that we 
@@ -236,6 +236,7 @@ public:
 		return fpsScale.get_value();
 	}
 	
+	// updates the values in session config from the window and saves them to disk
 	void UpdateSessionConfig();
 	
 	static gboolean IncrementTrialNumber(gpointer self)
