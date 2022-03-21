@@ -85,11 +85,18 @@ protected:
 	std::string currentDate;
 
 	//updates the variables above from the root config
-	void GetRootConfig();
+	void LoadRootConfig();
 
 	// overwrites the root config, adding the prevsavedir setting
 	void UpdateRootConfig();
-
+	
+	/**
+	 * will generate a default session name.
+	 * params:
+	 * 	sessionName - name of desired session directory
+	 * 	dirNumber   - number to be appended to end of sessionName if a directory with that name already exists.
+	 * 				  this will be incremented automatically until a non existent directory is found.
+	 **/
 	string GenerateSessionName(string sessionName, int dirNumber = 1);
 
 

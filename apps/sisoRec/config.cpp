@@ -2,10 +2,13 @@
 
 ConfigParser::ConfigParser(int numCameras)
 {
-	GetRootConfig();
+	// the root config stores the saveroot as well as the name of the last directory written to by this class. 
+	LoadRootConfig();
 	sessionName = prevSaveDir;
 	rootPath = fs::path(saveRoot0);
 	this->numCameras = numCameras;
+	
+	// sets currentDate to todays date in order to check the validity of the prevsavedir
 	time_t rawNow;
 	time(&rawNow);
 	auto now = localtime(&rawNow);
@@ -14,7 +17,13 @@ ConfigParser::ConfigParser(int numCameras)
          << std::setw(2) << std::setfill('0') << now->tm_mon+1 << "-"
          << std::setw(2) << std::setfill('0') << now->tm_mday;
 	currentDate = date.str();
+	
+	// tries to load the configuration files
 	bool loaded = Load();
+	
+	// checks if the load was successful.
+	// if it was, also checks the session date that has now been updated by the loading procedure
+	// the date of the prevsavedir is stored in the .config.cfg file 
 	if (loaded && (sessionDate == currentDate))
 	{	
 		showDialogue=true;
@@ -81,6 +90,9 @@ void ConfigParser::Save()
 {
 	libconfig::Config cfg;
 	fs::path p = rootPath / fs::path(sessionName);
+
+	// creates the top level directory if it doesnt exist
+	// the validity of rootPath and sessionName should already have been checked at this point.
 	if (!fs::exists(p)){
 		fs::create_directory(p);
 	}
@@ -181,7 +193,7 @@ bool ConfigParser::ReadCameraEntries()
 	// adding this here to prevent segfaults if there was an error when writing
 	if (!fs::exists(camerasConfigPath))
 	{
-		cout << camerasConfigPath << " not found, using default settings for the cameras." << endl;
+		cout << camerasConfigPath << " not found." << endl;
 		return false;
 	}
 	
@@ -212,7 +224,7 @@ bool ConfigParser::ReadCameraEntries()
 return true;
 }
 
-void ConfigParser::GetRootConfig()
+void ConfigParser::LoadRootConfig()
 {
 #if defined(__APPLE__) || defined( __gnu_linux__ )
 	struct passwd* pwd = getpwuid(getuid());
@@ -310,7 +322,7 @@ string ConfigParser::GenerateSessionName(string sessionName, int dirNumber)
 		ss << currentDate << "_" << dirNumber;
 		sessionName = ss.str();
 		dirNumber += 1;
-		// reccur function until it finds a session name
+		// recurse function until it finds a session name
 		// that doesnt exist yet.
 		return GenerateSessionName(sessionName,dirNumber);
 
