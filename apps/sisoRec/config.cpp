@@ -307,7 +307,7 @@ string ConfigParser::GenerateSessionName(string sessionName, int dirNumber)
 	{
 		
 		stringstream ss;
-		ss << currentDate << "(" << dirNumber << ")";
+		ss << currentDate << "_" << dirNumber;
 		sessionName = ss.str();
 		dirNumber += 1;
 		// reccur function until it finds a session name
