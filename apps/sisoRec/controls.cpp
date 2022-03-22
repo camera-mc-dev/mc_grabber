@@ -274,6 +274,11 @@ ControlsWindow::~ControlsWindow()
 
 void ControlsWindow::UpdateSessionConfig()
 {
+	// if in calibmode, dont store the gtk settings.
+	if (calibModeCheckBtn.get_active())
+	{
+		return;
+	}
 	sessionConfig->videoWidth = xResScale.get_value();
 	sessionConfig->videoHeight = yResScale.get_value();
 	sessionConfig->fps = fpsScale.get_value();
