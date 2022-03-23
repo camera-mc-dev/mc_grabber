@@ -4,7 +4,7 @@ ConfigParser::ConfigParser(int numCameras)
 {
 	// the root config stores the saveroot as well as the name of the last directory written to by this class. 
 	LoadRootConfig();
-	sessionName = prevSaveDir;
+	sessionDir = prevSaveDir;
 	rootPath = fs::path(saveRoot0);
 	this->numCameras = numCameras;
 	
@@ -39,7 +39,7 @@ void ConfigParser::GenerateDefaultConfig()
 
 	cout << "Generating default config" << endl;
 	sessionDate = currentDate;
-	sessionName = GenerateSessionName(currentDate); 
+	sessionDir = GenerateSessionDirName(currentDate); 
 	videoWidth  = 480;
 	videoHeight = 360;
 	fps         = 200;
@@ -50,7 +50,7 @@ void ConfigParser::GenerateDefaultConfig()
 }
 bool ConfigParser::Load()
 {
-	fs::path configPath = rootPath / fs::path(sessionName) / fs::path(configFileName);
+	fs::path configPath = rootPath / fs::path(sessionDir) / fs::path(configFileName);
 	libconfig::Config cfg;
 	if (fs::exists(configPath))
 	{
@@ -89,10 +89,10 @@ bool ConfigParser::Load()
 void ConfigParser::Save()
 {
 	libconfig::Config cfg;
-	fs::path p = rootPath / fs::path(sessionName);
+	fs::path p = rootPath / fs::path(sessionDir);
 
 	// creates the top level directory if it doesnt exist
-	// the validity of rootPath and sessionName should already have been checked at this point.
+	// the validity of rootPath and sessionDir should already have been checked at this point.
 	if (!fs::exists(p)){
 		fs::create_directory(p);
 	}
@@ -178,7 +178,7 @@ void ConfigParser::UpdateCameraEntries()
 		camsDisplayed.add(libconfig::Setting::TypeBoolean) = camSettings[i].displayed;
 	}
 	
-	fs::path camerasConfigPath = rootPath / fs::path(sessionName) / fs::path(camerasFileName);
+	fs::path camerasConfigPath = rootPath / fs::path(sessionDir) / fs::path(camerasFileName);
 	cfg.writeFile( camerasConfigPath.string().c_str() );
 
 
@@ -186,7 +186,7 @@ void ConfigParser::UpdateCameraEntries()
 
 bool ConfigParser::ReadCameraEntries()
 {
-	fs::path camerasConfigPath = rootPath / fs::path(sessionName) / fs::path(camerasFileName);
+	fs::path camerasConfigPath = rootPath / fs::path(sessionDir) / fs::path(camerasFileName);
 	
 	SetCameraSettings();
 	
@@ -296,7 +296,7 @@ void ConfigParser::UpdateRootConfig()
 		cfg.readFile( ss.str().c_str() );
 		cfg.lookup("saveRoot0") = saveRoot0;
 		cfg.lookup("saveRoot1") = saveRoot1;
-		cfg.lookup("prevSaveDir") = sessionName;
+		cfg.lookup("prevSaveDir") = sessionDir;
 		cfg.writeFile( ss.str().c_str() );
 
 
@@ -313,7 +313,7 @@ void ConfigParser::UpdateRootConfig()
 
 }
 
-string ConfigParser::GenerateSessionName(string sessionName, int dirNumber)
+string ConfigParser::GenerateSessionDirName(string sessionName, int dirNumber)
 {
 	if (fs::exists(rootPath / fs::path(sessionName)))
 	{
@@ -324,7 +324,7 @@ string ConfigParser::GenerateSessionName(string sessionName, int dirNumber)
 		dirNumber += 1;
 		// recurse function until it finds a session name
 		// that doesnt exist yet.
-		return GenerateSessionName(sessionName,dirNumber);
+		return GenerateSessionDirName(sessionName,dirNumber);
 
 	}
 	else

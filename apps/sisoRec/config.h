@@ -36,7 +36,7 @@ public:
 
 	// entries from .config.cfg and .cameras.cfg
 	string trialName;
-	string sessionName;
+	string sessionDir;
 	int trialNum;
 	int fps;
 	int duration;
@@ -97,7 +97,7 @@ protected:
 	 * 	dirNumber   - number to be appended to end of sessionName if a directory with that name already exists.
 	 * 				  this will be incremented automatically until a non existent directory is found.
 	 **/
-	string GenerateSessionName(string sessionName, int dirNumber = 1);
+	string GenerateSessionDirName(string sessionName, int dirNumber = 1);
 
 
 };

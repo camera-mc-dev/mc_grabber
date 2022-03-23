@@ -85,7 +85,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	sessionNameLabel.set_text("Session:");
 	trialNameLabel.set_text("Trial:");
 	
-	sessionNameEntry.set_text(sessionConfig->sessionName);
+	sessionNameEntry.set_text(sessionConfig->sessionDir);
 	trialNameEntry.set_text(sessionConfig->trialName);
 	
 	trialNumberSpin.set_range(0, 99);
@@ -279,6 +279,7 @@ void ControlsWindow::UpdateSessionConfig()
 	{
 		return;
 	}
+	sessionConfig->sessionDir = sessionNameEntry.get_text();
 	sessionConfig->videoWidth = xResScale.get_value();
 	sessionConfig->videoHeight = yResScale.get_value();
 	sessionConfig->fps = fpsScale.get_value();
