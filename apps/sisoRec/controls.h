@@ -74,7 +74,9 @@ public:
 	}
 	
 	GrabThreadData gdata;
-	
+
+protected:
+
 	//
 	// Widgets
 	//
@@ -82,6 +84,25 @@ public:
 	// box to contain all control frames
 	Gtk::Box allBox;
 	
+	
+	//
+	// Dropdown menu
+	//
+	
+	void on_menu_file_new_generic();
+	void on_menu_file_quit();
+	void on_menu_others();
+
+	void on_menu_choices_one();
+	void on_menu_choices_two();
+
+	//Gtk::VBox m_Box;
+
+	Glib::RefPtr<Gtk::UIManager> m_refUIManager;
+	Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
+	Glib::RefPtr<Gtk::RadioAction> m_refChoiceOne, m_refChoiceTwo;
+
+
 	//
 	// At the top of our controls window we have:
 	//    =====
@@ -156,7 +177,7 @@ public:
 	//
 	ConfigParser * sessionConfig;
 
-protected:
+
 	// wrapper for static function call
 	void StopGrabbing();
 	void SetAllGainsAndExposures();
@@ -278,6 +299,7 @@ protected:
 	void SaveGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 
 	void ShowDialogue();
+
 };
 
 struct GUIThreadData
