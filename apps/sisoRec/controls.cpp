@@ -138,10 +138,6 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	    "      <menuitem action='HelpAbout'/>"
 	    "    </menu>"
 	    "  </menubar>"
-	    "  <toolbar  name='ToolBar'>"
-	    "    <toolitem action='FileNewStandard'/>"
-	    "    <toolitem action='FileQuit'/>"
-	    "  </toolbar>"
 	    "</ui>";
 
 	try
