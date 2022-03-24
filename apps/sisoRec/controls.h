@@ -93,9 +93,6 @@ protected:
 	void on_menu_file_quit();
 	void on_menu_others();
 
-	void on_menu_choices_one();
-	void on_menu_choices_two();
-
 	//Gtk::VBox m_Box;
 
 	Glib::RefPtr<Gtk::UIManager> m_refUIManager;
@@ -298,8 +295,8 @@ protected:
 	void LoadGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 	void SaveGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 
-	void ShowDialogue();
-
+	void ShowDialog();
+	void FileChooserDialog();
 };
 
 struct GUIThreadData

@@ -38,9 +38,9 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	// Generate the config parser
 	sessionConfig = new ConfigParser(in_grabber->GetNumCameras());
 	// check if the config has found a pre-existing session for today
-	if (sessionConfig->showDialogue)
+	if (sessionConfig->showDialog)
 	{
-		ShowDialogue();
+		ShowDialog();
 	}
 
 	// TODO: Get input from the grabber class.
@@ -62,45 +62,24 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	m_refActionGroup = Gtk::ActionGroup::create();
 
 	//File|New sub menu:
-	m_refActionGroup->add(Gtk::Action::create("FileNewStandard",
-	          Gtk::Stock::NEW, "_New", "Create a new file"),
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_file_new_generic));
+	
 
-	m_refActionGroup->add(Gtk::Action::create("FileNewFoo",
-	          Gtk::Stock::NEW, "New Foo", "Create a new foo"),
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_file_new_generic));
+	// m_refActionGroup->add(Gtk::Action::create("FileNewCustom",
+	//           Gtk::Stock::NEW, "New Custom", "Create a new folder with a custom name."),
+	//       sigc::mem_fun(*this, &ControlsWindow::on_menu_file_new_generic));
 
-	m_refActionGroup->add(Gtk::Action::create("FileNewGoo",
-	          Gtk::Stock::NEW, "_New Goo", "Create a new goo"),
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_file_new_generic));
+	// m_refActionGroup->add(Gtk::Action::create("FileNewGoo",
+	//           Gtk::Stock::NEW, "_New Goo", "Create a new goo"),
+	//       sigc::mem_fun(*this, &ControlsWindow::on_menu_file_new_generic));
 
 	//File menu:
 	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
-	//Sub-menu.
-	m_refActionGroup->add(Gtk::Action::create("FileNew", Gtk::Stock::NEW));
+	m_refActionGroup->add(Gtk::Action::create("FileLoad",
+	          Gtk::Stock::NEW, "_New/Load", "Create or load a pre-existing session"),
+	      sigc::mem_fun(*this, &ControlsWindow::FileChooserDialog));
+	
 	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
 	      sigc::mem_fun(*this, &ControlsWindow::on_menu_file_quit));
-
-	//Edit menu:
-	m_refActionGroup->add(Gtk::Action::create("EditMenu", "Edit"));
-	m_refActionGroup->add(Gtk::Action::create("EditCopy", Gtk::Stock::COPY),
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_others));
-	m_refActionGroup->add(Gtk::Action::create("EditPaste", Gtk::Stock::PASTE),
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_others));
-	m_refActionGroup->add(Gtk::Action::create("EditSomething", "Something"),
-	      Gtk::AccelKey("<control><alt>S"),
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_others));
-
-
-	//Choices menu, to demonstrate Radio items
-	m_refActionGroup->add( Gtk::Action::create("ChoicesMenu", "Choices") );
-	Gtk::RadioAction::Group group_userlevel;
-	m_refChoiceOne = Gtk::RadioAction::create(group_userlevel, "ChoiceOne", "One");
-	m_refActionGroup->add(m_refChoiceOne,
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_choices_one) );
-	m_refChoiceTwo = Gtk::RadioAction::create(group_userlevel, "ChoiceTwo", "Two");
-	m_refActionGroup->add(m_refChoiceTwo,
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_choices_two) );
 
 	//Help menu:
 	m_refActionGroup->add( Gtk::Action::create("HelpMenu", "Help") );
@@ -115,30 +94,16 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//Layout the actions in a menubar and toolbar:
 	Glib::ustring ui_info = 
 	    "<ui>"
-	    "  <menubar name='MenuBar'>"
-	    "    <menu action='FileMenu'>"
-	    "      <menu action='FileNew'>"
-	    "        <menuitem action='FileNewStandard'/>"
-	    "        <menuitem action='FileNewFoo'/>"
-	    "        <menuitem action='FileNewGoo'/>"
-	    "      </menu>"
-	    "      <separator/>"
-	    "      <menuitem action='FileQuit'/>"
-	    "    </menu>"
-	    "    <menu action='EditMenu'>"
-	    "      <menuitem action='EditCopy'/>"
-	    "      <menuitem action='EditPaste'/>"
-	    "      <menuitem action='EditSomething'/>"
-	    "    </menu>"
-	    "    <menu action='ChoicesMenu'>"
-	    "      <menuitem action='ChoiceOne'/>"
-	    "      <menuitem action='ChoiceTwo'/>"
-	    "    </menu>"
-	    "    <menu action='HelpMenu'>"
-	    "      <menuitem action='HelpAbout'/>"
-	    "    </menu>"
-	    "  </menubar>"
-	    "</ui>";
+        "  <menubar name='MenuBar'>"
+        "    <menu action='FileMenu'>"
+		"      <menuitem action='FileLoad'/>"
+        "      <menuitem action='FileQuit'/>"
+        "    </menu>"
+        "    <menu action='HelpMenu'>"
+        "      <menuitem action='HelpAbout'/>"
+        "    </menu>"
+        "  </menubar>"
+        "</ui>";
 
 	try
 	{
@@ -189,7 +154,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	sessionNameLabel.set_text("Session:");
 	trialNameLabel.set_text("Trial:");
 	
-	sessionNameEntry.set_text(sessionConfig->sessionDir);
+	sessionNameEntry.set_text(sessionConfig->sessionName);
 	trialNameEntry.set_text(sessionConfig->trialName);
 	
 	trialNumberSpin.set_range(0, 99);
@@ -383,7 +348,7 @@ void ControlsWindow::UpdateSessionConfig()
 	{
 		return;
 	}
-	sessionConfig->sessionDir = sessionNameEntry.get_text();
+	sessionConfig->sessionName = sessionNameEntry.get_text();
 	sessionConfig->videoWidth = xResScale.get_value();
 	sessionConfig->videoHeight = yResScale.get_value();
 	sessionConfig->fps = fpsScale.get_value();
@@ -747,7 +712,7 @@ void ControlsWindow::SaveGrids( std::string fn, std::vector< std::vector< Circle
 }
 
 
-void ControlsWindow::ShowDialogue()
+void ControlsWindow::ShowDialog()
 {
 	Gtk::MessageDialog dialog(*this, "Previous session with todays date was found. Should this be reloaded?",
 	      false /* use_markup */, Gtk::MESSAGE_QUESTION,
@@ -790,26 +755,41 @@ void ControlsWindow::on_menu_others()
   std::cout << "A menu item was selected." << std::endl;
 }
 
-void ControlsWindow::on_menu_choices_one()
+void ControlsWindow::FileChooserDialog()
 {
-  Glib::ustring message;
-  if(m_refChoiceOne->get_active())
-    message = "Choice 1 was selected.";
-  else
-    message = "Choice 1 was deselected";
+  Gtk::FileChooserDialog dialog("Please choose a folder",
+          Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+  dialog.set_transient_for(*this);
 
-  std::cout << message << std::endl;
-}
+  //Add response buttons the the dialog:
+  dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dialog.add_button("Select", Gtk::RESPONSE_OK);
 
-void ControlsWindow::on_menu_choices_two()
-{
-  Glib::ustring message;
-  if(m_refChoiceTwo->get_active())
-    message = "Choice 2 was selected.";
-  else
-    message = "Choice 2 was deselected";
+  int result = dialog.run();
 
-  std::cout << message << std::endl;
+  //Handle the response:
+  switch(result)
+  {
+    case(Gtk::RESPONSE_OK):
+    {
+      std::cout << "Select clicked." << std::endl;
+      std::cout << "Folder selected: " << dialog.get_filename()
+          << std::endl;
+      // sessionConfig->sessionName = dialog.get_filename();
+      // sessionConfig->Load();
+      break;
+    }
+    case(Gtk::RESPONSE_CANCEL):
+    {
+      std::cout << "Cancel clicked." << std::endl;
+      break;
+    }
+    default:
+    {
+      std::cout << "Unexpected button clicked." << std::endl;
+      break;
+    }
+  }
 }
 
 #endif

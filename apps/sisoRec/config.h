@@ -36,7 +36,7 @@ public:
 
 	// entries from .config.cfg and .cameras.cfg
 	string trialName;
-	string sessionDir;
+	string sessionName;
 	int trialNum;
 	int fps;
 	int duration;
@@ -54,9 +54,10 @@ public:
 	
 	// checked by the controls window to open a dialogue asking whether to "reload" the old session.
 	// (actually the old session is always loaded if it exists, its just overwritten by generatedefaultconfig if the answer is no.)
-	bool showDialogue = false;
+	bool showDialog = false;
 
 protected:
+
 	// where the main settings are stored (width,height,fps,duration etc)
 	std::string configFileName = ".config.cfg";
 
@@ -65,6 +66,7 @@ protected:
 	
 	// path object of saveRoot (saveRoot0 in .mcdev.grabber.cfg)
 	boost::filesystem::path rootPath;
+	fs::path savePath;
 	
 	int numCameras;
 	
