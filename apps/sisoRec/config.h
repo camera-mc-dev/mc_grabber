@@ -34,6 +34,10 @@ public:
 	// updates the values in the config files from memory
 	void Save();
 
+	// tries to load a config in the directory specified by rootPath/sessionName.
+	// returns false if there was an error (i.e the directory doesnt exist or there is something wrong with the session config files.)
+	bool Load();
+
 	// entries from .config.cfg and .cameras.cfg
 	string trialName;
 	string sessionName;
@@ -48,9 +52,7 @@ public:
 	// sets the above variables to defaults
 	void GenerateDefaultConfig();
 
-	// tries to load a config in the directory specified by rootPath/sessionName.
-	// returns false if there was an error (i.e the directory doesnt exist or there is something wrong with the session config files.)
-	bool Load();
+	
 	
 	// checked by the controls window to open a dialogue asking whether to "reload" the old session.
 	// (actually the old session is always loaded if it exists, its just overwritten by generatedefaultconfig if the answer is no.)
@@ -89,7 +91,7 @@ protected:
 	//updates the variables above from the root config
 	void LoadRootConfig();
 
-	// overwrites the root config, adding the prevsavedir setting
+	// adds the prevsadir entry to a config file if it doesnt exist and updates it.
 	void UpdateRootConfig();
 	
 	/**

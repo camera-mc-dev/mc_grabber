@@ -286,20 +286,16 @@ void ConfigParser::UpdateRootConfig()
 	try
 	{
 		libconfig::Config cfg;
-		auto &cfgRoot = cfg.getRoot();
-		
-		cfgRoot.add("saveRoot0", libconfig::Setting::TypeString);
-		cfgRoot.add("saveRoot1", libconfig::Setting::TypeString);
-		cfgRoot.add("prevSaveDir", libconfig::Setting::TypeString);
-		cfg.writeFile( ss.str().c_str() );
-		
 		cfg.readFile( ss.str().c_str() );
-		cfg.lookup("saveRoot0") = saveRoot0;
-		cfg.lookup("saveRoot1") = saveRoot1;
+		
+		if (!cfg.exists("prevSaveDir"))
+		{
+			auto &cfgRoot = cfg.getRoot();
+			cfgRoot.add("prevSaveDir", libconfig::Setting::TypeString);
+		}
+		
 		cfg.lookup("prevSaveDir") = sessionName;
 		cfg.writeFile( ss.str().c_str() );
-
-
 
 	}
 	catch( libconfig::SettingException &e)
