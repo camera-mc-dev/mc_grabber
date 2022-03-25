@@ -88,16 +88,17 @@ protected:
 	//
 	// Dropdown menu
 	//
-	
-	void on_menu_file_new_generic();
-	void on_menu_file_quit();
-	void on_menu_others();
-
-	//Gtk::VBox m_Box;
 
 	Glib::RefPtr<Gtk::UIManager> m_refUIManager;
 	Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
 	Glib::RefPtr<Gtk::RadioAction> m_refChoiceOne, m_refChoiceTwo;
+
+	// signal handlers
+	void MenuFileNew();
+
+	void FileChooserDialog(Gtk::FileChooserAction action);
+	void on_menu_file_quit();
+	void on_menu_others();
 
 
 	//
@@ -254,8 +255,9 @@ public:
 		return fpsScale.get_value();
 	}
 	
-	// updates the values in session config from the window and saves them to disk
-	void UpdateSessionConfig();
+	// updates the values in session config. 
+	// saves the config to disk under rootpath/sessionName if save is true.
+	void UpdateSessionConfig(bool save = true);
 	
 	static gboolean IncrementTrialNumber(gpointer self)
 	{
@@ -296,7 +298,7 @@ protected:
 	void SaveGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 
 	void ShowDialog();
-	void FileChooserDialog();
+	
 };
 
 struct GUIThreadData

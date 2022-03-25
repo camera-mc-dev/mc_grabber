@@ -31,6 +31,8 @@ public:
 	// otherwise it will return the default settings
 	ConfigParser(int numCameras); 
 
+	void Save(string absolutePath);
+	
 	// updates the values in the config files from memory
 	void Save();
 

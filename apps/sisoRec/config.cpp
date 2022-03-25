@@ -144,6 +144,13 @@ void ConfigParser::Save()
 
 	UpdateRootConfig();
 }
+void ConfigParser::Save(string absolutePath)
+{
+	fs::path newPath(absolutePath);
+	fs::path relativePath = fs::relative(newPath,rootPath);
+	sessionName = relativePath.c_str();
+	Save();
+}
 
 void ConfigParser::SetCameraSettings()
 {

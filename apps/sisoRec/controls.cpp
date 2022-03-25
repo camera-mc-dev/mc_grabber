@@ -75,8 +75,8 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//File menu:
 	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
 	m_refActionGroup->add(Gtk::Action::create("FileLoad",
-	          Gtk::Stock::NEW, "_New/Load", "Create or load a pre-existing session"),
-	      sigc::mem_fun(*this, &ControlsWindow::FileChooserDialog));
+	          Gtk::Stock::NEW, "_New", "Create or load a pre-existing session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileNew));
 	
 	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
 	      sigc::mem_fun(*this, &ControlsWindow::on_menu_file_quit));
@@ -341,7 +341,7 @@ ControlsWindow::~ControlsWindow()
 {
 }
 
-void ControlsWindow::UpdateSessionConfig()
+void ControlsWindow::UpdateSessionConfig(bool save)
 {
 	// if in calibmode, dont store the gtk settings.
 	if (calibModeCheckBtn.get_active())
@@ -362,8 +362,11 @@ void ControlsWindow::UpdateSessionConfig()
 		sessionConfig->camSettings[cc].gain = camGainScales[cc].get_value();
 		sessionConfig->camSettings[cc].displayed = camDisplayedChecks[cc].get_active();	
 	}
+	if (save)
+	{
+		sessionConfig->Save();	
+	}
 	
-	sessionConfig->Save();
 }
 
 void ControlsWindow::StartGrabbing()
@@ -745,9 +748,9 @@ void ControlsWindow::on_menu_file_quit()
   hide(); //Closes the main window to stop the Gtk::Main::run().
 }
 
-void ControlsWindow::on_menu_file_new_generic()
+void ControlsWindow::MenuFileNew()
 {
-   std::cout << "A File|New menu item was selected." << std::endl;
+  FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER);
 }
 
 void ControlsWindow::on_menu_others()
@@ -755,10 +758,10 @@ void ControlsWindow::on_menu_others()
   std::cout << "A menu item was selected." << std::endl;
 }
 
-void ControlsWindow::FileChooserDialog()
+void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
 {
   Gtk::FileChooserDialog dialog("Please choose a folder",
-          Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+          action);
   dialog.set_transient_for(*this);
 
   //Add response buttons the the dialog:
@@ -772,11 +775,9 @@ void ControlsWindow::FileChooserDialog()
   {
     case(Gtk::RESPONSE_OK):
     {
-      std::cout << "Select clicked." << std::endl;
-      std::cout << "Folder selected: " << dialog.get_filename()
-          << std::endl;
-      // sessionConfig->sessionName = dialog.get_filename();
-      // sessionConfig->Load();
+      UpdateSessionConfig(false);
+      sessionConfig->Save(dialog.get_filename());
+      sessionNameEntry.set_text(sessionConfig->sessionName);
       break;
     }
     case(Gtk::RESPONSE_CANCEL):
