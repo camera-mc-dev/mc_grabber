@@ -74,9 +74,13 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 
 	//File menu:
 	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
-	m_refActionGroup->add(Gtk::Action::create("FileLoad",
-	          Gtk::Stock::NEW, "_New", "Create or load a pre-existing session"),
+	m_refActionGroup->add(Gtk::Action::create("FileNew",
+	          Gtk::Stock::NEW, "_New", "Create a new session"),
 	      sigc::mem_fun(*this, &ControlsWindow::MenuFileNew));
+	
+	m_refActionGroup->add(Gtk::Action::create("FileLoad", 
+		Gtk::Stock::OPEN, "Load", "Load a pre-existing session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileLoad));
 	
 	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
 	      sigc::mem_fun(*this, &ControlsWindow::on_menu_file_quit));
@@ -96,6 +100,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	    "<ui>"
         "  <menubar name='MenuBar'>"
         "    <menu action='FileMenu'>"
+        "      <menuitem action='FileNew'/>"
 		"      <menuitem action='FileLoad'/>"
         "      <menuitem action='FileQuit'/>"
         "    </menu>"
@@ -341,6 +346,23 @@ ControlsWindow::~ControlsWindow()
 {
 }
 
+void ControlsWindow::SetWidgetValues()
+{
+	xResScale.set_value(sessionConfig->videoWidth);
+	yResScale.set_value(sessionConfig->videoHeight);
+	fpsScale.set_value(sessionConfig->fps);
+	durScale.set_value(sessionConfig->duration);
+	sessionNameEntry.set_text(sessionConfig->sessionName);
+	trialNameEntry.set_text(sessionConfig->trialName);
+	trialNumberSpin.set_value(sessionConfig->trialNum);
+	for( unsigned cc = 0; cc < numCameras; ++cc )
+	{
+		camExpScales[cc].set_value(sessionConfig->camSettings[cc].exposure);
+		camGainScales[cc].set_value(sessionConfig->camSettings[cc].gain);
+		camDisplayedChecks[cc].set_active(sessionConfig->camSettings[cc].displayed);
+	}
+
+}
 void ControlsWindow::UpdateSessionConfig(bool save)
 {
 	// if in calibmode, dont store the gtk settings.
@@ -748,11 +770,6 @@ void ControlsWindow::on_menu_file_quit()
   hide(); //Closes the main window to stop the Gtk::Main::run().
 }
 
-void ControlsWindow::MenuFileNew()
-{
-  FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER);
-}
-
 void ControlsWindow::on_menu_others()
 {
   std::cout << "A menu item was selected." << std::endl;
@@ -775,20 +792,37 @@ void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
   {
     case(Gtk::RESPONSE_OK):
     {
-      UpdateSessionConfig(false);
-      sessionConfig->Save(dialog.get_filename());
-      sessionNameEntry.set_text(sessionConfig->sessionName);
+    	switch(action)
+    	{
+    		case(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER):
+	    	{
+	    		sessionConfig->GenerateDefaultConfig();
+	      		sessionConfig->Save(dialog.get_filename());
+	      		SetWidgetValues();
+	      		break;
+	    	}
+    		case(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER):
+    		{
+    			sessionConfig->Load(dialog.get_filename());
+    			SetWidgetValues();
+    			break;
+    		}
+    		default:
+		    {
+		      	std::cout << "Unexpected button clicked." << std::endl;
+		      	break;
+		    }
+    	}
       break;
     }
     case(Gtk::RESPONSE_CANCEL):
     {
-      std::cout << "Cancel clicked." << std::endl;
-      break;
+      	break;
     }
     default:
     {
-      std::cout << "Unexpected button clicked." << std::endl;
-      break;
+      	std::cout << "Unexpected button clicked." << std::endl;
+      	break;
     }
   }
 }

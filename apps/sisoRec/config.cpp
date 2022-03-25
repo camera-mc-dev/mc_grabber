@@ -86,6 +86,14 @@ bool ConfigParser::Load()
 
 }
 
+bool ConfigParser::Load(string absolutePath)
+{
+	fs::path newPath(absolutePath);
+	fs::path relativePath = fs::relative(newPath,rootPath);
+	sessionName = relativePath.c_str();
+	return Load();	
+}
+
 void ConfigParser::Save()
 {
 	libconfig::Config cfg;

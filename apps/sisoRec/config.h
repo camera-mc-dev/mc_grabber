@@ -31,14 +31,18 @@ public:
 	// otherwise it will return the default settings
 	ConfigParser(int numCameras); 
 
-	void Save(string absolutePath);
-	
 	// updates the values in the config files from memory
 	void Save();
+
+	// same as Save() but updates the sessionName to a relative path from rootPath
+	void Save(string absolutePath);
 
 	// tries to load a config in the directory specified by rootPath/sessionName.
 	// returns false if there was an error (i.e the directory doesnt exist or there is something wrong with the session config files.)
 	bool Load();
+
+	
+	bool Load(string absolutePath);
 
 	// entries from .config.cfg and .cameras.cfg
 	string trialName;

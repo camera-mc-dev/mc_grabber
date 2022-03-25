@@ -94,11 +94,22 @@ protected:
 	Glib::RefPtr<Gtk::RadioAction> m_refChoiceOne, m_refChoiceTwo;
 
 	// signal handlers
-	void MenuFileNew();
+	void MenuFileNew()
+	{
+  		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER);
+	};
 
-	void FileChooserDialog(Gtk::FileChooserAction action);
+
+	void MenuFileLoad()
+	{
+		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+	}
 	void on_menu_file_quit();
 	void on_menu_others();
+
+
+	void FileChooserDialog(Gtk::FileChooserAction action);
+	
 
 
 	//
@@ -179,14 +190,12 @@ protected:
 	// wrapper for static function call
 	void StopGrabbing();
 	void SetAllGainsAndExposures();
+	void SetWidgetValues();
 	//
 	// for time based events.
 	//
 	sigc::connection fpsTimerConnection;
 
-	//
-	// Signal handlers
-	//
 public:
 	void StartGrabbing();
 	
