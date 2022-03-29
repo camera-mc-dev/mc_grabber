@@ -344,3 +344,11 @@ string ConfigParser::GenerateSessionDirName(string sessionName, int dirNumber)
 		return sessionName;
 	}
 }
+
+void ConfigParser::Move(string absolutePath)
+{
+	fs::path src = rootPath / fs::path(sessionName);
+	fs::path dst = fs::path(absolutePath);
+	fs::rename(src,dst);
+	Load(absolutePath);
+}

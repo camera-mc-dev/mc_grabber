@@ -44,6 +44,8 @@ public:
 	
 	bool Load(string absolutePath);
 
+	void Move(string absolutePath);
+
 	// entries from .config.cfg and .cameras.cfg
 	string trialName;
 	string sessionName;

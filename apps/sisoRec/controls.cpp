@@ -81,6 +81,14 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	m_refActionGroup->add(Gtk::Action::create("FileLoad", 
 		Gtk::Stock::OPEN, "Load", "Load a pre-existing session"),
 	      sigc::mem_fun(*this, &ControlsWindow::MenuFileLoad));
+
+	m_refActionGroup->add(Gtk::Action::create("FileMove", 
+		Gtk::Stock::DIRECTORY, "Move/Rename", "Move existing session and all trials to different directory"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileMove));
+
+	m_refActionGroup->add(Gtk::Action::create("FileSave", 
+		Gtk::Stock::SAVE, "Save", "Save existing session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileSave));
 	
 	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
 	      sigc::mem_fun(*this, &ControlsWindow::MenuFileQuit));
@@ -95,13 +103,15 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 
 	add_accel_group(m_refUIManager->get_accel_group());
 
-	//Layout the actions in a menubar and toolbar:
+	//Layout the actions in a menubar:
 	Glib::ustring ui_info = 
 	    "<ui>"
         "  <menubar name='MenuBar'>"
         "    <menu action='FileMenu'>"
         "      <menuitem action='FileNew'/>"
 		"      <menuitem action='FileLoad'/>"
+		"      <menuitem action='FileMove'/>"
+		"      <menuitem action='FileSave'/>"
         "      <menuitem action='FileQuit'/>"
         "    </menu>"
         "    <menu action='HelpMenu'>"
@@ -119,14 +129,10 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 		std::cerr << "building menus failed: " <<  ex.what();
 	}
 
-	//Get the menubar and toolbar widgets, and add them to a container widget:
+	//Get the menubar widgets and add them to a container widget:
 	Gtk::Widget* pMenubar = m_refUIManager->get_widget("/MenuBar");
 	if(pMenubar)
 		allBox.pack_start(*pMenubar, Gtk::PACK_SHRINK);
-
-	// Gtk::Widget* pToolbar = m_refUIManager->get_widget("/ToolBar") ;
-	// if(pToolbar)
-	// 	allBox.pack_start(*pToolbar, Gtk::PACK_SHRINK);
 
 	//
 	// Create start/stop controls
@@ -791,10 +797,20 @@ void ControlsWindow::FileChooserResponse(int response)
 			}
 			if (fsAction == Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER)
 			{
-				sessionConfig->GenerateDefaultConfig();
-				sessionConfig->Save(dialog->get_filename());
-				SetWidgetValues();
-				dialog->hide();
+				if (fsMove)
+				{
+					sessionConfig->Move(dialog->get_filename());
+					SetWidgetValues();
+					dialog->hide();
+				}
+				else
+				{
+					sessionConfig->GenerateDefaultConfig();
+					sessionConfig->Save(dialog->get_filename());
+					SetWidgetValues();
+					dialog->hide();	
+				}
+				
 			}
 		break;
 		}
@@ -810,6 +826,11 @@ void ControlsWindow::FileChooserResponse(int response)
 		}
 	}
 	
+}
+
+void ControlsWindow::MenuFileSave()
+{
+	UpdateSessionConfig(true);
 }
 
 void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)

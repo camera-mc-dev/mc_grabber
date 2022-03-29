@@ -104,7 +104,15 @@ protected:
 		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
 	}
 
+	void MenuFileMove()
+	{
+		fsMove = true;
+		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER);
+		fsMove = false;
+	}
+
 	void MenuFileQuit();
+	void MenuFileSave();
 	void MenuFileUnimplemented();
 
 
@@ -113,6 +121,7 @@ protected:
 	// 
 	Gtk::FileChooserDialog * dialog;
 	Gtk::FileChooserAction fsAction;
+	bool fsMove = false;
 	void FileChooserDialog(Gtk::FileChooserAction action);
 	void FileChooserResponse(int response);
 
