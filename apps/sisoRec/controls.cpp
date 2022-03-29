@@ -83,12 +83,12 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	      sigc::mem_fun(*this, &ControlsWindow::MenuFileLoad));
 	
 	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_file_quit));
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileQuit));
 
 	//Help menu:
 	m_refActionGroup->add( Gtk::Action::create("HelpMenu", "Help") );
 	m_refActionGroup->add( Gtk::Action::create("HelpAbout", Gtk::Stock::HELP),
-	      sigc::mem_fun(*this, &ControlsWindow::on_menu_others) );
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileUnimplemented) );
 
 	m_refUIManager = Gtk::UIManager::create();
 	m_refUIManager->insert_action_group(m_refActionGroup);
@@ -765,17 +765,17 @@ void ControlsWindow::ShowDialog()
 	}
 }
 
-void ControlsWindow::on_menu_file_quit()
+void ControlsWindow::MenuFileQuit()
 {
   hide(); //Closes the main window to stop the Gtk::Main::run().
 }
 
-void ControlsWindow::on_menu_others()
+void ControlsWindow::MenuFileUnimplemented()
 {
   std::cout << "A menu item was selected." << std::endl;
 }
 
-void ControlsWindow::on_file_select_dialog_response(int response)
+void ControlsWindow::FileChooserResponse(int response)
 {
 	switch(response)
 	{
@@ -822,7 +822,7 @@ void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
   //Add response buttons the the dialog:
   dialog->add_button("_Cancel", Gtk::RESPONSE_CANCEL);
   dialog->add_button("Select", Gtk::RESPONSE_OK);
-  dialog->signal_response().connect(sigc::mem_fun(*this, &ControlsWindow::on_file_select_dialog_response));
+  dialog->signal_response().connect(sigc::mem_fun(*this, &ControlsWindow::FileChooserResponse));
   dialog->run();
 
 }

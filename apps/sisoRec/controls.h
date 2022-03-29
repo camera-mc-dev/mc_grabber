@@ -88,7 +88,6 @@ protected:
 	//
 	// Dropdown menu
 	//
-
 	Glib::RefPtr<Gtk::UIManager> m_refUIManager;
 	Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
 	Glib::RefPtr<Gtk::RadioAction> m_refChoiceOne, m_refChoiceTwo;
@@ -104,14 +103,18 @@ protected:
 	{
 		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
 	}
-	// TODO: change these (names and functions)
-	void on_menu_file_quit();
-	void on_menu_others();
 
+	void MenuFileQuit();
+	void MenuFileUnimplemented();
+
+
+	//
+	// File Dialog
+	// 
 	Gtk::FileChooserDialog * dialog;
 	Gtk::FileChooserAction fsAction;
 	void FileChooserDialog(Gtk::FileChooserAction action);
-	void on_file_select_dialog_response(int response);
+	void FileChooserResponse(int response);
 
 	//
 	// At the top of our controls window we have:
