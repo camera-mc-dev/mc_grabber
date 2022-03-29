@@ -81,6 +81,7 @@ bool ConfigParser::Load()
 	}
 	else
 	{
+		cout << configPath << " not found" << endl;
 		return false;
 	}
 

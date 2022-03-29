@@ -775,65 +775,56 @@ void ControlsWindow::on_menu_others()
   std::cout << "A menu item was selected." << std::endl;
 }
 
+void ControlsWindow::on_file_select_dialog_response(int response)
+{
+	switch(response)
+	{
+		case(Gtk::RESPONSE_OK):
+		{
+			if(fsAction == Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER)
+			{
+				if (sessionConfig->Load(dialog->get_filename()))
+				{
+					SetWidgetValues();
+					dialog->hide();
+				}
+			}
+			if (fsAction == Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER)
+			{
+				sessionConfig->GenerateDefaultConfig();
+				sessionConfig->Save(dialog->get_filename());
+				SetWidgetValues();
+				dialog->hide();
+			}
+		break;
+		}
+				
+		case(Gtk::RESPONSE_CANCEL):
+		{
+			dialog->hide();
+			break;
+		}
+		default:
+		{
+			cout << "unexpected button pressed" << endl;
+		}
+	}
+	
+}
+
 void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
 {
-  Gtk::FileChooserDialog dialog("Please choose a folder",
+  fsAction = action;
+  dialog = new Gtk::FileChooserDialog("Please choose a folder",
           action);
-  dialog.set_transient_for(*this);
+  dialog->set_transient_for(*this);
 
   //Add response buttons the the dialog:
-  dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
-  Gtk::Button* select_button = dialog.add_button("Select", Gtk::RESPONSE_OK);
+  dialog->add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dialog->add_button("Select", Gtk::RESPONSE_OK);
+  dialog->signal_response().connect(sigc::mem_fun(*this, &ControlsWindow::on_file_select_dialog_response));
+  dialog->run();
 
-  int result = dialog.run();
-
-  //Handle the response:
-  switch(result)
-  {
-    case(Gtk::RESPONSE_OK):
-    {
-    	switch(action)
-    	{
-    		case(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER):
-	    	{
-	    		sessionConfig->GenerateDefaultConfig();
-	      		sessionConfig->Save(dialog.get_filename());
-	      		SetWidgetValues();
-	      		break;
-	    	}
-    		case(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER):
-    		{
-
-    			if (!sessionConfig->Load(dialog.get_filename()))
-    			{
-    				cout << "No folder found." << endl;
-    				break;
-    			}
-    			else
-    			{
-    				SetWidgetValues();
-    				break;
-    			}
-    			
-    		}
-    		default:
-		    {
-		      	std::cout << "Unexpected button clicked." << std::endl;
-		      	break;
-		    }
-    	}
-      break;
-    }
-    case(Gtk::RESPONSE_CANCEL):
-    {
-      	break;
-    }
-    default:
-    {
-      	std::cout << "Unexpected button clicked." << std::endl;
-      	break;
-    }
-  }
 }
 
 #endif

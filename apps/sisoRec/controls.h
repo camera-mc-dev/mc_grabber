@@ -108,9 +108,10 @@ protected:
 	void on_menu_file_quit();
 	void on_menu_others();
 
+	Gtk::FileChooserDialog * dialog;
+	Gtk::FileChooserAction fsAction;
 	void FileChooserDialog(Gtk::FileChooserAction action);
-	Gtk::Button selectButton;
-
+	void on_file_select_dialog_response(int response);
 
 	//
 	// At the top of our controls window we have:
