@@ -121,8 +121,14 @@ protected:
 	// 
 	Gtk::FileChooserDialog * dialog;
 	Gtk::FileChooserAction fsAction;
+
+	// tells the filedialog to move all files with it when it creates a new folder (for move/rename) 
 	bool fsMove = false;
+
+	// creates a new filechooser dialog
 	void FileChooserDialog(Gtk::FileChooserAction action);
+	
+	// handles the response from file chooser dialog. 
 	void FileChooserResponse(int response);
 
 	//

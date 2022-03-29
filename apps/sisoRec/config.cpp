@@ -64,7 +64,7 @@ bool ConfigParser::Load()
 			trialName   = (const char*) cfg.lookup("trialname");
 			trialNum    = cfg.lookup("trialnum");
 			sessionDate = (const char*) cfg.lookup("sessionDate");
-			if (!ReadCameraEntries())
+			if (!LoadCameraEntries())
 			{
 				return false;
 			}
@@ -140,7 +140,7 @@ void ConfigParser::Save()
 	    cfg.lookup("sessionDate") = currentDate;
 		cfg.writeFile( configPath.string().c_str() );
 		
-		UpdateCameraEntries();
+		SaveCameraEntries();
 	}
 
 	catch( libconfig::SettingException &e)
@@ -174,7 +174,7 @@ void ConfigParser::SetCameraSettings()
 
 }
 
-void ConfigParser::UpdateCameraEntries()
+void ConfigParser::SaveCameraEntries()
 {
 	// there might be a better way of doing this
 	// the way libconfig seems to want to update arrays, it seems safer to overwrite the entire file
@@ -200,7 +200,7 @@ void ConfigParser::UpdateCameraEntries()
 
 }
 
-bool ConfigParser::ReadCameraEntries()
+bool ConfigParser::LoadCameraEntries()
 {
 	fs::path camerasConfigPath = rootPath / fs::path(sessionName) / fs::path(camerasFileName);
 	
@@ -350,5 +350,6 @@ void ConfigParser::Move(string absolutePath)
 	fs::path src = rootPath / fs::path(sessionName);
 	fs::path dst = fs::path(absolutePath);
 	fs::rename(src,dst);
+	// load the session to update the sessionName.
 	Load(absolutePath);
 }

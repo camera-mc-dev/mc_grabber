@@ -61,17 +61,6 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//Create actions for menus and toolbars:
 	m_refActionGroup = Gtk::ActionGroup::create();
 
-	//File|New sub menu:
-	
-
-	// m_refActionGroup->add(Gtk::Action::create("FileNewCustom",
-	//           Gtk::Stock::NEW, "New Custom", "Create a new folder with a custom name."),
-	//       sigc::mem_fun(*this, &ControlsWindow::on_menu_file_new_generic));
-
-	// m_refActionGroup->add(Gtk::Action::create("FileNewGoo",
-	//           Gtk::Stock::NEW, "_New Goo", "Create a new goo"),
-	//       sigc::mem_fun(*this, &ControlsWindow::on_menu_file_new_generic));
-
 	//File menu:
 	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
 	m_refActionGroup->add(Gtk::Action::create("FileNew",

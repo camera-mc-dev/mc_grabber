@@ -34,16 +34,17 @@ public:
 	// updates the values in the config files from memory
 	void Save();
 
-	// same as Save() but updates the sessionName to a relative path from rootPath
+	// saves the session to the directory specified by absolutePath
 	void Save(string absolutePath);
 
 	// tries to load a config in the directory specified by rootPath/sessionName.
 	// returns false if there was an error (i.e the directory doesnt exist or there is something wrong with the session config files.)
 	bool Load();
 
-	
+	// tries to load config files in absolute path if they exist	
 	bool Load(string absolutePath);
 
+	// moves all files to the directory specified by absolutePath
 	void Move(string absolutePath);
 
 	// entries from .config.cfg and .cameras.cfg
@@ -60,9 +61,7 @@ public:
 	// sets the above variables to defaults
 	void GenerateDefaultConfig();
 
-	
-	
-	// checked by the controls window to open a dialogue asking whether to "reload" the old session.
+	// checked by the controls window to open a dialog asking whether to "reload" the old session.
 	// (actually the old session is always loaded if it exists, its just overwritten by generatedefaultconfig if the answer is no.)
 	bool showDialog = false;
 
@@ -84,10 +83,10 @@ protected:
 	void SetCameraSettings();
 
 	// Updates the camera entries in .camera.cfg
-	void UpdateCameraEntries();
+	void SaveCameraEntries();
 
 	// reads the camera entries from .camera.cfg 
-	bool ReadCameraEntries();
+	bool LoadCameraEntries();
 
 	// entries from .mc.grabber.cfg
 	std::string userHome;
