@@ -783,7 +783,7 @@ void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
 
   //Add response buttons the the dialog:
   dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
-  dialog.add_button("Select", Gtk::RESPONSE_OK);
+  Gtk::Button* select_button = dialog.add_button("Select", Gtk::RESPONSE_OK);
 
   int result = dialog.run();
 
@@ -803,9 +803,18 @@ void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
 	    	}
     		case(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER):
     		{
-    			sessionConfig->Load(dialog.get_filename());
-    			SetWidgetValues();
-    			break;
+
+    			if (!sessionConfig->Load(dialog.get_filename()))
+    			{
+    				cout << "No folder found." << endl;
+    				break;
+    			}
+    			else
+    			{
+    				SetWidgetValues();
+    				break;
+    			}
+    			
     		}
     		default:
 		    {

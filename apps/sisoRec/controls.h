@@ -104,12 +104,12 @@ protected:
 	{
 		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
 	}
+	// TODO: change these (names and functions)
 	void on_menu_file_quit();
 	void on_menu_others();
 
-
 	void FileChooserDialog(Gtk::FileChooserAction action);
-	
+	Gtk::Button selectButton;
 
 
 	//
