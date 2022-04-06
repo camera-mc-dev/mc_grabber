@@ -20,6 +20,7 @@ using std::endl;
 #include "imgio/fake.h"
 
 #include <boost/filesystem.hpp>
+namespace fs  = boost::filesystem;
 #include <iomanip>
 #include "gdk/gdk.h"
 
@@ -318,20 +319,21 @@ int main(int argc, char* argv[])
 					// Get directory... to even things out on the disks, we'll
 					// alternate which disk gets even or odd cameras.
 					//
-					std::stringstream outDir0, outDir1;
 					
-					outDir0 << gtdata.saveRoot0 << gtdata.window->GetSaveDirectory();
-					outDir1 << gtdata.saveRoot1 << gtdata.window->GetSaveDirectory();
+					fs::path outDir0, outDir1;
 					
+					outDir0 = fs::path(gtdata.saveRoot0) / fs::path(gtdata.window->GetSaveDirectory());
+					outDir1 = fs::path(gtdata.saveRoot1) / fs::path(gtdata.window->GetSaveDirectory());
+
 					if( gtdata.window->GetTrialNumber() % 2 == 0 )
 					{
-						tdata.outDir0 = outDir0.str();
-						tdata.outDir1 = outDir1.str();
+						tdata.outDir0 = outDir0.string();
+						tdata.outDir1 = outDir1.string();
 					}
 					else
 					{
-						tdata.outDir0 = outDir1.str();
-						tdata.outDir1 = outDir0.str();
+						tdata.outDir0 = outDir1.string();
+						tdata.outDir1 = outDir0.string();
 					}
 					
 					
@@ -390,7 +392,7 @@ int main(int argc, char* argv[])
 
 					auto t2 = std::chrono::steady_clock::now();
 					std::stringstream clss;
-					clss << outDir0.str() << "/capTime.log";
+					clss << outDir0.string()<< "/capTime.log";
 					std::ofstream caplog( clss.str() );
 					std::string trialName = gtdata.window->GetSaveDirectory();
 					float capTime = gtdata.window->GetRecDuration();
@@ -411,9 +413,10 @@ int main(int argc, char* argv[])
 					GrabThreadData &tdata = gtdata.window->gdata;
 					buffRecord = false;
 					
-					std::string outDir = gtdata.saveRoot0 + gtdata.window->GetSaveDirectory();
+					fs::path outDir = fs::path(gtdata.saveRoot0) / fs::path(gtdata.window->GetSaveDirectory());
+
 					unsigned numCams = tdata.rawBuffers.size();
-					PrepSaveDirectories( {outDir}, numCams, gtdata );
+					PrepSaveDirectories( {outDir.string()}, numCams, gtdata );
 					
 					auto fnos = grabber->GetFrameNumbers();
 					auto earliest = fnos[0];
@@ -554,9 +557,7 @@ void PrepSaveDirectories( const std::vector<std::string> outDirs, unsigned numCa
 			{
 				cout << "Error! save location exists but is not a directory!" << endl;
 				cout << "Saving to " << gtdata.saveRoot0 << "/rescued/" << endl;
-				outDir = gtdata.saveRoot0 + "rescued/";
-				
-				boost::filesystem::path p(outDir);
+				fs::path p = fs::path(gtdata.saveRoot0) / fs::path("rescued");
 				boost::filesystem::create_directories(p);
 			}
 		}
@@ -574,8 +575,9 @@ void PrepSaveDirectories( const std::vector<std::string> outDirs, unsigned numCa
 			outDir = outDirs[0];
 		}
 		std::stringstream ss;
-		ss << outDir << "/" << std::setw(2) << std::setfill('0') << cc;
-		std::string camDir = ss.str();
+		ss << std::setw(2) << std::setfill('0') << cc;
+		fs::path p = fs::path(outDir) / fs::path(ss.str());
+		std::string camDir = p.string();
 		
 		boost::filesystem::path cp(camDir);
 		if( !boost::filesystem::exists(cp) )
@@ -898,8 +900,9 @@ void GetSaveRoots( GUIThreadData &gtdata )
 			
 			cfgRoot.add("saveRoot0", libconfig::Setting::TypeString);
 			cfgRoot.add("saveRoot1", libconfig::Setting::TypeString);
-			
 			cfg.writeFile( ss.str().c_str() );
+			cout << "The saveroots were not set. Please set them to absolute paths under " << fs::path(userHome) / fs::path(".mc_dev.grabber.cfg") << endl;
+			exit(0);
 		}
 		
 		libconfig::Config cfg;
@@ -907,9 +910,18 @@ void GetSaveRoots( GUIThreadData &gtdata )
 		
 		gtdata.saveRoot0 = (const char*) cfg.lookup("saveRoot0");
 		gtdata.saveRoot1 = (const char*) cfg.lookup("saveRoot1");
-		
-		cfg.lookup("saveRoot0") = "/data/raid0/recording/";
-		cfg.lookup("saveRoot1") = "/data/raid1/recording/";
+		std::vector <string> saveroots = {gtdata.saveRoot0, gtdata.saveRoot1};
+		for (unsigned i = 0; i < 2; i++)
+		{	
+			cout << "hello world!" << endl;
+			fs::path sp(saveroots[i]);
+			if (!fs::exists(sp) || !sp.is_absolute())
+			{
+				std::stringstream ss;
+				ss << "error from reading .mc_dev.grabber.cfg: " << "\n" << sp << " is not a valid path"; 
+				throw std::runtime_error(ss.str());
+			}
+		}	
 	}
 	catch( libconfig::SettingException &e)
 	{
