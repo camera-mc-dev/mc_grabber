@@ -228,7 +228,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 		camFrames[cc].set_label( ss.str() );
 		camExpLabels[cc].set_label("exp 1/x (s)");
 		camGainLabels[cc].set_label("gain");
-		camExpScales[cc].set_range(1,1000);
+		camExpScales[cc].set_range(fpsScale.get_value(),1000);
 		camGainScales[cc].set_range(1,16);
 		
 		camFrames[cc].set_hexpand(true);
@@ -277,7 +277,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	baseGain12RB.join_group( baseGain00RB );
 	baseGain00RB.set_active();
 	
-	allCamGainScale.set_value(1);
+	allCamGainScale.set_value(fpsScale.get_value());
 	allCamExpScale.set_value(250);
 	
 	allCamExpGrid.set_hexpand(true);
@@ -313,7 +313,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	camControlSetButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetGainsAndExposures ) );
 	allCamExpSetButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetAllGainsAndExposures ) );
 	baseGainButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetAllBaseGains ) );
-	
+	fpsScale.signal_value_changed().connect(sigc::mem_fun(*this, &ControlsWindow::SetMaxExposure ) );
 	
 	
 	//
@@ -336,6 +336,14 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	show_all_children();
 }
 
+void ControlsWindow::SetMaxExposure()
+{
+	allCamExpScale.set_range(fpsScale.get_value(), 1000);
+	for( unsigned cc = 0; cc < numCameras; ++cc )
+	{
+		camExpScales[cc].set_range(fpsScale.get_value(),1000);
+	}
+}
 ControlsWindow::~ControlsWindow()
 {
 }

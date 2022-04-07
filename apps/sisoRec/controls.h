@@ -238,6 +238,8 @@ public:
 	// when called from seperate thread, needs to be called with 
 	// gdk_threads_add_idle in order to avoid crashes.
 	static gboolean SetAllGainsAndExposures(gpointer self);
+
+	void SetMaxExposure();
 	
 	void SetAllBaseGains();
 	
