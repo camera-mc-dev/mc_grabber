@@ -65,6 +65,11 @@ public:
 	// (actually the old session is always loaded if it exists, its just overwritten by generatedefaultconfig if the answer is no.)
 	bool showDialog = false;
 
+	fs::path GetRootPath()
+	{
+		return rootPath;
+	}
+
 protected:
 
 	// where the main settings are stored (width,height,fps,duration etc)
@@ -74,8 +79,7 @@ protected:
 	std::string camerasFileName = ".cameras.cfg";
 	
 	// path object of saveRoot (saveRoot0 in .mcdev.grabber.cfg)
-	boost::filesystem::path rootPath;
-	fs::path savePath;
+	fs::path rootPath;
 	
 	int numCameras;
 	
@@ -101,13 +105,13 @@ protected:
 	// adds the prevsadir entry to a config file if it doesnt exist and updates it.
 	void UpdateRootConfig();
 	
-	/**
-	 * will generate a default session name.
-	 * params:
-	 * 	sessionName - name of desired session directory
-	 * 	dirNumber   - number to be appended to end of sessionName if a directory with that name already exists.
-	 * 				  this will be incremented automatically until a non existent directory is found.
-	 **/
+	//
+	// will generate a default session name.
+	// params:
+	// 	sessionName - name of desired session directory
+	// 	dirNumber   - number to be appended to end of sessionName if a directory with that name already exists.
+	// 				  this will be incremented automatically until a non existent directory is found.
+	//
 	string GenerateSessionDirName(string sessionName, int dirNumber = 1);
 
 

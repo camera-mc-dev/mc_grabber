@@ -6,6 +6,7 @@
 #include <ctime>
 #include <iomanip>
 #include <boost/filesystem.hpp>
+#include <giomm/file.h>
 
 void GUIThread( GUIThreadData *gtdata )
 {
@@ -833,6 +834,7 @@ void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
   dialog->add_button("_Cancel", Gtk::RESPONSE_CANCEL);
   dialog->add_button("Select", Gtk::RESPONSE_OK);
   dialog->signal_response().connect(sigc::mem_fun(*this, &ControlsWindow::FileChooserResponse));
+  dialog->set_current_folder(sessionConfig->GetRootPath().c_str());
   dialog->run();
 
 }
