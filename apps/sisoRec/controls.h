@@ -145,7 +145,8 @@ protected:
 	Gtk::Frame       ssFrame;
 	Gtk::Grid        ssGrid;
 	Gtk::Label       xResLabel, yResLabel, fpsLabel, durLabel;
-	Gtk::HScale      xResScale, yResScale, fpsScale, durScale;
+	Gtk::Entry       xResEntry, yResEntry;
+	Gtk::HScale      fpsScale, durScale;
 	Gtk::Label       obsFpsA, obsFpsB;
 	Gtk::Label       sessionNameLabel, trialNameLabel;
 	Gtk::Entry       sessionNameEntry;
@@ -199,6 +200,13 @@ protected:
 	Gtk::Label      shareLabel;
 	Gtk::SpinButton shareSpinner;
 
+	//
+	// For getting the text entries from xres and yres and converting them to ints (safely)
+	//
+	int GetResEntry(Gtk::Entry* entry)
+	{
+		return abs(std::stoi(entry->get_text()));	
+	}
 
 	//
 	// for storing gtk settings to disk

@@ -128,14 +128,12 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	// Create start/stop controls
 	//
 	xResLabel.set_text("width");
-	xResScale.set_range(64, 2560);
-	xResScale.set_value(sessionConfig->videoWidth);
-	xResScale.set_hexpand(true);
+	xResEntry.set_text(std::to_string(sessionConfig->videoWidth));
+	xResEntry.set_hexpand(true);
 	
 	yResLabel.set_text("height");
-	yResScale.set_range(2,2048);
-	yResScale.set_value(sessionConfig->videoHeight);
-	yResScale.set_hexpand(true);
+	yResEntry.set_text(std::to_string(sessionConfig->videoHeight));
+	yResEntry.set_hexpand(true);
 	
 	fpsLabel.set_text("fps");
 	fpsScale.set_range(1,200);
@@ -186,8 +184,8 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	gridLightOnDarkCheck.set_label("light on dark");
 	gridLightOnDarkCheck.set_active(false);
 	
-	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResScale, 1, 0, 3, 1 );
-	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResScale, 1, 1, 3, 1 );
+	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResEntry, 1, 0, 3, 1 );
+	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResEntry, 1, 1, 3, 1 );
 	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 3, 1 );
 	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 3, 1 );
 	ssGrid.attach( obsFpsA,   0, 4, 1, 1); ssGrid.attach( obsFpsB,   1, 4, 1, 1 );
@@ -344,8 +342,8 @@ ControlsWindow::~ControlsWindow()
 
 void ControlsWindow::SetWidgetValues()
 {
-	xResScale.set_value(sessionConfig->videoWidth);
-	yResScale.set_value(sessionConfig->videoHeight);
+	xResEntry.set_text(std::to_string(sessionConfig->videoWidth));
+	yResEntry.set_text(std::to_string(sessionConfig->videoHeight));
 	fpsScale.set_value(sessionConfig->fps);
 	durScale.set_value(sessionConfig->duration);
 	sessionNameEntry.set_text(sessionConfig->sessionName);
@@ -367,8 +365,8 @@ void ControlsWindow::UpdateSessionConfig(bool save)
 		return;
 	}
 	sessionConfig->sessionName = sessionNameEntry.get_text();
-	sessionConfig->videoWidth = xResScale.get_value();
-	sessionConfig->videoHeight = yResScale.get_value();
+	sessionConfig->videoWidth = GetResEntry(&xResEntry);
+	sessionConfig->videoHeight = GetResEntry(&yResEntry);
 	sessionConfig->fps = fpsScale.get_value();
 	sessionConfig->duration = durScale.get_value();
 	sessionConfig->trialNum = trialNumberSpin.get_value();
@@ -398,8 +396,8 @@ void ControlsWindow::StartGrabbing()
 	
 	startGrabButton.set_sensitive(false);
 	fpsScale.set_sensitive(false);
-	xResScale.set_sensitive(false);
-	yResScale.set_sensitive(false);
+	xResEntry.set_sensitive(false);
+	yResEntry.set_sensitive(false);
 	durScale.set_sensitive(false);
 	calibModeCheckBtn.set_sensitive(false);
 	
@@ -423,14 +421,14 @@ void ControlsWindow::StartGrabbing()
 	unsigned long memLimit = 120 * 1000 * 1000 * 1000;
 	
 	unsigned long fps = fpsScale.get_value();
-	long int resX = xResScale.get_value();
-	long int resY = yResScale.get_value();
+	long int resX = GetResEntry(&xResEntry);
+	long int resY = GetResEntry(&yResEntry);
 	long int recDuration = durScale.get_value();
 	
 	grabber->SetFPS( fps, 0 );
 	grabber->SetResolution( resX, resY );
-	xResScale.set_value( resX );
-	yResScale.set_value( resY );
+	xResEntry.set_text(std::to_string(resX));
+	yResEntry.set_text(std::to_string(resY));
 	fpsScale.set_value( fps );
 	
 	unsigned long memUse = resX * resY * fps * recDuration * grabber->GetNumCameras();
@@ -487,8 +485,8 @@ gboolean ControlsWindow::StopGrabbing(gpointer self)
 		window->UpdateSessionConfig(true);
 		window->startGrabButton.set_sensitive(true);
 		window->fpsScale.set_sensitive(true);
-		window->xResScale.set_sensitive(true);
-		window->yResScale.set_sensitive(true);
+		window->xResEntry.set_sensitive(true);
+		window->yResEntry.set_sensitive(true);
 		window->durScale.set_sensitive(true);
 		window->baseGainButton.set_sensitive(true);
 		window->calibModeCheckBtn.set_sensitive(true);
@@ -546,8 +544,11 @@ void ControlsWindow::CalibModeToggle()
 		
 		// Create the circle grid detector
 		unsigned w,h;
-		w = xResScale.get_value();
-		h = yResScale.get_value();
+		w = GetResEntry(&xResEntry);
+		h = GetResEntry(&yResEntry);
+		
+
+		
 		cout << w << " " << h << endl;
 		gdata.cgDetector.reset( new CircleGridDetector( w, h, false, false, CircleGridDetector::CIRCD_t ) );
 	}
