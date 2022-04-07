@@ -912,8 +912,7 @@ void GetSaveRoots( GUIThreadData &gtdata )
 		gtdata.saveRoot1 = (const char*) cfg.lookup("saveRoot1");
 		std::vector <string> saveroots = {gtdata.saveRoot0, gtdata.saveRoot1};
 		for (unsigned i = 0; i < 2; i++)
-		{	
-			cout << "hello world!" << endl;
+		{
 			fs::path sp(saveroots[i]);
 			if (!fs::exists(sp) || !sp.is_absolute())
 			{
