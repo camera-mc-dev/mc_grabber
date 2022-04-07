@@ -790,6 +790,7 @@ void ControlsWindow::FileChooserResponse(int response)
 			{
 				if (fsMove)
 				{
+					UpdateSessionConfig();
 					sessionConfig->Move(dialog->get_filename());
 					SetWidgetValues();
 					dialog->hide();
