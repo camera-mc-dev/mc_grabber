@@ -484,6 +484,7 @@ void ControlsWindow::StopGrabbing()
 gboolean ControlsWindow::StopGrabbing(gpointer self)
 	{
 		ControlsWindow * window  = (ControlsWindow*) self;
+		window->UpdateSessionConfig(true);
 		window->startGrabButton.set_sensitive(true);
 		window->fpsScale.set_sensitive(true);
 		window->xResScale.set_sensitive(true);
