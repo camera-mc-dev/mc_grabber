@@ -154,6 +154,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	trialNameLabel.set_text("Trial:");
 	
 	sessionNameEntry.set_text(sessionConfig->sessionName);
+	sessionNameEntry.set_sensitive(false);
 	trialNameEntry.set_text(sessionConfig->trialName);
 	
 	trialNumberSpin.set_range(0, 99);
