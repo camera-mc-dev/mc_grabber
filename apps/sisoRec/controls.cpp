@@ -134,39 +134,10 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//Only show the scrollbars when they are necessary:
 	m_ScrolledWindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 
-	//Create the Tree model:
-	m_refTreeModel = Gtk::TreeStore::create(m_Columns);
-	m_TreeView.set_model(m_refTreeModel);
-	m_TreeView.set_hexpand(true);
-
-	//Fill the TreeView's model
-	Gtk::TreeModel::Row row = *(m_refTreeModel->append());
-	row[m_Columns.m_col_id] = 1;
-	row[m_Columns.m_col_name] = "Billy Bob";
-
-	Gtk::TreeModel::Row childrow = *(m_refTreeModel->append(row.children()));
-	childrow[m_Columns.m_col_id] = 11;
-	childrow[m_Columns.m_col_name] = "Billy Bob Junior";
-
-	childrow = *(m_refTreeModel->append(row.children()));
-	childrow[m_Columns.m_col_id] = 12;
-	childrow[m_Columns.m_col_name] = "Sue Bob";
-
-	row = *(m_refTreeModel->append());
-	row[m_Columns.m_col_id] = 2;
-	row[m_Columns.m_col_name] = "Joey Jojo";
-
-
-	row = *(m_refTreeModel->append());
-	row[m_Columns.m_col_id] = 3;
-	row[m_Columns.m_col_name] = "Rob McRoberts";
-
-	childrow = *(m_refTreeModel->append(row.children()));
-	childrow[m_Columns.m_col_id] = 31;
-	childrow[m_Columns.m_col_name] = "Xavier McRoberts";
-
+	PopulateTrialList();
+	
 	//Add the TreeView's view columns:
-	m_TreeView.append_column("ID", m_Columns.m_col_id);
+	//m_TreeView.append_column("ID", m_Columns.m_col_id);
 	m_TreeView.append_column("Name", m_Columns.m_col_name);
 
 	//Connect signal:
@@ -199,7 +170,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	durScale.set_value(sessionConfig->duration);
 	durScale.set_hexpand(true);
 	
-	sessionNameLabel.set_text("Session:");
+	sessionNameLabel.set_text("Directory:");
 	trialNameLabel.set_text("Trial:");
 	
 	sessionNameEntry.set_text(sessionConfig->sessionName);
@@ -209,11 +180,6 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	trialNumberSpin.set_range(0, 99);
 	trialNumberSpin.set_value(sessionConfig->trialNum);
 	trialNumberSpin.set_increments(1,1);
-	
-	
-	sessionNameEntry.set_hexpand(true);
-	trialNameEntry.set_hexpand(true);
-	trialNumberSpin.set_hexpand(true);
 	
 	startGrabButton.set_label("Start Grabbing");
 	stopGrabButton.set_label("Stop Grabbing");
@@ -233,18 +199,21 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	gridColsSpin.set_increments(1,1);
 	gridLightOnDarkCheck.set_label("light on dark");
 	gridLightOnDarkCheck.set_active(false);
+
+	// parameters for Gtk::Grid.attach:
+	// child – The widget to add.
+	// left – The column number to attach the left side of child to.
+	// top – The row number to attach the top side of child to.
+	// width – The number of columns that child will span.
+	// height – The number of rows that child will span.
+
 	
 	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResEntry, 1, 0, 1, 1 );
 	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResEntry, 1, 1, 1, 1 );
 	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 1, 1 );
 	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 1, 1 );
 	ssGrid.attach( obsFpsA,   0, 4, 1, 1); ssGrid.attach( obsFpsB,   1, 4, 1, 1 );
-	ssGrid.attach( m_ScrolledWindow, 2, 0, 3 ,4);
-	ssGrid.attach(    sessionNameLabel, 0, 5, 1, 1 );
-	ssGrid.attach(    sessionNameEntry, 1, 5, 4, 1 );
-	ssGrid.attach(      trialNameLabel, 0, 6, 1, 1 );
-	ssGrid.attach(      trialNameEntry, 1, 6, 2, 1 );
-	ssGrid.attach(     trialNumberSpin, 3, 6, 1, 1 );
+	
 	ssGrid.attach(     startGrabButton, 0, 7, 2, 1 );
 	ssGrid.attach(     stopGrabButton,  2, 7, 2, 1 );
 	ssGrid.attach(   calibModeCheckBtn, 0, 8, 2, 1 );
@@ -260,7 +229,19 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	allBox.pack_start( ssFrame );
 	
 	stopGrabButton.set_sensitive(false);
-	
+
+
+	sessionGrid.attach(    sessionNameLabel, 0, 0, 1, 1 );
+	sessionGrid.attach(    sessionNameEntry, 1, 0, 1, 1 );
+	sessionGrid.attach(      trialNameLabel, 0, 1, 1, 1 );
+	sessionGrid.attach(      trialNameEntry, 1, 1, 1, 1 );
+	sessionGrid.attach(     trialNumberSpin, 1, 2, 1, 1 );
+	sessionGrid.attach( m_ScrolledWindow, 	 3, 0, 3 ,3 );
+	sessionFrame.set_label("Trials");
+	sessionFrame.add(sessionGrid);
+	allBox.pack_start(sessionFrame);
+	sessionConfig->GetTrialNames();
+
 	//
 	// Create per-camera gain and exposure controls.
 	//
@@ -414,6 +395,7 @@ void ControlsWindow::SetWidgetValues()
 		camGainScales[cc].set_value(sessionConfig->camSettings[cc].gain);
 		camDisplayedChecks[cc].set_active(sessionConfig->camSettings[cc].displayed);
 	}
+	PopulateTrialList();
 
 }
 void ControlsWindow::UpdateSessionConfig(bool save)
@@ -562,6 +544,7 @@ gboolean ControlsWindow::StopGrabbing(gpointer self)
 			window->FinaliseCalibrationSession();
 		}
 		window->ClearGtData();
+		window->PopulateTrialList();
 		return FALSE;
 	}
 
@@ -911,6 +894,25 @@ void ControlsWindow::RenderTrial(const Gtk::TreeModel::Path& path,
     std::cout << "Row activated: ID=" << row[m_Columns.m_col_id] << ", Name="
         << row[m_Columns.m_col_name] << std::endl;
   }
+}
+
+void ControlsWindow::PopulateTrialList()
+{
+	//Create the Tree model:
+	m_refTreeModel = Gtk::TreeStore::create(m_Columns);
+	m_TreeView.set_model(m_refTreeModel);
+	m_TreeView.set_hexpand(true);
+
+	std::vector<string> trials = sessionConfig->GetTrialNames();
+	
+	//Fill the TreeView's model
+	for (unsigned i =0; i < trials.size(); i++) 
+	{
+		Gtk::TreeModel::Row row = *(m_refTreeModel->append());
+		row[m_Columns.m_col_id] = i;
+		row[m_Columns.m_col_name] = trials[i];	
+	}
+
 }
 
 #endif

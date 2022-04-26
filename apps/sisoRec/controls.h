@@ -134,6 +134,7 @@ protected:
 	//
 	// Trial treeview
 	//
+	void PopulateTrialList();
 	void RenderTrial(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
 
   	//Tree model columns:
@@ -168,6 +169,8 @@ protected:
 	//
 	Gtk::Frame       ssFrame;
 	Gtk::Grid        ssGrid;
+	Gtk::Grid        sessionGrid;
+	Gtk::Frame       sessionFrame;
 	Gtk::Label       xResLabel, yResLabel, fpsLabel, durLabel;
 	Gtk::Entry       xResEntry, yResEntry;
 	Gtk::HScale      fpsScale, durScale;

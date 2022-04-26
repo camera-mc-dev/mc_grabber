@@ -353,3 +353,20 @@ void ConfigParser::Move(string absolutePath)
 	// load the session to update the sessionName.
 	Load(absolutePath);
 }
+
+std::vector<string> ConfigParser::GetTrialNames()
+{
+	std::vector<string> trials;
+	fs::path p = rootPath / fs::path(sessionName);
+	for (const auto & entry : fs::directory_iterator(p))
+		if (fs::is_directory(entry.path()))
+		{
+        	trials.push_back(fs::relative(entry.path(),p).string());
+		}
+	std::sort(trials.begin(),trials.end());
+	for (string str:trials)
+	{
+		cout << str << endl;
+	}
+    return trials;
+}

@@ -12,7 +12,6 @@
 
 #include <ctime>
 
-
 using namespace::std;
 namespace fs = boost::filesystem;
 
@@ -69,6 +68,8 @@ public:
 	{
 		return rootPath;
 	}
+
+	std::vector<string> GetTrialNames();
 
 protected:
 
