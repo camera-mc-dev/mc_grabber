@@ -125,6 +125,55 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 		allBox.pack_start(*pMenubar, Gtk::PACK_SHRINK);
 
 	//
+	// List view for trials
+	//
+	//Add the TreeView, inside a ScrolledWindow, with the button underneath:
+	m_ScrolledWindow.add(m_TreeView);
+	m_ScrolledWindow.set_hexpand(true);
+
+	//Only show the scrollbars when they are necessary:
+	m_ScrolledWindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+
+	//Create the Tree model:
+	m_refTreeModel = Gtk::TreeStore::create(m_Columns);
+	m_TreeView.set_model(m_refTreeModel);
+	m_TreeView.set_hexpand(true);
+
+	//Fill the TreeView's model
+	Gtk::TreeModel::Row row = *(m_refTreeModel->append());
+	row[m_Columns.m_col_id] = 1;
+	row[m_Columns.m_col_name] = "Billy Bob";
+
+	Gtk::TreeModel::Row childrow = *(m_refTreeModel->append(row.children()));
+	childrow[m_Columns.m_col_id] = 11;
+	childrow[m_Columns.m_col_name] = "Billy Bob Junior";
+
+	childrow = *(m_refTreeModel->append(row.children()));
+	childrow[m_Columns.m_col_id] = 12;
+	childrow[m_Columns.m_col_name] = "Sue Bob";
+
+	row = *(m_refTreeModel->append());
+	row[m_Columns.m_col_id] = 2;
+	row[m_Columns.m_col_name] = "Joey Jojo";
+
+
+	row = *(m_refTreeModel->append());
+	row[m_Columns.m_col_id] = 3;
+	row[m_Columns.m_col_name] = "Rob McRoberts";
+
+	childrow = *(m_refTreeModel->append(row.children()));
+	childrow[m_Columns.m_col_id] = 31;
+	childrow[m_Columns.m_col_name] = "Xavier McRoberts";
+
+	//Add the TreeView's view columns:
+	m_TreeView.append_column("ID", m_Columns.m_col_id);
+	m_TreeView.append_column("Name", m_Columns.m_col_name);
+
+	//Connect signal:
+	m_TreeView.signal_row_activated().connect(sigc::mem_fun(*this,
+	          &ControlsWindow::RenderTrial) );
+
+	//
 	// Create start/stop controls
 	//
 	xResLabel.set_text("width");
@@ -185,11 +234,12 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	gridLightOnDarkCheck.set_label("light on dark");
 	gridLightOnDarkCheck.set_active(false);
 	
-	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResEntry, 1, 0, 3, 1 );
-	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResEntry, 1, 1, 3, 1 );
-	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 3, 1 );
-	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 3, 1 );
+	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResEntry, 1, 0, 1, 1 );
+	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResEntry, 1, 1, 1, 1 );
+	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 1, 1 );
+	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 1, 1 );
 	ssGrid.attach( obsFpsA,   0, 4, 1, 1); ssGrid.attach( obsFpsB,   1, 4, 1, 1 );
+	ssGrid.attach( m_ScrolledWindow, 2, 0, 3 ,4);
 	ssGrid.attach(    sessionNameLabel, 0, 5, 1, 1 );
 	ssGrid.attach(    sessionNameEntry, 1, 5, 4, 1 );
 	ssGrid.attach(      trialNameLabel, 0, 6, 1, 1 );
@@ -849,6 +899,18 @@ void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
   dialog->set_current_folder(sessionConfig->GetRootPath().c_str());
   dialog->run();
 
+}
+
+void ControlsWindow::RenderTrial(const Gtk::TreeModel::Path& path,
+        Gtk::TreeViewColumn* /* column */)
+{
+  Gtk::TreeModel::iterator iter = m_refTreeModel->get_iter(path);
+  if(iter)
+  {
+    Gtk::TreeModel::Row row = *iter;
+    std::cout << "Row activated: ID=" << row[m_Columns.m_col_id] << ", Name="
+        << row[m_Columns.m_col_name] << std::endl;
+  }
 }
 
 #endif

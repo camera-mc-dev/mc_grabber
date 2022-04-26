@@ -132,6 +132,30 @@ protected:
 	void FileChooserResponse(int response);
 
 	//
+	// Trial treeview
+	//
+	void RenderTrial(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
+
+  	//Tree model columns:
+  	class ModelColumns : public Gtk::TreeModel::ColumnRecord
+	{
+	public:
+
+		ModelColumns()
+		{ add(m_col_id); add(m_col_name); }
+
+		Gtk::TreeModelColumn<int> m_col_id;
+		Gtk::TreeModelColumn<Glib::ustring> m_col_name;
+	};
+
+	ModelColumns m_Columns;
+
+	//Child widgets:
+	Gtk::ScrolledWindow m_ScrolledWindow;
+	Gtk::TreeView m_TreeView;
+	Glib::RefPtr<Gtk::TreeStore> m_refTreeModel;
+
+	//
 	// At the top of our controls window we have:
 	//    =====
 	// image resolution x       (scale/slider - greyed out when grabbing)
