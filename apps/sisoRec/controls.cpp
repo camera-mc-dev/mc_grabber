@@ -208,10 +208,10 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	// height – The number of rows that child will span.
 
 	
-	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResEntry, 1, 0, 1, 1 );
-	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResEntry, 1, 1, 1, 1 );
-	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 1, 1 );
-	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 1, 1 );
+	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResEntry, 1, 0, 4, 1 );
+	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResEntry, 1, 1, 4, 1 );
+	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 4, 1 );
+	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 4, 1 );
 	ssGrid.attach( obsFpsA,   0, 4, 1, 1); ssGrid.attach( obsFpsB,   1, 4, 1, 1 );
 	
 	ssGrid.attach(     startGrabButton, 0, 7, 2, 1 );
@@ -834,9 +834,14 @@ void ControlsWindow::FileChooserResponse(int response)
 				if (fsMove)
 				{
 					UpdateSessionConfig();
-					sessionConfig->Move(dialog->get_filename());
-					SetWidgetValues();
-					dialog->hide();
+
+					if (sessionConfig->Move(dialog->get_filename()))
+					{
+						SetWidgetValues();
+						dialog->hide();
+						fsMove = false;
+					}
+					
 				}
 				else
 				{

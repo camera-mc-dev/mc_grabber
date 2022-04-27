@@ -345,28 +345,59 @@ string ConfigParser::GenerateSessionDirName(string sessionName, int dirNumber)
 	}
 }
 
-void ConfigParser::Move(string absolutePath)
+bool ConfigParser::Move(string absolutePath)
 {
-	fs::path src = rootPath / fs::path(sessionName);
-	fs::path dst = fs::path(absolutePath);
-	fs::rename(src,dst);
+	// all the config stuff is saved under saveroot0 so we need to make sure the changes
+	// are mirrored on the other drive. Also need to make sure the dual drive system is 
+	// preserved. 
+
+	// generate the src and dst for saveroot0
+	fs::path src0 = rootPath / fs::path(sessionName);
+	fs::path dst0 = fs::path(absolutePath);
+	
+	
+	// do the same for saveroot1
+	fs::path src1 = fs::path(saveRoot1) / fs::path(sessionName);
+	fs::path new_sessionName = fs::relative(fs::path(absolutePath), rootPath);
+	fs::path dst1 = fs::path(saveRoot1) / new_sessionName;
+	
+	// move the first directory
+	fs::rename(src0,dst0);
+	
+	// add check condition incase we only have one drive or only one camera is being used.
+	if (fs::exists(src1))
+	{
+		if (fs::exists(dst1))
+		{
+			cout << "Error when moving " << src1 << " to " << dst1 << endl;
+			cout << dst1 << " already exists." << endl;
+
+			// undo move of first directory.
+			fs::rename(dst0, src0);
+			return false;
+		}
+		fs::rename(src1,dst1);
+	}
+	
 	// load the session to update the sessionName.
-	Load(absolutePath);
+	return Load(absolutePath);
+
 }
 
 std::vector<string> ConfigParser::GetTrialNames()
 {
 	std::vector<string> trials;
 	fs::path p = rootPath / fs::path(sessionName);
+	if (!fs::exists(p))
+	{
+		return trials;
+	}
 	for (const auto & entry : fs::directory_iterator(p))
 		if (fs::is_directory(entry.path()))
 		{
         	trials.push_back(fs::relative(entry.path(),p).string());
 		}
 	std::sort(trials.begin(),trials.end());
-	for (string str:trials)
-	{
-		cout << str << endl;
-	}
+
     return trials;
 }

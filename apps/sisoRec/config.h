@@ -44,7 +44,7 @@ public:
 	bool Load(string absolutePath);
 
 	// moves all files to the directory specified by absolutePath
-	void Move(string absolutePath);
+	bool Move(string absolutePath);
 
 	// entries from .config.cfg and .cameras.cfg
 	string trialName;
@@ -69,6 +69,7 @@ public:
 		return rootPath;
 	}
 
+	// Returns the names of the trials in the session directory
 	std::vector<string> GetTrialNames();
 
 protected:

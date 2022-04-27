@@ -108,7 +108,7 @@ protected:
 	{
 		fsMove = true;
 		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER);
-		fsMove = false;
+		
 	}
 
 	void MenuFileQuit();
