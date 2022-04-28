@@ -16,6 +16,9 @@
 #include "grab.h"
 #include "config.h"
 
+#include "renderer.h"
+#include "imgio/sourceFactory.h"
+
 class SignalHandler
 {
 public:

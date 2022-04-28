@@ -321,8 +321,6 @@ void ConfigParser::UpdateRootConfig()
 		cout << e.getPath() << endl;
 		exit(0);
 	}
-
-
 }
 
 string ConfigParser::GenerateSessionDirName(string sessionName, int dirNumber)
@@ -367,6 +365,8 @@ bool ConfigParser::Move(string absolutePath)
 	// add check condition incase we only have one drive or only one camera is being used.
 	if (fs::exists(src1))
 	{
+		// if this condition triggers it might mean we have moved out of the drives and we would have to merge
+		// the two directories (which we dont want to do at the capture phase)
 		if (fs::exists(dst1))
 		{
 			cout << "Error when moving " << src1 << " to " << dst1 << endl;
@@ -400,4 +400,31 @@ std::vector<string> ConfigParser::GetTrialNames()
 	std::sort(trials.begin(),trials.end());
 
     return trials;
+}
+
+std::vector<string> ConfigParser::GetImageDirectories(string trialName)
+{
+	std::vector<string> directories;
+	fs::path tp0 = rootPath / fs::path(sessionName) / fs::path(trialName);
+	fs::path tp1 = fs::path(saveRoot1) / fs::path(sessionName) / fs::path(trialName);
+	std::vector<fs::path> paths{tp0,tp1};
+
+	for (fs::path tp : paths)
+	{
+		if (!fs::exists(tp))
+		{
+			// return empty vector (to be checked by calling function)
+			return directories;
+		}
+		for (const auto & entry : fs::directory_iterator(tp))
+			if (fs::is_directory(entry.path()))
+			{
+				stringstream ss;
+				ss << entry.path().string() << "/";
+	        	directories.push_back(ss.str());
+			}
+	}
+
+	std::sort(directories.begin(),directories.end());
+	return directories;
 }

@@ -336,9 +336,6 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	allBox.pack_start( baseGainFrame );
 
 	
-	
-	
-	
 	startGrabButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::StartGrabbing ) );
 	stopGrabButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::StopGrabbing ) );
 	calibModeCheckBtn.signal_toggled().connect( sigc::mem_fun(*this, &ControlsWindow::CalibModeToggle ) );
@@ -892,14 +889,72 @@ void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
 void ControlsWindow::RenderTrial(const Gtk::TreeModel::Path& path,
         Gtk::TreeViewColumn* /* column */)
 {
-  Gtk::TreeModel::iterator iter = m_refTreeModel->get_iter(path);
-  if(iter)
-  {
-    Gtk::TreeModel::Row row = *iter;
-    std::cout << "Row activated: ID=" << row[m_Columns.m_col_id] << ", Name="
-        << row[m_Columns.m_col_name] << std::endl;
-  }
-}
+	// copied all this from gtkmm docs. 
+	Gtk::TreeModel::iterator iter = m_refTreeModel->get_iter(path);
+	string trialName; 
+	if(iter)
+	{
+		Gtk::TreeModel::Row row = *iter;
+		std::cout << "Row activated: ID=" << row[m_Columns.m_col_id] << ", Name="
+		    << row[m_Columns.m_col_name] << std::endl;
+		trialName = Glib::ustring(row[m_Columns.m_col_name]);
+		cout << trialName << endl;
+	}
+
+	std::vector<string> directories = sessionConfig->GetImageDirectories(trialName);
+	std::vector<SourcePair> sources;
+	if (directories.size())
+	{
+		for (string str : directories)
+		{
+			sources.push_back(CreateSource(str));
+		}
+	}
+	else
+	{
+		cout << "no videos recorded" << endl;
+		return;
+	}
+
+	if (grabber->fake)
+	{
+		grabber->SetResolution(sessionConfig->videoWidth,sessionConfig->videoHeight);
+	}
+
+	std::map<int, bool> dispCams;
+	GetCameraDisplayInfo(dispCams);
+
+	// create renderer
+	unsigned winW, winH;
+	PrepRenderWindow( grabber, winW, winH );
+	std::shared_ptr<RecRenderer> renderer;
+	Rendering::RendererFactory::Create( renderer, winW,winH, "Trial Renderer" );
+	renderer->Prep( grabber );
+
+
+	// renderloop
+	std::vector< cv::Mat > bgrImgs( grabber->GetNumCameras() );
+	// for (unsigned cc = 0; cc < grabber->GetNumCameras(); cc++)
+	// {
+	// 	bgrImgs.push_back(sources[cc].source->GetCurrent());
+	// }
+	bool done = false;
+	while(!done)
+	{
+		for (unsigned cc = 0; cc < grabber->GetNumCameras(); cc++)
+		{
+			bgrImgs[cc] = sources[cc].source->GetCurrent();
+			
+			if (!sources[cc].source->Advance())
+			{
+				return;
+			}
+
+		}
+	renderer->Update(bgrImgs,dispCams);
+	}
+
+	}
 
 void ControlsWindow::PopulateTrialList()
 {

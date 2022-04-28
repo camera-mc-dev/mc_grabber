@@ -72,6 +72,8 @@ public:
 	// Returns the names of the trials in the session directory
 	std::vector<string> GetTrialNames();
 
+	std::vector<string> GetImageDirectories(string trialName);
+
 protected:
 
 	// where the main settings are stored (width,height,fps,duration etc)
