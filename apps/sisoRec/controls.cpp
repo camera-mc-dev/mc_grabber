@@ -8,6 +8,8 @@
 #include <boost/filesystem.hpp>
 #include <giomm/file.h>
 
+#include "renderer2/showImage.h"
+
 void GUIThread( GUIThreadData *gtdata )
 {
 	int argc=0; char** argv = NULL;
@@ -933,28 +935,34 @@ void ControlsWindow::RenderTrial(const Gtk::TreeModel::Path& path,
 
 
 	// renderloop
-	std::vector< cv::Mat > bgrImgs( grabber->GetNumCameras() );
-	// for (unsigned cc = 0; cc < grabber->GetNumCameras(); cc++)
-	// {
-	// 	bgrImgs.push_back(sources[cc].source->GetCurrent());
-	// }
+	std::vector< cv::Mat > rawImgs( grabber->GetNumCameras() );
+	
 	bool done = false;
+	int ic = 0;
 	while(!done)
 	{
+		// get images to show (currently just raw images)
 		for (unsigned cc = 0; cc < grabber->GetNumCameras(); cc++)
 		{
-			bgrImgs[cc] = sources[cc].source->GetCurrent();
+			rawImgs[cc] = sources[cc].source->GetCurrent();
 			
 			if (!sources[cc].source->Advance())
 			{
 				return;
 			}
-
+			
 		}
-	renderer->Update(bgrImgs,dispCams);
+		
+		// update renderer with current images and which cameras to view
+		renderer->Update(rawImgs,dispCams);
+		
+		// do the render step
+		bool buffRecord = false;
+		bool liveRecord = false;
+		renderer->Step( buffRecord, liveRecord );
+		
 	}
-
-	}
+}
 
 void ControlsWindow::PopulateTrialList()
 {
