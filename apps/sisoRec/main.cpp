@@ -490,7 +490,7 @@ int main(int argc, char* argv[])
 						for( unsigned cc = 0; cc < tdata.rawBuffers.size(); ++cc )
 						{
 							std::stringstream ss;
-							ss << outDir << "/" << std::setw(2) << std::setfill('0') << cc << "/"
+							ss << outDir.c_str() << "/" << std::setw(2) << std::setfill('0') << cc << "/"
 							<< std::setw(12) << std::setfill('0') << tdata.bufferFrameIdx[cc][ bufIndx ] << ".charImg";
 							SaveImage( grabs[cc], ss.str() );
 						}
