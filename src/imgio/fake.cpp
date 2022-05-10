@@ -62,10 +62,12 @@ void FakeGrabber::CameraLoop()
 	{
 		if( !paused )
 		{
+			std::unique_lock<std::mutex> lock( grabMutex );
 			for (unsigned i = 0; i < cameras.size(); i++)
 			{
 				cameras[i].Advance();
 			}
+			lock.unlock();
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps));
 	}
@@ -84,6 +86,7 @@ FakeGrabber::FakeGrabber(string pathToSource)
 
 void FakeGrabber::GetCurrent()
 {
+	std::unique_lock<std::mutex> lock( grabMutex );
 	if (currentFrames.size() < GetNumCameras())
 	{
 		for (unsigned i = 0; i < GetNumCameras(); i++)
@@ -98,6 +101,7 @@ void FakeGrabber::GetCurrent()
 			currentFrames[i] = cameras[i].GetCurrentFrame();
 		}
 	}
+	lock.unlock();
 }
 
 bool FakeGrabber::GetNumberedFrame(frameindex_t frameIdx, int timeout, std::vector< Mat * > dsts)

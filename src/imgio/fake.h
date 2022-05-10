@@ -22,6 +22,8 @@
 using std::cout;
 using std::endl;
 
+#include <mutex>
+
 //
 // A Fake camera that we can launch in a  seperate thread.
 // Pausing the grabber thread seems to cause issues with GTK.
@@ -205,6 +207,8 @@ class FakeGrabber : public AbstractGrabber
 	int fps = 24;
 	bool done = false;
 	bool paused = false;
+	
+	std::mutex grabMutex;
 };
 
 #endif // MC_GRABBER_FAKE_H
