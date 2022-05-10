@@ -56,6 +56,12 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//
 	allBox.set_border_width(5);
 	allBox.set_orientation(Gtk::ORIENTATION_VERTICAL);
+	vBoxLeft.set_border_width(5);
+	vBoxLeft.set_orientation(Gtk::ORIENTATION_VERTICAL);
+	vBoxRight.set_border_width(5);
+	vBoxRight.set_orientation(Gtk::ORIENTATION_VERTICAL);
+	hBox.set_border_width(5);
+	hBox.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
 	
 	//
 	// Dropdown menu
@@ -131,7 +137,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//
 	//Add the TreeView, inside a ScrolledWindow, with the button underneath:
 	m_ScrolledWindow.add(m_TreeView);
-	m_ScrolledWindow.set_hexpand(true);
+	m_ScrolledWindow.set_vexpand(true);
 
 	//Only show the scrollbars when they are necessary:
 	m_ScrolledWindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
@@ -172,7 +178,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	durScale.set_value(sessionConfig->duration);
 	durScale.set_hexpand(true);
 	
-	sessionNameLabel.set_text("Directory:");
+	sessionNameLabel.set_text("Session:");
 	trialNameLabel.set_text("Trial:");
 	
 	sessionNameEntry.set_text(sessionConfig->sessionName);
@@ -228,7 +234,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	ssFrame.set_label("acquisition");
 	ssFrame.add( ssGrid );
 	
-	allBox.pack_start( ssFrame );
+	vBoxLeft.pack_start( ssFrame );
 	
 	stopGrabButton.set_sensitive(false);
 
@@ -237,11 +243,13 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	sessionGrid.attach(    sessionNameEntry, 1, 0, 1, 1 );
 	sessionGrid.attach(      trialNameLabel, 0, 1, 1, 1 );
 	sessionGrid.attach(      trialNameEntry, 1, 1, 1, 1 );
-	sessionGrid.attach(     trialNumberSpin, 1, 2, 1, 1 );
-	sessionGrid.attach( m_ScrolledWindow, 	 3, 0, 3 ,3 );
+	sessionGrid.attach(     trialNumberSpin, 2, 1, 1, 1 );
+	sessionGrid.attach( m_ScrolledWindow, 	 0, 3, 4, 4 );
 	sessionFrame.set_label("Trials");
 	sessionFrame.add(sessionGrid);
-	allBox.pack_start(sessionFrame);
+	vBoxRight.pack_start(sessionFrame);
+	m_ScrolledWindow.set_hexpand(true);
+	//vBoxRight.pack_start(m_ScrolledWindow);
 	sessionConfig->GetTrialNames();
 
 	//
@@ -290,7 +298,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	int cc = numCameras;
 	camControlGrid.attach( camControlSetButton, cc%3, cc/3, 1, 1);
 	
-	allBox.pack_start( camControlGrid );
+	vBoxLeft.pack_start( camControlGrid );
 	
 	
 	
@@ -326,7 +334,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	allCamExpGrid.attach( allCamExpSetButton, 2, 0, 1, 2 );
 	allCamExpFrame.add( allCamExpGrid );
 	
-	allBox.pack_start( allCamExpFrame );
+	vBoxLeft.pack_start( allCamExpFrame );
 	
 	
 	baseGainGrid.attach( baseGainLabel,      0, 0, 1, 1 );
@@ -335,7 +343,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	baseGainGrid.attach( baseGain12RB,       3, 0, 1, 1 );
 	baseGainGrid.attach( baseGainButton,     4, 0, 1, 1 );
 	baseGainFrame.add( baseGainGrid );
-	allBox.pack_start( baseGainFrame );
+	vBoxLeft.pack_start( baseGainFrame );
 
 	
 	startGrabButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::StartGrabbing ) );
@@ -360,10 +368,11 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	shareGrid.attach( shareSpinner, 1, 0, 1, 1);
 	shareFrame.add( shareGrid );
 	shareFrame.set_label("sharing");
-	allBox.pack_start( shareFrame );
-	
-	
-	add( allBox );
+	vBoxLeft.pack_start( shareFrame );
+	hBox.pack_start(vBoxLeft);
+	hBox.pack_start(vBoxRight);
+	allBox.pack_start(hBox);
+	add(allBox);
 	show_all_children();
 }
 

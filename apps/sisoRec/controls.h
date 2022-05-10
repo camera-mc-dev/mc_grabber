@@ -84,9 +84,14 @@ protected:
 	// Widgets
 	//
 	
-	// box to contain all control frames
+	// box to contain all the widgets
 	Gtk::Box allBox;
-	
+	// previous allBox, contains everything apart from the trials stuff
+	Gtk::Box vBoxLeft;
+	// contains the session name, trial name editor and listview
+	Gtk::Box vBoxRight;
+	// box to stack vBoxLeft and vBoxRight
+	Gtk::Box hBox;
 	
 	//
 	// Dropdown menu
