@@ -67,19 +67,19 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//File menu:
 	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
 	m_refActionGroup->add(Gtk::Action::create("FileNew",
-	          Gtk::Stock::NEW, "_New", "Create a new session"),
+	          Gtk::Stock::NEW, "New Session", "Create a new session"),
 	      sigc::mem_fun(*this, &ControlsWindow::MenuFileNew));
 	
 	m_refActionGroup->add(Gtk::Action::create("FileLoad", 
-		Gtk::Stock::OPEN, "Load", "Load a pre-existing session"),
+		Gtk::Stock::OPEN, "Load Session", "Load a pre-existing session"),
 	      sigc::mem_fun(*this, &ControlsWindow::MenuFileLoad));
 
 	m_refActionGroup->add(Gtk::Action::create("FileMove", 
-		Gtk::Stock::DIRECTORY, "Move/Rename", "Move existing session and all trials to different directory"),
+		Gtk::Stock::DIRECTORY, "Move/Rename Session", "Move existing session and all trials to different directory"),
 	      sigc::mem_fun(*this, &ControlsWindow::MenuFileMove));
 
 	m_refActionGroup->add(Gtk::Action::create("FileSave", 
-		Gtk::Stock::SAVE, "Save", "Save existing session"),
+		Gtk::Stock::SAVE, "Save Settings", "Save existing session"),
 	      sigc::mem_fun(*this, &ControlsWindow::MenuFileSave));
 	
 	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
