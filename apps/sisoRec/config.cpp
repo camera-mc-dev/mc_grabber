@@ -407,8 +407,19 @@ std::vector<string> ConfigParser::GetImageDirectories(string trialName)
 	std::vector<string> directories;
 	fs::path tp0 = rootPath / fs::path(sessionName) / fs::path(trialName);
 	fs::path tp1 = fs::path(saveRoot1) / fs::path(sessionName) / fs::path(trialName);
-	std::vector<fs::path> paths{tp0,tp1};
 
+	std::vector<fs::path> paths;
+	// add this check so we dont render twice as many cameras if were not on a dual directory system
+	if (!fs::equivalent(tp0,tp1))
+	{
+		paths.push_back(tp0);
+		paths.push_back(tp1);	
+	}
+	else
+	{
+		paths.push_back(tp0);
+	}
+	
 	for (fs::path tp : paths)
 	{
 		if (!fs::exists(tp))
