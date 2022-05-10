@@ -146,7 +146,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	
 	//Add the TreeView's view columns:
 	//m_TreeView.append_column("ID", m_Columns.m_col_id);
-	m_TreeView.append_column("Name", m_Columns.m_col_name);
+	m_TreeView.append_column("Previous trials:", m_Columns.m_col_name);
 
 	//Connect signal:
 	m_TreeView.signal_row_activated().connect(sigc::mem_fun(*this,

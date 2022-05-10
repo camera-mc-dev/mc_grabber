@@ -77,7 +77,7 @@ class FakeGrabber : public AbstractGrabber
 	unsigned GetNumCameras()
 	{
 		// always just return 4 for now.
-		return 6;
+		return 4;
 	}
 
 	std::vector< Mat > currentFrames;

@@ -182,19 +182,21 @@ void ConfigParser::SaveCameraEntries()
 
 	libconfig::Config cfg;
 	auto &cfgRoot = cfg.getRoot();
-
+	libconfig::Setting &numCamerasConf = cfgRoot.add("numCameras", libconfig::Setting::TypeInt);
 	libconfig::Setting &camExposures = cfgRoot.add("camexposures", libconfig::Setting::TypeArray);
 	libconfig::Setting &camGains = cfgRoot.add("camgains", libconfig::Setting::TypeArray);
 	libconfig::Setting &camsDisplayed = cfgRoot.add("camsdisplayed", libconfig::Setting::TypeArray);
-	
 	for (unsigned i=0; i < numCameras; i++)
 	{
 		camExposures.add(libconfig::Setting::TypeInt) = camSettings[i].exposure;
 		camGains.add(libconfig::Setting::TypeFloat) = camSettings[i].gain;
 		camsDisplayed.add(libconfig::Setting::TypeBoolean) = camSettings[i].displayed;
 	}
-	
 	fs::path camerasConfigPath = rootPath / fs::path(sessionName) / fs::path(camerasFileName);
+	cfg.writeFile( camerasConfigPath.string().c_str() );
+	
+	cfg.readFile(camerasConfigPath.string().c_str());
+	cfg.lookup("numCameras") = numCameras;
 	cfg.writeFile( camerasConfigPath.string().c_str() );
 
 
@@ -215,8 +217,10 @@ bool ConfigParser::LoadCameraEntries()
 	
 	libconfig::Config cfg;
 	cfg.readFile( camerasConfigPath.string().c_str() );
+	int numCamerasConf;
 	try
 	{
+		numCamerasConf = cfg.lookup("numCameras");
 		libconfig::Setting &camExposures = cfg.lookup("camexposures"); 
 		libconfig::Setting &camGains = cfg.lookup("camgains");
 		libconfig::Setting &camsDisplayed = cfg.lookup("camsdisplayed");
@@ -237,6 +241,11 @@ bool ConfigParser::LoadCameraEntries()
 		cout << e.getPath() << endl;
 		return false;
 	}
+if (numCamerasConf != numCameras)
+{
+	cout << "Error: will not load session with " << numCamerasConf << " cameras with " << numCameras << " cameras connected." << endl;
+	return false;
+}
 return true;
 }
 
