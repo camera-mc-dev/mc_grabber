@@ -386,6 +386,7 @@ void ControlsWindow::SetMaxExposure()
 }
 ControlsWindow::~ControlsWindow()
 {
+	exit(0);
 }
 
 void ControlsWindow::SetWidgetValues()
@@ -816,6 +817,7 @@ void ControlsWindow::ShowDialog()
 void ControlsWindow::MenuFileQuit()
 {
   hide(); //Closes the main window to stop the Gtk::Main::run().
+  exit(0);
 }
 
 void ControlsWindow::MenuFileUnimplemented()
