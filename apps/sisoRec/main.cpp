@@ -1,6 +1,6 @@
 #ifdef USE_SISO
 
-// #define GRABBER_SAVE_AS_HDF5
+#define GRABBER_SAVE_AS_HDF5
 
 
 #include <iostream>
