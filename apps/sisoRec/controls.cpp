@@ -970,7 +970,14 @@ void ControlsWindow::RenderTrial(const Gtk::TreeModel::Path& path,
 		// do the render step
 		bool buffRecord = false;
 		bool liveRecord = false;
-		renderer->Step( buffRecord, liveRecord );
+
+		if (grabber->fake)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000/24));	
+		}
+		
+		// reading the "close" event from Step to stop the render loop if we close the window.
+		done = renderer->Step( buffRecord, liveRecord );
 		
 	}
 }
