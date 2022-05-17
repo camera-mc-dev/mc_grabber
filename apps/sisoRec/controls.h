@@ -142,7 +142,10 @@ protected:
 	//
 	// Trial treeview
 	//
-	void PopulateTrialList();
+	void PopulateTrialList()
+	{
+		PopulateTrialList(this);
+	}
 	void RenderTrial(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
 
   	//Tree model columns:
@@ -259,6 +262,8 @@ protected:
 	sigc::connection fpsTimerConnection;
 
 public:
+	static gboolean PopulateTrialList(gpointer self);
+
 	void StartGrabbing();
 	
 	// when called from seperate thread, needs to be called with 

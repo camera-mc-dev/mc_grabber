@@ -982,21 +982,22 @@ void ControlsWindow::RenderTrial(const Gtk::TreeModel::Path& path,
 	}
 }
 
-void ControlsWindow::PopulateTrialList()
+gboolean ControlsWindow::PopulateTrialList(gpointer self)
 {
+	ControlsWindow * window  = (ControlsWindow*) self;
 	//Create the Tree model:
-	m_refTreeModel = Gtk::TreeStore::create(m_Columns);
-	m_TreeView.set_model(m_refTreeModel);
-	m_TreeView.set_hexpand(true);
+	window->m_refTreeModel = Gtk::TreeStore::create(window->m_Columns);
+	window->m_TreeView.set_model(window->m_refTreeModel);
+	window->m_TreeView.set_hexpand(true);
 
-	std::vector<string> trials = sessionConfig->GetTrialNames();
+	std::vector<string> trials = window->sessionConfig->GetTrialNames();
 	
 	//Fill the TreeView's model
 	for (unsigned i =0; i < trials.size(); i++) 
 	{
-		Gtk::TreeModel::Row row = *(m_refTreeModel->append());
-		row[m_Columns.m_col_id] = i;
-		row[m_Columns.m_col_name] = trials[i];	
+		Gtk::TreeModel::Row row = *(window->m_refTreeModel->append());
+		row[window->m_Columns.m_col_id] = i;
+		row[window->m_Columns.m_col_name] = trials[i];	
 	}
 
 }
