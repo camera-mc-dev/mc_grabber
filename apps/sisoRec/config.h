@@ -72,7 +72,11 @@ public:
 	// Returns the names of the trials in the session directory
 	std::vector<string> GetTrialNames();
 
+	// returns the image directories in a trial (as strings but the parsing is done with boost::fs)
 	std::vector<string> GetImageDirectories(string trialName);
+
+	// gets the first .hdf5 file from a directory. returns an empty string if none found
+	string GetHDF5(string directory);
 
 protected:
 

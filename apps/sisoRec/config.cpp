@@ -448,3 +448,16 @@ std::vector<string> ConfigParser::GetImageDirectories(string trialName)
 	std::sort(directories.begin(),directories.end());
 	return directories;
 }
+
+string ConfigParser::GetHDF5(string directory)
+{
+	fs::path p(directory);
+	for (const auto & entry : fs::directory_iterator(p)){
+		if(entry.path().extension() == ".hdf5")
+		{
+			return entry.path().string();
+		}
+	}
+	return "";
+
+}

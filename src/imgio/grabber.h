@@ -56,6 +56,7 @@ public:
 	virtual void SetBaseGain( int cam, baseGain_t value ) = 0 ;
 	
 	bool fake = false;
+	bool save_as_hdf5 = false;
 };
 
 

@@ -75,11 +75,19 @@ public:
 	{
 		return durScale.get_value();
 	}
+
+	void SetSaveMode(string saveMode)
+	{
+		if (saveMode == "hdf5")
+		{
+			save_hdf5 = true;
+		}
+	}
 	
 	GrabThreadData gdata;
 
 protected:
-
+	bool save_hdf5 = false;
 	//
 	// Widgets
 	//
@@ -149,12 +157,14 @@ protected:
   	class ModelColumns : public Gtk::TreeModel::ColumnRecord
 	{
 	public:
+	
+	
+	
+	ModelColumns()
+	{ add(m_col_id); add(m_col_name); }
 
-		ModelColumns()
-		{ add(m_col_id); add(m_col_name); }
-
-		Gtk::TreeModelColumn<int> m_col_id;
-		Gtk::TreeModelColumn<Glib::ustring> m_col_name;
+	Gtk::TreeModelColumn<int> m_col_id;
+	Gtk::TreeModelColumn<Glib::ustring> m_col_name;
 	};
 
 	ModelColumns m_Columns;

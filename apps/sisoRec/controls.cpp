@@ -918,10 +918,31 @@ void ControlsWindow::RenderTrial(const Gtk::TreeModel::Path& path,
 	std::vector<SourcePair> sources;
 	if (directories.size())
 	{
-		for (string str : directories)
+		if (save_hdf5)
 		{
-			sources.push_back(CreateSource(str));
+			for (string str : directories)
+			{
+				string video_str = sessionConfig->GetHDF5(str);
+				if (!video_str.empty())
+				{
+					sources.push_back(CreateSource(video_str));	
+				}
+				else
+				{
+					continue;
+				}
+				
+			}
 		}
+		else
+		{
+			for (string str : directories)
+			{
+				sources.push_back(CreateSource(str));
+			}
+
+		}
+		
 	}
 	else
 	{

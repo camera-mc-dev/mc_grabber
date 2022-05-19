@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 	{
 		grabber = new FakeGrabber(videoPath);	
 	}
-	
+
 	grabber->PrintCameraInfo();
 	grabber->SetOutput1StateLow(0);
 	
@@ -124,8 +124,10 @@ int main(int argc, char* argv[])
 	std::unique_lock<std::mutex> gtlock(gtdata.signalHandler->mtx);
 	while(!gtdata.signalHandler->ready) gtdata.signalHandler->cv.wait(gtlock);
 	
-	
-	
+#ifdef GRABBER_SAVE_AS_HDF5
+			gtdata.window->SetSaveMode("hdf5");
+#endif
+
 	
 	// create the image sender
 	ImageSender isender(ioService, 90210);
@@ -750,8 +752,14 @@ void SaveEven(GrabThreadData *tdata)
 				
 				if( bufIndx >= tdata->buffersNeeded )
 					bufIndx = bufIndx - tdata->buffersNeeded;
-				
-				writer.AddImage( tdata->rawBuffers[cc][ bufIndx ], tdata->bufferFrameIdx[cc][ bufIndx ] );
+				try
+				{
+					writer.AddImage( tdata->rawBuffers[cc][ bufIndx ], tdata->bufferFrameIdx[cc][ bufIndx ] );	
+				}
+				catch(HighFive::DataSetException& e)
+				{
+					cout << "HDF5 file already had frame. Ignoring exception." << endl;
+				}
 				
 				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
 			}
@@ -829,8 +837,15 @@ void SaveOdd(GrabThreadData *tdata)
 				
 				if( bufIndx >= tdata->buffersNeeded )
 					bufIndx = bufIndx - tdata->buffersNeeded;
+				try 
+				{
+					writer.AddImage( tdata->rawBuffers[cc][ bufIndx ], tdata->bufferFrameIdx[cc][ bufIndx ] );
+				}
+				catch(HighFive::DataSetException& e)
+				{
+					cout << "HDF5 file already had frame. Ignoring exception." << endl;
+				}
 				
-				writer.AddImage( tdata->rawBuffers[cc][ bufIndx ], tdata->bufferFrameIdx[cc][ bufIndx ] );
 				
 				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
 			}
