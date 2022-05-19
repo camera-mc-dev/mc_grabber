@@ -389,7 +389,11 @@ int main(int argc, char* argv[])
 					
 					buffRecord = false;
 					liveRecord = false;
+					
+					// update the trial list from here so we dont need to wait for the window to close or poll
+					// the grabber window from the gtk thread
 					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
+
 					auto t2 = std::chrono::steady_clock::now();
 					std::stringstream clss;
 					clss << outDir0.string()<< "/capTime.log";
