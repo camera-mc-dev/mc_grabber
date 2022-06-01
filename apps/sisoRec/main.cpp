@@ -216,6 +216,7 @@ int main(int argc, char* argv[])
 			
 			std::map<int, bool> dispCams;
 			tdata.meanfps = -1.0f;
+			bool new_liverecord = true;
 			// run renderer
 			while( !gtdata.done && gtdata.window->grabbing )
 			{
@@ -278,6 +279,7 @@ int main(int argc, char* argv[])
 				
 				sendImgs[0] = bgrImgs[ gtdata.window->GetSendImageIndx() ];
 				isender.SetImages("SiSo Rec image", sendImgs );
+				
 				
 				if( buffRecord )
 				{
@@ -414,6 +416,11 @@ int main(int argc, char* argv[])
 				
 				if( liveRecord )
 				{
+					if (new_liverecord)
+					{
+						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
+						new_liverecord = false;	
+					}
 					GrabThreadData &tdata = gtdata.window->gdata;
 					buffRecord = false;
 					
@@ -498,7 +505,7 @@ int main(int argc, char* argv[])
 							<< std::setw(12) << std::setfill('0') << tdata.bufferFrameIdx[cc][ bufIndx ] << ".charImg";
 							SaveImage( grabs[cc], ss.str() );
 						}
-					}
+					} 
 					
 					T = transMatrix3D::Identity();
 					T(0,3) = 0.05f;
@@ -509,6 +516,7 @@ int main(int argc, char* argv[])
 					Eigen::Vector4f rcol; rcol << v2, 1.0-v2, 0.0, 0.8;
 					liveRecCircle->SetBaseColour(rcol);
 					
+					
 				}
 				else
 				{
@@ -516,6 +524,9 @@ int main(int argc, char* argv[])
 					T(0,3) = -5.0f;
 					T(1,3) = 0.5f;
 					liveRecCircle->SetTransformation(T);
+					new_liverecord = true;
+					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
+
 				}
 				
 			}

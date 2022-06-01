@@ -46,6 +46,7 @@ void ConfigParser::GenerateDefaultConfig()
 	duration    = 10;
 	trialName   = "test";
 	trialNum    = 0;
+	calibNum    = 0;
 	SetCameraSettings();	
 }
 bool ConfigParser::Load()
@@ -63,6 +64,7 @@ bool ConfigParser::Load()
 			duration    = cfg.lookup("duration");
 			trialName   = (const char*) cfg.lookup("trialname");
 			trialNum    = cfg.lookup("trialnum");
+			calibNum 	= cfg.lookup("calibnum");
 			sessionDate = (const char*) cfg.lookup("sessionDate");
 			if (!LoadCameraEntries())
 			{
@@ -123,6 +125,7 @@ void ConfigParser::Save()
 			cfgRoot.add("duration", libconfig::Setting::TypeInt);
 			cfgRoot.add("trialname", libconfig::Setting::TypeString);
 			cfgRoot.add("trialnum", libconfig::Setting::TypeInt);
+			cfgRoot.add("calibnum", libconfig::Setting::TypeInt);
 			cfgRoot.add("sessionDate", libconfig::Setting::TypeString);
 			
 			cfg.writeFile( configPath.string().c_str() );
@@ -137,6 +140,7 @@ void ConfigParser::Save()
 		cfg.lookup("duration")    = duration;
 		cfg.lookup("trialname")   = trialName;
 		cfg.lookup("trialnum")    = trialNum;
+		cfg.lookup("calibnum")    = calibNum;
 	    cfg.lookup("sessionDate") = currentDate;
 		cfg.writeFile( configPath.string().c_str() );
 		

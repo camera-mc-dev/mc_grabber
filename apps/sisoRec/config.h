@@ -50,6 +50,7 @@ public:
 	string trialName;
 	string sessionName;
 	int trialNum;
+	int calibNum;
 	int fps;
 	int duration;
 	int videoWidth;
