@@ -11,6 +11,7 @@ import mcdev_grabber_config as grabbercfg
 # results of some checks.
 # ---------------------------------------------------------
 openmpAvailable = True
+haveNets = os.path.exists("%s/../mc_nets/"%(Dir('.').abspath))
 
 # ---------------------------------------------------------
 # Set libraries to link against and include paths for the compiler
@@ -22,6 +23,9 @@ def SetPathsLibsAndFlagsAll(env):
 	grabbercfg.SetGrabberConfig(env)
 	env.Append(CPPPATH=["%s/../mc_core/src"%(Dir('.').abspath)])
 	env.Append(CPPPATH=["%s/../mc_imgproc/src"%(Dir('.').abspath)])
+	if haveNets:
+		env.Append(CPPPATH=["%s/../mc_nets/src"%(Dir('.').abspath)])
+		env.Append(CPPDEFINES=["HAVE_MC_NETS"])
 
 
 

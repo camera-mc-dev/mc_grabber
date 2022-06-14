@@ -3,6 +3,12 @@
 #include "controls.h"
 #include "grab.h"
 #include "gridDetect.h"
+
+#ifdef HAVE_MC_NETS
+#include "deepNets/calibGrid/calibGrid.h"
+#endif
+
+
 #include <chrono>
 
 void GridDetectThread( SGridDetectData *data )
@@ -11,6 +17,13 @@ void GridDetectThread( SGridDetectData *data )
 	int grows, gcols;
 	bool lightOnDark;
 	
+#ifdef HAVE_MC_NETS
+	std::string netPath;
+	std::string netName;
+	auto ctx = mx::Context::gpu(0);
+	CalibGridDetectNet cgdNet( netPath, netName, data->inBGR.size(), ctx );
+	cv::Mat tmpf;
+#endif
 	std::shared_ptr<CircleGridDetector> cgDetector;
 	
 	while( !data->done )
@@ -39,6 +52,32 @@ void GridDetectThread( SGridDetectData *data )
 		}
 		
 		// try to get grids
+#ifdef HAVE_MC_NETS
+		// If we've got one of our grid detector networks, then we can at least try it.
+		// we probably don't expect it to find the grid circles well enough for calibration,
+		// but at the very least, we can get a good idea of whether the grid is visible, and 
+		// where it is in the image.
+		std::vector< cv::Mat > smallImgs( imgs.size() );
+		for( unsigned ic = 0; ic < imgs.size(); ++ic )
+		{
+			cv::Mat rawf, input;
+			imgs[ic].convertTo( tmpf, CV_32FC3 );
+			tmpf /= 255.0f;
+			cv::resize( tmpf, smallImgs[ic], cv::Size( 480, 270 ) );
+		}
+		std::vector< std::vector<hVec2D> > detections( imgs.size() );
+		cgdNet.Detect( smallImgs, detections );
+		
+		for( unsigned ic = 0; ic < detections.size(); ++ic )
+		{
+			cout << "cgdNet -- " << ic << " --" << endl;
+			for( unsigned pc = 0; pc < detections[ic].size(); ++pc )
+			{
+				cout << detections[ic][pc].transpose() << endl;
+			}
+		}
+		
+#else
 		std::vector< std::vector< CircleGridDetector::GridPoint > > gridPoints( imgs.size() );
 		unsigned maxDetections = 0;
 		unsigned goodCount = 0;
@@ -49,6 +88,7 @@ void GridDetectThread( SGridDetectData *data )
 			if( gridPoints[cc].size() == grows * gcols )
 				++goodCount;
 		}
+#endif
 		
 		auto r = data->renderer.lock();
 		// have we got grids?
