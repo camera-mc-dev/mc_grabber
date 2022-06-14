@@ -6,29 +6,46 @@
 #include <ctime>
 #include <iomanip>
 #include <boost/filesystem.hpp>
+#include <giomm/file.h>
 
+#include "renderer2/showImage.h"
 
 void GUIThread( GUIThreadData *gtdata )
 {
 	int argc=0; char** argv = NULL;
+
+	// tell the main thread to pause until this thread is ready
+	SignalHandler * handler = new SignalHandler();
+	gtdata->signalHandler = handler;
+	
 	auto app = Gtk::Application::create(argc, argv, "recording controls");
-	
-	ControlsWindow window( gtdata->grabber );
+
+	ControlsWindow window( gtdata->grabber);
 	window.set_default_size(400, 200);
-	
+
 	gtdata->window = &window;
-	
+
+	gtdata->signalHandler->ready = true;
+	gtdata->signalHandler->cv.notify_all();
+
 	app->run(window);
-	
-	
+
 	gtdata->done = true;
-	
-	return;
+	gtdata->window->UpdateSessionConfig();
+
 }
 
 
 ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 {
+	// Generate the config parser
+	sessionConfig = new ConfigParser(in_grabber->GetNumCameras());
+	// check if the config has found a pre-existing session for today
+	if (sessionConfig->showDialog)
+	{
+		ShowDialog();
+	}
+
 	// TODO: Get input from the grabber class.
 	grabber = in_grabber;
 	numCameras = grabber->GetNumCameras();
@@ -39,23 +56,116 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//
 	allBox.set_border_width(5);
 	allBox.set_orientation(Gtk::ORIENTATION_VERTICAL);
+	vBoxLeft.set_border_width(5);
+	vBoxLeft.set_orientation(Gtk::ORIENTATION_VERTICAL);
+	vBoxRight.set_border_width(5);
+	vBoxRight.set_orientation(Gtk::ORIENTATION_VERTICAL);
+	hBox.set_border_width(5);
+	hBox.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
 	
+	//
+	// Dropdown menu
+	//
+
+	//Create actions for menus and toolbars:
+	m_refActionGroup = Gtk::ActionGroup::create();
+
+	//File menu:
+	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
+	m_refActionGroup->add(Gtk::Action::create("FileNew",
+	          Gtk::Stock::NEW, "New Session", "Create a new session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileNew));
+	
+	m_refActionGroup->add(Gtk::Action::create("FileLoad", 
+		Gtk::Stock::OPEN, "Load Session", "Load a pre-existing session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileLoad));
+
+	m_refActionGroup->add(Gtk::Action::create("FileMove", 
+		Gtk::Stock::DIRECTORY, "Move/Rename Session", "Move existing session and all trials to different directory"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileMove));
+
+	m_refActionGroup->add(Gtk::Action::create("FileSave", 
+		Gtk::Stock::SAVE, "Save Settings", "Save existing session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileSave));
+	
+	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileQuit));
+
+	//Help menu:
+	m_refActionGroup->add( Gtk::Action::create("HelpMenu", "Help") );
+	m_refActionGroup->add( Gtk::Action::create("HelpAbout", Gtk::Stock::HELP),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileUnimplemented) );
+
+	m_refUIManager = Gtk::UIManager::create();
+	m_refUIManager->insert_action_group(m_refActionGroup);
+
+	add_accel_group(m_refUIManager->get_accel_group());
+
+	//Layout the actions in a menubar:
+	Glib::ustring ui_info = 
+	    "<ui>"
+        "  <menubar name='MenuBar'>"
+        "    <menu action='FileMenu'>"
+        "      <menuitem action='FileNew'/>"
+		"      <menuitem action='FileLoad'/>"
+		"      <menuitem action='FileMove'/>"
+		"      <menuitem action='FileSave'/>"
+        "      <menuitem action='FileQuit'/>"
+        "    </menu>"
+        "    <menu action='HelpMenu'>"
+        "      <menuitem action='HelpAbout'/>"
+        "    </menu>"
+        "  </menubar>"
+        "</ui>";
+
+	try
+	{
+		m_refUIManager->add_ui_from_string(ui_info);
+	}
+	catch(const Glib::Error& ex)
+	{
+		std::cerr << "building menus failed: " <<  ex.what();
+	}
+
+	//Get the menubar widgets and add them to a container widget:
+	Gtk::Widget* pMenubar = m_refUIManager->get_widget("/MenuBar");
+	if(pMenubar)
+		allBox.pack_start(*pMenubar, Gtk::PACK_SHRINK);
+
+	//
+	// List view for trials
+	//
+	//Add the TreeView, inside a ScrolledWindow, with the button underneath:
+	m_ScrolledWindow.add(m_TreeView);
+	m_ScrolledWindow.set_vexpand(true);
+
+	//Only show the scrollbars when they are necessary:
+	m_ScrolledWindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+
+	PopulateTrialList();
+	
+	//Add the TreeView's view columns:
+	//m_TreeView.append_column("ID", m_Columns.m_col_id);
+	m_TreeView.append_column("Previous trials:", m_Columns.m_col_name);
+
+	//Connect signal:
+	m_TreeView.signal_row_activated().connect(sigc::mem_fun(*this,
+	          &ControlsWindow::RenderTrial) );
+
 	//
 	// Create start/stop controls
 	//
 	xResLabel.set_text("width");
-	xResScale.set_range(64, 2560);
-	xResScale.set_value(480);
-	xResScale.set_hexpand(true);
+	xResEntry.set_text(std::to_string(sessionConfig->videoWidth));
+	xResEntry.set_hexpand(true);
 	
 	yResLabel.set_text("height");
-	yResScale.set_range(2,2048);
-	yResScale.set_value(360);
-	yResScale.set_hexpand(true);
+	yResEntry.set_text(std::to_string(sessionConfig->videoHeight));
+	yResEntry.set_hexpand(true);
 	
 	fpsLabel.set_text("fps");
 	fpsScale.set_range(1,200);
-	fpsScale.set_value(200);
+	fpsScale.set_value(sessionConfig->fps);
 	fpsScale.set_hexpand(true);
 
 	obsFpsA.set_text("observed fps:");
@@ -65,30 +175,19 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	
 	durLabel.set_text("duration (s)");
 	durScale.set_range(1,20);
-	durScale.set_value(10);
+	durScale.set_value(sessionConfig->duration);
 	durScale.set_hexpand(true);
 	
 	sessionNameLabel.set_text("Session:");
 	trialNameLabel.set_text("Trial:");
 	
-	time_t rawNow;
-	time(&rawNow);
-	auto now = localtime(&rawNow);
-	std::stringstream defSessionName;
-	defSessionName << now->tm_year + 1900 << "-"
-	               << std::setw(2) << std::setfill('0') << now->tm_mon+1 << "-"
-	               << std::setw(2) << std::setfill('0') << now->tm_mday;
-	sessionNameEntry.set_text( defSessionName.str() );
-	trialNameEntry.set_text("test");
+	sessionNameEntry.set_text(sessionConfig->sessionName);
+	sessionNameEntry.set_sensitive(false);
+	trialNameEntry.set_text(sessionConfig->trialName);
 	
 	trialNumberSpin.set_range(0, 99);
-	trialNumberSpin.set_value(0);
+	trialNumberSpin.set_value(sessionConfig->trialNum);
 	trialNumberSpin.set_increments(1,1);
-	
-	
-	sessionNameEntry.set_hexpand(true);
-	trialNameEntry.set_hexpand(true);
-	trialNumberSpin.set_hexpand(true);
 	
 	startGrabButton.set_label("Start Grabbing");
 	stopGrabButton.set_label("Stop Grabbing");
@@ -108,17 +207,21 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	gridColsSpin.set_increments(1,1);
 	gridLightOnDarkCheck.set_label("light on dark");
 	gridLightOnDarkCheck.set_active(false);
+
+	// parameters for Gtk::Grid.attach:
+	// child – The widget to add.
+	// left – The column number to attach the left side of child to.
+	// top – The row number to attach the top side of child to.
+	// width – The number of columns that child will span.
+	// height – The number of rows that child will span.
+
 	
-	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResScale, 1, 0, 3, 1 );
-	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResScale, 1, 1, 3, 1 );
-	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 3, 1 );
-	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 3, 1 );
+	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResEntry, 1, 0, 4, 1 );
+	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResEntry, 1, 1, 4, 1 );
+	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 4, 1 );
+	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 4, 1 );
 	ssGrid.attach( obsFpsA,   0, 4, 1, 1); ssGrid.attach( obsFpsB,   1, 4, 1, 1 );
-	ssGrid.attach(    sessionNameLabel, 0, 5, 1, 1 );
-	ssGrid.attach(    sessionNameEntry, 1, 5, 4, 1 );
-	ssGrid.attach(      trialNameLabel, 0, 6, 1, 1 );
-	ssGrid.attach(      trialNameEntry, 1, 6, 2, 1 );
-	ssGrid.attach(     trialNumberSpin, 3, 6, 1, 1 );
+	
 	ssGrid.attach(     startGrabButton, 0, 7, 2, 1 );
 	ssGrid.attach(     stopGrabButton,  2, 7, 2, 1 );
 	ssGrid.attach(   calibModeCheckBtn, 0, 8, 2, 1 );
@@ -131,10 +234,24 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	ssFrame.set_label("acquisition");
 	ssFrame.add( ssGrid );
 	
-	allBox.pack_start( ssFrame );
+	vBoxLeft.pack_start( ssFrame );
 	
 	stopGrabButton.set_sensitive(false);
-	
+
+
+	sessionGrid.attach(    sessionNameLabel, 0, 0, 1, 1 );
+	sessionGrid.attach(    sessionNameEntry, 1, 0, 1, 1 );
+	sessionGrid.attach(      trialNameLabel, 0, 1, 1, 1 );
+	sessionGrid.attach(      trialNameEntry, 1, 1, 1, 1 );
+	sessionGrid.attach(     trialNumberSpin, 2, 1, 1, 1 );
+	sessionGrid.attach( m_ScrolledWindow, 	 0, 3, 4, 4 );
+	sessionFrame.set_label("Trials");
+	sessionFrame.add(sessionGrid);
+	vBoxRight.pack_start(sessionFrame);
+	m_ScrolledWindow.set_hexpand(true);
+	//vBoxRight.pack_start(m_ScrolledWindow);
+	sessionConfig->GetTrialNames();
+
 	//
 	// Create per-camera gain and exposure controls.
 	//
@@ -153,7 +270,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 		camFrames[cc].set_label( ss.str() );
 		camExpLabels[cc].set_label("exp 1/x (s)");
 		camGainLabels[cc].set_label("gain");
-		camExpScales[cc].set_range(1,1000);
+		camExpScales[cc].set_range(fpsScale.get_value(),1000);
 		camGainScales[cc].set_range(1,16);
 		
 		camFrames[cc].set_hexpand(true);
@@ -161,11 +278,11 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 		camGainLabels[cc].set_hexpand(false);
 		camExpScales[cc].set_hexpand(true);
 		camGainScales[cc].set_hexpand(true);
-		camExpScales[cc].set_value(250);
-		camGainScales[cc].set_value(1);
+		camExpScales[cc].set_value(sessionConfig->camSettings[cc].exposure);
+		camGainScales[cc].set_value(sessionConfig->camSettings[cc].gain);
 		
 		camDisplayedChecks[cc].set_label("displayed");
-		camDisplayedChecks[cc].set_active(true);
+		camDisplayedChecks[cc].set_active(sessionConfig->camSettings[cc].displayed);
 		
 		camGrids[cc].set_hexpand(true);
 		camGrids[cc].attach( camExpLabels[cc] , 0, 0, 1, 1 );
@@ -181,7 +298,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	int cc = numCameras;
 	camControlGrid.attach( camControlSetButton, cc%3, cc/3, 1, 1);
 	
-	allBox.pack_start( camControlGrid );
+	vBoxLeft.pack_start( camControlGrid );
 	
 	
 	
@@ -202,7 +319,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	baseGain12RB.join_group( baseGain00RB );
 	baseGain00RB.set_active();
 	
-	allCamGainScale.set_value(1);
+	allCamGainScale.set_value(fpsScale.get_value());
 	allCamExpScale.set_value(250);
 	
 	allCamExpGrid.set_hexpand(true);
@@ -217,7 +334,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	allCamExpGrid.attach( allCamExpSetButton, 2, 0, 1, 2 );
 	allCamExpFrame.add( allCamExpGrid );
 	
-	allBox.pack_start( allCamExpFrame );
+	vBoxLeft.pack_start( allCamExpFrame );
 	
 	
 	baseGainGrid.attach( baseGainLabel,      0, 0, 1, 1 );
@@ -226,11 +343,8 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	baseGainGrid.attach( baseGain12RB,       3, 0, 1, 1 );
 	baseGainGrid.attach( baseGainButton,     4, 0, 1, 1 );
 	baseGainFrame.add( baseGainGrid );
-	allBox.pack_start( baseGainFrame );
+	vBoxLeft.pack_start( baseGainFrame );
 
-	
-	
-	
 	
 	startGrabButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::StartGrabbing ) );
 	stopGrabButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::StopGrabbing ) );
@@ -238,7 +352,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	camControlSetButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetGainsAndExposures ) );
 	allCamExpSetButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetAllGainsAndExposures ) );
 	baseGainButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetAllBaseGains ) );
-	
+	fpsScale.signal_value_changed().connect(sigc::mem_fun(*this, &ControlsWindow::SetMaxExposure ) );
 	
 	
 	//
@@ -254,26 +368,91 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	shareGrid.attach( shareSpinner, 1, 0, 1, 1);
 	shareFrame.add( shareGrid );
 	shareFrame.set_label("sharing");
-	allBox.pack_start( shareFrame );
-	
-	
-	add( allBox );
+	vBoxLeft.pack_start( shareFrame );
+	hBox.pack_start(vBoxLeft);
+	hBox.pack_start(vBoxRight);
+	allBox.pack_start(hBox);
+	add(allBox);
 	show_all_children();
 }
 
+void ControlsWindow::SetMaxExposure()
+{
+	allCamExpScale.set_range(fpsScale.get_value(), 1000);
+	for( unsigned cc = 0; cc < numCameras; ++cc )
+	{
+		camExpScales[cc].set_range(fpsScale.get_value(),1000);
+	}
+}
 ControlsWindow::~ControlsWindow()
 {
+	exit(0);
+}
+
+void ControlsWindow::SetWidgetValues()
+{
+	xResEntry.set_text(std::to_string(sessionConfig->videoWidth));
+	yResEntry.set_text(std::to_string(sessionConfig->videoHeight));
+	fpsScale.set_value(sessionConfig->fps);
+	durScale.set_value(sessionConfig->duration);
+	sessionNameEntry.set_text(sessionConfig->sessionName);
+	trialNameEntry.set_text(sessionConfig->trialName);
+	trialNumberSpin.set_value(sessionConfig->trialNum);
+	for( unsigned cc = 0; cc < numCameras; ++cc )
+	{
+		camExpScales[cc].set_value(sessionConfig->camSettings[cc].exposure);
+		camGainScales[cc].set_value(sessionConfig->camSettings[cc].gain);
+		camDisplayedChecks[cc].set_active(sessionConfig->camSettings[cc].displayed);
+	}
+	PopulateTrialList();
+
+}
+void ControlsWindow::UpdateSessionConfig(bool save)
+{
+	// if in calibmode, dont store all the gtk settings.
+	if (calibModeCheckBtn.get_active())
+	{
+		sessionConfig->calibNum = trialNumberSpin.get_value();
+		sessionConfig->Save();
+	}
+	else
+	{
+		sessionConfig->sessionName = sessionNameEntry.get_text();
+		sessionConfig->videoWidth = GetResEntry(&xResEntry);
+		sessionConfig->videoHeight = GetResEntry(&yResEntry);
+		sessionConfig->fps = fpsScale.get_value();
+		sessionConfig->duration = durScale.get_value();
+		sessionConfig->trialNum = trialNumberSpin.get_value();
+		sessionConfig->trialName = trialNameEntry.get_text();
+		
+		for( unsigned cc = 0; cc < numCameras; ++cc )
+		{
+			sessionConfig->camSettings[cc].exposure = camExpScales[cc].get_value();
+			sessionConfig->camSettings[cc].gain = camGainScales[cc].get_value();
+			sessionConfig->camSettings[cc].displayed = camDisplayedChecks[cc].get_active();	
+		}
+		if (save)
+		{
+			sessionConfig->Save();	
+		}
+
+	}
+	
 }
 
 void ControlsWindow::StartGrabbing()
 {
 	cout << "Start grabbing" << endl;
+
+	// save the session config so we can reload incase of crash
+	UpdateSessionConfig();
+
 	meanfps = -1.0;
 	
 	startGrabButton.set_sensitive(false);
 	fpsScale.set_sensitive(false);
-	xResScale.set_sensitive(false);
-	yResScale.set_sensitive(false);
+	xResEntry.set_sensitive(false);
+	yResEntry.set_sensitive(false);
 	durScale.set_sensitive(false);
 	calibModeCheckBtn.set_sensitive(false);
 	
@@ -297,14 +476,14 @@ void ControlsWindow::StartGrabbing()
 	unsigned long memLimit = 120 * 1000 * 1000 * 1000;
 	
 	unsigned long fps = fpsScale.get_value();
-	long int resX = xResScale.get_value();
-	long int resY = yResScale.get_value();
+	long int resX = GetResEntry(&xResEntry);
+	long int resY = GetResEntry(&yResEntry);
 	long int recDuration = durScale.get_value();
 	
 	grabber->SetFPS( fps, 0 );
 	grabber->SetResolution( resX, resY );
-	xResScale.set_value( resX );
-	yResScale.set_value( resY );
+	xResEntry.set_text(std::to_string(resX));
+	yResEntry.set_text(std::to_string(resY));
 	fpsScale.set_value( fps );
 	
 	unsigned long memUse = resX * resY * fps * recDuration * grabber->GetNumCameras();
@@ -358,10 +537,11 @@ void ControlsWindow::StopGrabbing()
 gboolean ControlsWindow::StopGrabbing(gpointer self)
 	{
 		ControlsWindow * window  = (ControlsWindow*) self;
+		window->UpdateSessionConfig(true);
 		window->startGrabButton.set_sensitive(true);
 		window->fpsScale.set_sensitive(true);
-		window->xResScale.set_sensitive(true);
-		window->yResScale.set_sensitive(true);
+		window->xResEntry.set_sensitive(true);
+		window->yResEntry.set_sensitive(true);
 		window->durScale.set_sensitive(true);
 		window->baseGainButton.set_sensitive(true);
 		window->calibModeCheckBtn.set_sensitive(true);
@@ -378,6 +558,7 @@ gboolean ControlsWindow::StopGrabbing(gpointer self)
 			window->FinaliseCalibrationSession();
 		}
 		window->ClearGtData();
+		window->PopulateTrialList();
 		return FALSE;
 	}
 
@@ -409,7 +590,7 @@ void ControlsWindow::CalibModeToggle()
 		trialNameEntry.set_text("calib");
 		trialNameEntry.set_sensitive(false);
 		trialNumberSpin.set_range(0, 99);
-		trialNumberSpin.set_value(0);
+		trialNumberSpin.set_value(sessionConfig->calibNum);
 		trialNumberSpin.set_increments(1,1);
 		
 		cout << "fps pre calib toggle: " << fpsPreCalibToggle << endl;
@@ -419,8 +600,11 @@ void ControlsWindow::CalibModeToggle()
 		
 		// Create the circle grid detector
 		unsigned w,h;
-		w = xResScale.get_value();
-		h = yResScale.get_value();
+		w = GetResEntry(&xResEntry);
+		h = GetResEntry(&yResEntry);
+		
+
+		
 		cout << w << " " << h << endl;
 		gdata.cgDetector.reset( new CircleGridDetector( w, h, false, false, CircleGridDetector::CIRCD_t ) );
 	}
@@ -604,6 +788,223 @@ void ControlsWindow::SaveGrids( std::string fn, std::vector< std::vector< Circle
 			      << grids[gc][pc].pi(1) << endl;
 		}
 	}
+}
+
+
+void ControlsWindow::ShowDialog()
+{
+	Gtk::MessageDialog dialog(*this, "Previous session with todays date was found. Should this be reloaded?",
+	      false /* use_markup */, Gtk::MESSAGE_QUESTION,
+	      Gtk::BUTTONS_OK_CANCEL);
+	dialog.set_default_response(Gtk::RESPONSE_OK);
+	int result = dialog.run();
+
+	//Handle the response:
+	switch(result)
+	{
+		case(Gtk::RESPONSE_OK):
+		{
+		  break;
+		}
+		case(Gtk::RESPONSE_CANCEL):
+		{
+		  sessionConfig->GenerateDefaultConfig();
+		  break;
+		}
+		default:
+		{
+		  std::cout << "Unexpected button clicked." << std::endl;
+		  break;
+		}
+	}
+}
+
+void ControlsWindow::MenuFileQuit()
+{
+  hide(); //Closes the main window to stop the Gtk::Main::run().
+  exit(0);
+}
+
+void ControlsWindow::MenuFileUnimplemented()
+{
+  std::cout << "A menu item was selected." << std::endl;
+}
+
+void ControlsWindow::FileChooserResponse(int response)
+{
+	switch(response)
+	{
+		case(Gtk::RESPONSE_OK):
+		{
+			if(fsAction == Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER)
+			{
+				if (sessionConfig->Load(dialog->get_filename()))
+				{
+					SetWidgetValues();
+					dialog->hide();
+				}
+			}
+			if (fsAction == Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER)
+			{
+				if (fsMove)
+				{
+					UpdateSessionConfig();
+
+					if (sessionConfig->Move(dialog->get_filename()))
+					{
+						SetWidgetValues();
+						dialog->hide();
+						fsMove = false;
+					}
+					
+				}
+				else
+				{
+					sessionConfig->GenerateDefaultConfig();
+					sessionConfig->Save(dialog->get_filename());
+					SetWidgetValues();
+					dialog->hide();	
+				}
+				
+			}
+		break;
+		}
+				
+		case(Gtk::RESPONSE_CANCEL):
+		{
+			dialog->hide();
+			break;
+		}
+		default:
+		{
+			cout << "unexpected button pressed" << endl;
+		}
+	}
+	
+}
+
+void ControlsWindow::MenuFileSave()
+{
+	UpdateSessionConfig(true);
+}
+
+void ControlsWindow::FileChooserDialog(Gtk::FileChooserAction action)
+{
+  fsAction = action;
+  dialog = new Gtk::FileChooserDialog("Please choose a folder",
+          action);
+  dialog->set_transient_for(*this);
+
+  //Add response buttons the the dialog:
+  dialog->add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dialog->add_button("Select", Gtk::RESPONSE_OK);
+  dialog->signal_response().connect(sigc::mem_fun(*this, &ControlsWindow::FileChooserResponse));
+  dialog->set_current_folder(sessionConfig->GetRootPath().c_str());
+  dialog->run();
+
+}
+
+void ControlsWindow::RenderTrial(const Gtk::TreeModel::Path& path,
+        Gtk::TreeViewColumn* /* column */)
+{
+	// copied all this from gtkmm docs. 
+	Gtk::TreeModel::iterator iter = m_refTreeModel->get_iter(path);
+	string trialName; 
+	if(iter)
+	{
+		Gtk::TreeModel::Row row = *iter;
+		std::cout << "Row activated: ID=" << row[m_Columns.m_col_id] << ", Name="
+		    << row[m_Columns.m_col_name] << std::endl;
+		trialName = Glib::ustring(row[m_Columns.m_col_name]);
+		cout << trialName << endl;
+	}
+
+	std::vector<string> directories = sessionConfig->GetImageDirectories(trialName);
+	std::vector<SourcePair> sources;
+	if (directories.size())
+	{
+		for (string str : directories)
+		{
+			sources.push_back(CreateSource(str));
+		}
+	}
+	else
+	{
+		cout << "no videos recorded" << endl;
+		return;
+	}
+
+	if (grabber->fake)
+	{
+		grabber->SetResolution(sessionConfig->videoWidth,sessionConfig->videoHeight);
+	}
+
+	std::map<int, bool> dispCams;
+	GetCameraDisplayInfo(dispCams);
+
+	// create renderer
+	unsigned winW, winH;
+	PrepRenderWindow( grabber, winW, winH );
+	std::shared_ptr<RecRenderer> renderer;
+	Rendering::RendererFactory::Create( renderer, winW,winH, "Trial Renderer" );
+	renderer->Prep( grabber );
+
+
+	// renderloop
+	std::vector< cv::Mat > rawImgs( grabber->GetNumCameras() );
+	
+	bool done = false;
+	int ic = 0;
+	while(!done)
+	{
+		// get images to show (currently just raw images)
+		for (unsigned cc = 0; cc < grabber->GetNumCameras(); cc++)
+		{
+			rawImgs[cc] = sources[cc].source->GetCurrent();
+			
+			if (!sources[cc].source->Advance())
+			{
+				return;
+			}
+			
+		}
+		
+		// update renderer with current images and which cameras to view
+		renderer->Update(rawImgs,dispCams);
+		
+		// do the render step
+		bool buffRecord = false;
+		bool liveRecord = false;
+
+		if (grabber->fake)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000/24));	
+		}
+		
+		// reading the "close" event from Step to stop the render loop if we close the window.
+		done = renderer->Step( buffRecord, liveRecord );
+		
+	}
+}
+
+gboolean ControlsWindow::PopulateTrialList(gpointer self)
+{
+	ControlsWindow * window  = (ControlsWindow*) self;
+	//Create the Tree model:
+	window->m_refTreeModel = Gtk::TreeStore::create(window->m_Columns);
+	window->m_TreeView.set_model(window->m_refTreeModel);
+	window->m_TreeView.set_hexpand(true);
+
+	std::vector<string> trials = window->sessionConfig->GetTrialNames();
+	
+	//Fill the TreeView's model
+	for (unsigned i =0; i < trials.size(); i++) 
+	{
+		Gtk::TreeModel::Row row = *(window->m_refTreeModel->append());
+		row[window->m_Columns.m_col_id] = i;
+		row[window->m_Columns.m_col_name] = trials[i];	
+	}
+
 }
 
 #endif
