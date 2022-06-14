@@ -45,17 +45,17 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//
 	xResLabel.set_text("width");
 	xResScale.set_range(64, 2560);
-	xResScale.set_value(480);
+	xResScale.set_value(1920);
 	xResScale.set_hexpand(true);
 	
 	yResLabel.set_text("height");
 	yResScale.set_range(2,2048);
-	yResScale.set_value(360);
+	yResScale.set_value(1080);
 	yResScale.set_hexpand(true);
 	
 	fpsLabel.set_text("fps");
 	fpsScale.set_range(1,200);
-	fpsScale.set_value(200);
+	fpsScale.set_value(5);
 	fpsScale.set_hexpand(true);
 
 	obsFpsA.set_text("observed fps:");
@@ -65,7 +65,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	
 	durLabel.set_text("duration (s)");
 	durScale.set_range(1,20);
-	durScale.set_value(10);
+	durScale.set_value(2);
 	durScale.set_hexpand(true);
 	
 	sessionNameLabel.set_text("Session:");

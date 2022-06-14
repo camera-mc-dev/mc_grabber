@@ -12,6 +12,11 @@ import mcdev_grabber_config as grabbercfg
 # ---------------------------------------------------------
 openmpAvailable = True
 haveNets = os.path.exists("%s/../mc_nets/"%(Dir('.').abspath))
+print("have nets: ", haveNets )
+
+if haveNets:
+	sys.path.append("../mc_nets/")
+	import mcdev_nets_config as netscfg 
 
 # ---------------------------------------------------------
 # Set libraries to link against and include paths for the compiler
@@ -26,6 +31,7 @@ def SetPathsLibsAndFlagsAll(env):
 	if haveNets:
 		env.Append(CPPPATH=["%s/../mc_nets/src"%(Dir('.').abspath)])
 		env.Append(CPPDEFINES=["HAVE_MC_NETS"])
+		netscfg.SetNetsConfig(env)
 
 
 
