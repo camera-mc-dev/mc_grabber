@@ -83,7 +83,9 @@ def SetPathsLibsAndFlags_memSan(env):
 
 
 
-
+def SetPathsLibsAndFlags_profiling(env):
+	env.Append(CPPFLAGS=['-pg','-g', '-O0'])
+	env.Append(LINKFLAGS=['-pg','-g'])
 
 
 
@@ -132,7 +134,7 @@ colors['end']    = '\033[0m'
 # If the output is not a terminal, remove the colors we just defined :)
 # (yes, I may have just copy-pasted these colouring sections to save me time...
 if not sys.stdout.isatty():
-	for key, value in colors.iteritems():
+	for key in colors:
 		colors[key] = ''
 
 # -------------------------------------------------------
@@ -218,11 +220,13 @@ buildEnvs['debug'] = masterEnv.Clone()
 buildEnvs['dbgOpt'] = masterEnv.Clone()
 buildEnvs['dbg-memSan'] = masterEnv.Clone()
 buildEnvs['optimised'] = masterEnv.Clone()
+buildEnvs['profile'] = masterEnv.Clone()
 
 SetPathsLibsAndFlags_debug( buildEnvs['debug'])
 SetPathsLibsAndFlags_dbgOpt( buildEnvs['dbgOpt'])
 SetPathsLibsAndFlags_memSan( buildEnvs['dbg-memSan'])
 SetPathsLibsAndFlags_opt( buildEnvs['optimised'])
+SetPathsLibsAndFlags_profiling(buildEnvs['profile'])
 
 
 # --------------------------------------------------------------

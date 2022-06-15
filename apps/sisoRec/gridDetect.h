@@ -11,6 +11,7 @@ struct SGridDetectData
 	std::vector< cv::Mat > inBGR;
 	int inGridRows, inGridCols;
 	bool inLightOnDark;
+	int numCameras;
 	
 	std::weak_ptr<RecRenderer> renderer;
 	
