@@ -14,6 +14,21 @@
 #include "imgio/siso.h"
 
 #include "grab.h"
+#include "config.h"
+
+#include "renderer.h"
+#include "imgio/sourceFactory.h"
+
+class SignalHandler
+{
+public:
+	SignalHandler() {};
+	~SignalHandler() {};
+	std::condition_variable cv;
+	std::mutex mtx;
+	bool ready=false;
+
+};
 
 class ControlsWindow : public Gtk::Window
 {
@@ -62,14 +77,96 @@ public:
 	}
 	
 	GrabThreadData gdata;
-	
+
+protected:
+
 	//
 	// Widgets
 	//
 	
-	// box to contain all control frames
+	// box to contain all the widgets
 	Gtk::Box allBox;
+	// previous allBox, contains everything apart from the trials stuff
+	Gtk::Box vBoxLeft;
+	// contains the session name, trial name editor and listview
+	Gtk::Box vBoxRight;
+	// box to stack vBoxLeft and vBoxRight
+	Gtk::Box hBox;
 	
+	//
+	// Dropdown menu
+	//
+	Glib::RefPtr<Gtk::UIManager> m_refUIManager;
+	Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
+	Glib::RefPtr<Gtk::RadioAction> m_refChoiceOne, m_refChoiceTwo;
+
+	// signal handlers
+	void MenuFileNew()
+	{
+  		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER);
+	};
+
+
+	void MenuFileLoad()
+	{
+		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+	}
+
+	void MenuFileMove()
+	{
+		fsMove = true;
+		FileChooserDialog(Gtk::FILE_CHOOSER_ACTION_CREATE_FOLDER);
+		
+	}
+
+	void MenuFileQuit();
+	void MenuFileSave();
+	void MenuFileUnimplemented();
+
+
+	//
+	// File Dialog
+	// 
+	Gtk::FileChooserDialog * dialog;
+	Gtk::FileChooserAction fsAction;
+
+	// tells the filedialog to move all files with it when it creates a new folder (for move/rename) 
+	bool fsMove = false;
+
+	// creates a new filechooser dialog
+	void FileChooserDialog(Gtk::FileChooserAction action);
+	
+	// handles the response from file chooser dialog. 
+	void FileChooserResponse(int response);
+
+	//
+	// Trial treeview
+	//
+	void PopulateTrialList()
+	{
+		PopulateTrialList(this);
+	}
+	void RenderTrial(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
+
+  	//Tree model columns:
+  	class ModelColumns : public Gtk::TreeModel::ColumnRecord
+	{
+	public:
+
+		ModelColumns()
+		{ add(m_col_id); add(m_col_name); }
+
+		Gtk::TreeModelColumn<int> m_col_id;
+		Gtk::TreeModelColumn<Glib::ustring> m_col_name;
+	};
+
+	ModelColumns m_Columns;
+
+	//Child widgets:
+	Gtk::ScrolledWindow m_ScrolledWindow;
+	Gtk::TreeView m_TreeView;
+	Glib::RefPtr<Gtk::TreeStore> m_refTreeModel;
+
 	//
 	// At the top of our controls window we have:
 	//    =====
@@ -83,8 +180,11 @@ public:
 	//
 	Gtk::Frame       ssFrame;
 	Gtk::Grid        ssGrid;
+	Gtk::Grid        sessionGrid;
+	Gtk::Frame       sessionFrame;
 	Gtk::Label       xResLabel, yResLabel, fpsLabel, durLabel;
-	Gtk::HScale      xResScale, yResScale, fpsScale, durScale;
+	Gtk::Entry       xResEntry, yResEntry;
+	Gtk::HScale      fpsScale, durScale;
 	Gtk::Label       obsFpsA, obsFpsB;
 	Gtk::Label       sessionNameLabel, trialNameLabel;
 	Gtk::Entry       sessionNameEntry;
@@ -138,19 +238,32 @@ public:
 	Gtk::Label      shareLabel;
 	Gtk::SpinButton shareSpinner;
 
-protected:
+	//
+	// For getting the text entries from xres and yres and converting them to ints (safely)
+	//
+	int GetResEntry(Gtk::Entry* entry)
+	{
+		return abs(std::stoi(entry->get_text()));	
+	}
+
+	//
+	// for storing gtk settings to disk
+	//
+	ConfigParser * sessionConfig;
+
+
 	// wrapper for static function call
 	void StopGrabbing();
 	void SetAllGainsAndExposures();
+	void SetWidgetValues();
 	//
 	// for time based events.
 	//
 	sigc::connection fpsTimerConnection;
-	
-	//
-	// Signal handlers
-	//
+
 public:
+	static gboolean PopulateTrialList(gpointer self);
+
 	void StartGrabbing();
 	
 	// when called from seperate thread, needs to be called with 
@@ -165,6 +278,8 @@ public:
 	// when called from seperate thread, needs to be called with 
 	// gdk_threads_add_idle in order to avoid crashes.
 	static gboolean SetAllGainsAndExposures(gpointer self);
+
+	void SetMaxExposure();
 	
 	void SetAllBaseGains();
 	
@@ -218,6 +333,10 @@ public:
 		return fpsScale.get_value();
 	}
 	
+	// updates the values in session config. 
+	// saves the config to disk under rootpath/sessionName if save is true.
+	void UpdateSessionConfig(bool save = true);
+	
 	static gboolean IncrementTrialNumber(gpointer self)
 	{
 		ControlsWindow * window  = (ControlsWindow*) self;
@@ -255,6 +374,9 @@ protected:
 	
 	void LoadGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
 	void SaveGrids( std::string fn, std::vector< std::vector< CircleGridDetector::GridPoint > > &grids );
+
+	void ShowDialog();
+	
 };
 
 struct GUIThreadData
@@ -267,6 +389,7 @@ struct GUIThreadData
 	
 	std::string saveRoot0;
 	std::string saveRoot1;
+	SignalHandler * signalHandler;
 };
 
 void GUIThread( GUIThreadData *gtdata );
