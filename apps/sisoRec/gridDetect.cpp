@@ -22,7 +22,7 @@ void GridDetectThread( SGridDetectData *data )
 #ifdef HAVE_MC_NETS
 	//TODO: load from common config or grabber config
 	std::string netPath = "/data2/gridDet/";
-	std::string netName = "cgd-bxs03-bst";
+	std::string netName = "cgd-hm-pts-1-bst";
 	auto ctx = mx::Context::gpu(0);
 	cout << "bs: " << data->numCameras << endl;
 	CalibGridDetectNet cgdNet( netPath, netName, data->numCameras, ctx );
@@ -30,12 +30,15 @@ void GridDetectThread( SGridDetectData *data )
 	std::ofstream cgdbg("cgdDebug");
 	int dbgImCnt = 0;
 #endif
-	std::shared_ptr<CircleGridDetector> cgDetector;
+	std::vector< std::shared_ptr<CircleGridDetector> > cgDetectors;
 	
 	while( !data->done )
 	{
+		auto t0 = std::chrono::steady_clock::now();
 		// lock data lock
 		data->gridMutex.lock();
+		
+		auto t1 = std::chrono::steady_clock::now();
 		
 		// get images to process
 		imgs.resize( data->inBGR.size() );
@@ -46,7 +49,7 @@ void GridDetectThread( SGridDetectData *data )
 		grows = data->inGridRows;
 		gcols = data->inGridCols;
 		lightOnDark = data->inLightOnDark;
-		cgDetector  = data->inCgDetector;
+		cgDetectors  = data->inCgDetectors;
 		
 		// unlock data lock
 		data->gridMutex.unlock();
@@ -62,11 +65,18 @@ void GridDetectThread( SGridDetectData *data )
 		unsigned goodCount = 0;
 		std::vector< std::vector< CircleGridDetector::GridPoint > > gridPoints( imgs.size() );
 #ifdef HAVE_MC_NETS
-		// If we've got one of our grid detector networks, then we can at least try it.
-		// we probably don't expect it to find the grid circles well enough for calibration,
-		// but at the very least, we can get a good idea of whether the grid is visible, and 
-		// where it is in the image.
-		auto t0 = std::chrono::steady_clock::now();
+		
+		// At the moment, the circleGridNet is only accurate enough to give us a detection and 
+		// approximate location of the outside corners of the grid. But that's not a bad thing,
+		// because we can still make use of that info to massively reduce our normal use of 
+		// the circle grid detector.
+		
+		auto t2 = std::chrono::steady_clock::now();
+		
+		//
+		// First off, get small images to feed the network.
+		// Right now, the network is expecting images of 480x270
+		//
 		std::vector< cv::Mat > smallImgs( imgs.size() );
 		for( unsigned ic = 0; ic < imgs.size(); ++ic )
 		{
@@ -76,48 +86,113 @@ void GridDetectThread( SGridDetectData *data )
 			cv::resize( tmpf, smallImgs[ic], cv::Size( 480, 270 ) );
 		}
 		
+		
+		//
+		// Next we can run the detector on those images.
+		//
 		std::vector< std::vector<hVec2D> > detections( imgs.size() );
-		cgdNet.Detect( smallImgs, detections );
-		auto t1 = std::chrono::steady_clock::now();
+		std::vector< std::vector< cv::Mat > > hmaps;
+		cgdNet.Detect( smallImgs, detections, hmaps );
+		
+		auto t3 = std::chrono::steady_clock::now();
+		
 		cgdbg << imgs.size() << endl;
-		cgdbg << "cgd time: " << std::chrono::duration <double, std::milli> (t1-t0).count() << endl;
+		cgdbg << "cgd time: " << std::chrono::duration <double, std::milli> (t3-t2).count() << endl;
+		
+		
+		//
+		// Having done that, we now want to run the normal circle grid detector
+		// but only on the images that had a grid detection, and only over the 
+		// small region of the image where the grid was detected. We do one more
+		// speed/accuracy trade off and resize the grid detection window to half 
+		// its original size, just because the accuracy cost is small enough (probably)
+		//
+		#pragma omp parallel for
 		for( unsigned ic = 0; ic < detections.size(); ++ic )
 		{
-			cgdbg << "cgdNet -- " << ic << " --" << endl;
+			cv::Mat &raw = imgs[ic];
+			
+			// is there a grid, and how big is it in the image?
+			hVec2D m, M;
+			m << raw.cols, raw.rows, 1.0f;
+			M << 0, 0, 1.0f;
+			int got = 0;
 			for( unsigned pc = 0; pc < detections[ic].size(); ++pc )
 			{
-				cgdbg << detections[ic][pc].transpose() << endl;
-				float v = detections[ic][pc](2);
-				cv::circle( imgs[0], cv::Point( detections[ic][pc](0) * imgs[0].cols, detections[ic][pc](1) * imgs[0].rows ), 7, cv::Scalar(0,v*255,255 - v*255), 3 );
-				cv::circle( smallImgs[0], cv::Point( detections[ic][pc](0) * smallImgs[0].cols, detections[ic][pc](1) * smallImgs[0].rows ), 7, cv::Scalar(0,v,1-v), 3 );
+				if( detections[ic][pc](2) > 0.2 )
+				{
+					m(0) = std::min( m(0), detections[ic][pc](0) * raw.cols );
+					m(1) = std::min( m(1), detections[ic][pc](1) * raw.rows );
+					
+					M(0) = std::max( M(0), detections[ic][pc](0) * raw.cols );
+					M(1) = std::max( M(1), detections[ic][pc](1) * raw.rows );
+					
+					++got;
+				}
+			}
+			
+			
+			cv::Rect win;
+			if( got > 3 )
+			{
+				// make our grid detection a bit bigger.
+				int xmod = 0.1* (M(0)-m(0));
+				m(0) = std::max((int)m(0)-xmod, 0);
+				M(0) = std::min((int)M(0)+xmod, raw.cols-1);
+				int ymod = 0.1* (M(1)-m(1));
+				m(1) = std::max((int)m(1)-ymod, 0);
+				M(1) = std::min((int)M(1)+ymod, raw.rows-1);
+				
+				// get greyscale version of image for MSER grid detect.
+				cv::Mat grey, greyW;
+				cv::cvtColor(  raw,  grey, cv::COLOR_BGR2GRAY );
+				
+				// get the window.
+				win = cv::Rect( m(0), m(1), M(0)-m(0), M(1)-m(1) );
+				greyW = grey( win ).clone(); 
+				
+				// is the window still quite ... big?
+				bool halved = false;
+				//if( win.width > 0.25 * raw.cols )
+				{
+					cv::resize( greyW, greyW, cv::Size( ), 0.5, 0.5 );
+					halved = true;
+				}
+				
+				// run the normal grid detector on that window
+				cgDetectors[ic]->FindGrid( greyW, 9, 10, false, false, gridPoints[ic] );
+				
+				// adjust the grid points for our window.
+				for( unsigned gpc = 0; gpc < gridPoints[ic].size(); ++gpc )
+				{
+					if( halved )
+					{
+						gridPoints[ic][gpc].pi(0) *= 2.0f;
+						gridPoints[ic][gpc].pi(1) *= 2.0f;
+					}
+					
+					gridPoints[ic][gpc].pi(0) += int(m(0));
+					gridPoints[ic][gpc].pi(1) += int(m(1));
+				}
+				maxDetections = std::max( maxDetections, (unsigned)gridPoints[ic].size() );
+				
+				cgdbg << "cgdNet -- " << ic << " --" << endl;
+				cgdbg << "\t" << got << " : " << gridPoints[ic].size() << endl;
 			}
 		}
 		
 		
-		std::stringstream ss;
-		ss << "/data2/gridDet/liveTst/full/" << std::setw(8) << std::setfill('0') << dbgImCnt << ".jpg";
-		SaveImage( imgs[0], ss.str() );
-		
-		ss.str("");
-		ss << "/data2/gridDet/liveTst/small/" << std::setw(8) << std::setfill('0') << dbgImCnt << ".jpg";
-		SaveImage( smallImgs[0], ss.str() );
-		++dbgImCnt;
+		auto t4 = std::chrono::steady_clock::now();
 		
 		
-#else
-		for( unsigned cc = 0; cc < imgs.size(); ++cc )
-		{	
-			cgDetector->FindGrid( imgs[cc], grows, gcols, true, false, gridPoints[cc] );
-			maxDetections = std::max( maxDetections, (unsigned)gridPoints[cc].size() );
-			if( gridPoints[cc].size() == grows * gcols )
-				++goodCount;
-		}
-#endif
 		
 		auto r = data->renderer.lock();
 		// have we got grids?
-		if( maxDetections == grows * gcols )
+		if( maxDetections >= 4 )
 		{
+			// lock data lock
+			data->gridMutex.lock();
+			
 			for( unsigned cc = 0; cc < imgs.size(); ++cc )
 			{
 				data->grids->at(cc).push_back( gridPoints[cc] );
@@ -130,7 +205,56 @@ void GridDetectThread( SGridDetectData *data )
 			}
 			
 			++(*data->gridNo );
+			
+			// unlock data lock
+			data->gridMutex.unlock();
+			
+			auto t5 = std::chrono::steady_clock::now();
+			
+			cgdbg << "cgd time 0 -> 1: " << std::chrono::duration <double, std::milli> (t1-t0).count() << endl;
+			cgdbg << "cgd time 1 -> 2: " << std::chrono::duration <double, std::milli> (t2-t1).count() << endl;
+			cgdbg << "cgd time 2 -> 3: " << std::chrono::duration <double, std::milli> (t3-t2).count() << endl;
+			cgdbg << "cgd time 3 -> 4: " << std::chrono::duration <double, std::milli> (t4-t3).count() << endl;
+			cgdbg << "cgd time 4 -> 5: " << std::chrono::duration <double, std::milli> (t5-t4).count() << endl;
+			cgdbg << " ==== " << endl << endl;
 		}
+		
+		
+#else
+		for( unsigned cc = 0; cc < imgs.size(); ++cc )
+		{	
+			cgDetectors[cc]->FindGrid( imgs[cc], grows, gcols, true, false, gridPoints[cc] );
+			maxDetections = std::max( maxDetections, (unsigned)gridPoints[cc].size() );
+			if( gridPoints[cc].size() == grows * gcols )
+				++goodCount;
+		}
+		
+		auto r = data->renderer.lock();
+		// have we got grids?
+		if( maxDetections == grows * gcols )
+		{
+			// lock data lock
+			data->gridMutex.lock();
+			
+			for( unsigned cc = 0; cc < imgs.size(); ++cc )
+			{
+				data->grids->at(cc).push_back( gridPoints[cc] );
+				
+				
+				std::stringstream ss;
+				ss << data->outDir << "/" << std::setw(2) << std::setfill('0') << cc << "/"
+				<< std::setw(12) << std::setfill('0') << *data->gridNo << ".charImg";
+				SaveImage( imgs[cc], ss.str() );
+			}
+			
+			++(*data->gridNo );
+			
+			// unlock data lock
+			data->gridMutex.unlock();
+		}
+#endif
+		
+		
 		
 		// lock data lock
 		data->gridMutex.lock();

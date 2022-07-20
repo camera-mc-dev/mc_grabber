@@ -32,7 +32,8 @@ struct GrabThreadData
 	
 	// I'm not entirely happy with this being here, semantically
 	// it doesn't really suit. But it is accessable from both places that need it.
-	std::shared_ptr<CircleGridDetector> cgDetector;
+	// because we want to thread this, we need a detector per camera.
+	std::vector< std::shared_ptr<CircleGridDetector> > cgDetectors;
 	
 	// for the current calibration session
 	// number of the next grab

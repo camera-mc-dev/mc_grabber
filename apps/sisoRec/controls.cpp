@@ -606,7 +606,12 @@ void ControlsWindow::CalibModeToggle()
 
 		
 		cout << w << " " << h << endl;
-		gdata.cgDetector.reset( new CircleGridDetector( w, h, false, false, CircleGridDetector::CIRCD_t ) );
+		gdata.cgDetectors.resize( grabber->GetNumCameras() );
+		for( unsigned cc = 0; cc < grabber->GetNumCameras(); ++cc )
+		{
+			//gdata.cgDetector[cc].reset( new CircleGridDetector( w, h, false, false, CircleGridDetector::CIRCD_t ) );
+			gdata.cgDetectors[cc].reset( new CircleGridDetector( w, h, false, false, CircleGridDetector::MSER_t ) );
+		}
 	}
 	else
 	{

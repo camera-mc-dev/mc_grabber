@@ -462,17 +462,21 @@ int main(int argc, char* argv[])
 							gdtdata.inBGR.resize( grabs.size() );
 							for( unsigned ic = 0; ic < grabs.size(); ++ic )
 							{
-								gdtdata.inBGR[ic] = bgrImgs[ic].clone();
+								cv::cvtColor( grabs[ic], gdtdata.inBGR[ic], cv::COLOR_BayerGB2BGR_EA );
 							}
 							gdtdata.inGridRows = grows;
 							gdtdata.inGridCols = gcols;
 							gdtdata.inLightOnDark = glightOnDark;
 							
-							gdtdata.inCgDetector = tdata.cgDetector;
+							gdtdata.inCgDetectors = tdata.cgDetectors;
+							
+							gdtdata.outDir = outDir.c_str();
 							
 							gdtdata.gridMutex.unlock();
 						}
 						
+						
+						gdtdata.gridMutex.lock();
 						// that should now do the grids in the background...
 						CreateGridNodes(grows, gcols, numVis, renderer, tdata.grids );
 						
@@ -493,6 +497,7 @@ int main(int argc, char* argv[])
 								}
 							}
 						}
+						gdtdata.gridMutex.unlock();
 						sharesGrid /= 100.0f;
 						sharesGridRen->SetBGImage( sharesGrid );
 						sharesGridRen->StepEventLoop();
@@ -611,7 +616,7 @@ std::shared_ptr< Rendering::MeshNode > CreateGridNode(
                                                        std::vector< CircleGridDetector::GridPoint > &grid
                                                      )
 {
-	cout << "CGN: " << grid.size() << endl;
+// 	cout << "CGN: " << grid.size() << endl;
 	// where are our corners?
 	int p00, p01, p10, p11;
 	p00 = p01 = p10 = p11 = -1;
@@ -625,6 +630,7 @@ std::shared_ptr< Rendering::MeshNode > CreateGridNode(
 	
 	if( p00 >= 0 && p01 >= 0 && p10 >= 0 && p11 >= 0 )
 	{
+// 		cout << "CGN: " << grid.size() << " MESH" << endl;
 		// create the mesh.
 		std::shared_ptr<Rendering::Mesh> msh( new Rendering::Mesh(4,4,2) ); // 4 verts, 4 faces (lines)
 		msh->vertices << grid[p00].pi(0), grid[p01].pi(0), grid[p11].pi(0), grid[p10].pi(0),
@@ -660,7 +666,8 @@ std::shared_ptr< Rendering::MeshNode > CreateGridNode(
 	}
 	else
 	{
-		throw std::runtime_error( "Got a grid with no corners. That shouldn't happen?" );
+// 		throw std::runtime_error( "Got a grid with no corners. That shouldn't happen?" );
+		// actually, it can happen, and doesn't really matter.
 	}
 }
 
@@ -683,7 +690,6 @@ void CreateGridNodes(
 	{
 		s = std::min( (int)grids[gc].size(), s );
 	}
-	
 	if( numVis < s )
 	{
 		// we have grids to draw.
@@ -692,8 +698,8 @@ void CreateGridNodes(
 			unsigned maxDetections = 0;
 			unsigned goodCount = 0;
 			for( unsigned cc = 0; cc < grids.size(); ++cc )
-			{	
-				if( grids[cc][gc].size() == grows * gcols )
+			{
+				if( grids[cc][gc].size() == grows * gcols || grids[cc][gc].size() == 4)
 					++goodCount;
 			}
 			
@@ -707,7 +713,7 @@ void CreateGridNodes(
 			
 			for( unsigned cc = 0; cc < grids.size(); ++cc )
 			{
-				if( grids[cc][gc].size() == grows * gcols )
+				if( grids[cc][gc].size() == grows * gcols || grids[cc][gc].size() == 4 )
 				{
 					auto n = CreateGridNode( grows, gcols, ren, grids[cc][gc] );
 					n->SetBaseColour(bc);

@@ -15,7 +15,7 @@ struct SGridDetectData
 	
 	std::weak_ptr<RecRenderer> renderer;
 	
-	std::shared_ptr<CircleGridDetector> inCgDetector;
+	std::vector< std::shared_ptr<CircleGridDetector> > inCgDetectors;
 	
 	// pointer to where we keep track of grid numbers, which are variables 
 	// in the grabThreadData structure.
