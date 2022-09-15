@@ -40,8 +40,8 @@ void ConfigParser::GenerateDefaultConfig()
 	cout << "Generating default config" << endl;
 	sessionDate = currentDate;
 	sessionName = GenerateSessionDirName(currentDate); 
-	videoWidth  = 480;
-	videoHeight = 360;
+	videoWidth  = 1920;
+	videoHeight = 1080;
 	fps         = 200;
 	duration    = 10;
 	trialName   = "test";
