@@ -16,6 +16,7 @@ SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 		if( fg == NULL )
 		{
 			cout << "Error Fg_Init for board: " << boardInfo[bc].boardIndx << endl;
+			cout << Sgc_getErrorDescription(err) << endl;
 			CleanUp();
 			exit(0);
 		}
@@ -24,14 +25,15 @@ SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 		//
 		// Initialise genicam handle
 		//
-	    SgcBoardHandle *boardHandle;
-    	int err = Sgc_initBoard( fg, 0, &boardHandle );
-	    if( err != 0 )
-    	{
-        	cout << "Sgc_initBoard error for board " << boardInfo[bc].boardIndx << " : " << err << endl;
-	        CleanUp();
-    	    exit(0);
-    	}
+		SgcBoardHandle *boardHandle;
+		int err = Sgc_initBoard( fg, 0, &boardHandle );
+		if( err != 0 )
+		{
+			cout << "Sgc_initBoard error for board " << boardInfo[bc].boardIndx << " : " << err << endl;
+			cout << Sgc_getErrorDescription(err) << endl;
+			CleanUp();
+			exit(0);
+		}
 		boardHandles.push_back( boardHandle );
 
 
@@ -44,6 +46,7 @@ SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 		if( err != 0 )
 		{
 			 cout << "Sgc_scanPorts error for board " << boardInfo[bc].boardIndx << " : " << err << endl;
+			 cout << Sgc_getErrorDescription(err) << endl;
 			 CleanUp();
 			 exit(0);
 		}
@@ -59,6 +62,7 @@ SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 			if( err != 0 )
 			{
 				cout << "Sgc_getCameraByIndex error (board,camera) (" << boardInfo[bc].boardIndx << "," << cc << ") : " << err << endl;
+				cout << Sgc_getErrorDescription(err) << endl;
 				CleanUp();
 				exit(0);
 			}
@@ -72,6 +76,7 @@ SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 				if( err != NULL )
 				{
 					cout << "Error connecting camera: " << err << " " << Sgc_getErrorDescription(err) << endl;
+					cout << Sgc_getErrorDescription(err) << endl;
 					CleanUp();
 					exit(0);
 				}
@@ -237,6 +242,7 @@ void SiSoGrabber::StopAcquisition( )
 		if( err != 0 )
 		{
 			cout << "Error in Sgc_stopAcquisition: " << err << " " << Sgc_getErrorDescription(err) << endl;
+			cout << Sgc_getErrorDescription(err) << endl;
 			CleanUp();
 			exit(0);
 		}
