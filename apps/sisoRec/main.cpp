@@ -211,12 +211,12 @@ int main(int argc, char* argv[])
 			
 			
 			bool liveRecord = false;
+			bool prevLiveRecord = false;
 			
 			std::vector< cv::Mat > bgrImgs( grabber->GetNumCameras() );
 			
 			std::map<int, bool> dispCams;
 			tdata.meanfps = -1.0f;
-			bool new_liverecord = true;
 			// run renderer
 			while( !gtdata.done && gtdata.window->grabbing )
 			{
@@ -391,7 +391,7 @@ int main(int argc, char* argv[])
 					
 					buffRecord = false;
 					liveRecord = false;
-					
+
 					// update the trial list from here so we dont need to wait for the window to close or poll
 					// the grabber window from the gtk thread
 					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
@@ -416,11 +416,7 @@ int main(int argc, char* argv[])
 				
 				if( liveRecord )
 				{
-					if (new_liverecord)
-					{
-						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
-						new_liverecord = false;	
-					}
+					prevLiveRecord = true;
 					GrabThreadData &tdata = gtdata.window->gdata;
 					buffRecord = false;
 					
@@ -524,7 +520,11 @@ int main(int argc, char* argv[])
 					T(0,3) = -5.0f;
 					T(1,3) = 0.5f;
 					liveRecCircle->SetTransformation(T);
-					new_liverecord = true;
+					if (prevLiveRecord)
+					{
+						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
+						prevLiveRecord = false;	
+					}
 					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
 
 				}
