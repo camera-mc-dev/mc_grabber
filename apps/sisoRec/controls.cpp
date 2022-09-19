@@ -1009,6 +1009,7 @@ gboolean ControlsWindow::PopulateTrialList(gpointer self)
 		}	
 	}
 	cout << "spamming from out of loop" <<endl;	
+	return FALSE;
 
 }
 

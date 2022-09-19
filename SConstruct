@@ -44,7 +44,7 @@ def SetPathsLibsAndFlags_dbgOpt(env):
 	# debugging will always work better with -O0
 	# but sometimes you need to have debug symbols in the optimised
 	# stuff.
-	env.Append(CPPFLAGS=['-g', '-O2'])
+	env.Append(CPPFLAGS=['-g', '-O0'])
 	env.Append(CPPFLAGS=['-fopenmp'])
 
 
@@ -55,7 +55,7 @@ def SetPathsLibsAndFlags_dbgOpt(env):
 # specific to optimised build
 # ---------------------------------------------------------
 def SetPathsLibsAndFlags_opt(env):
-	env.Append(CPPFLAGS=['-O2'])
+	env.Append(CPPFLAGS=['-O0'])
 	env.Append(CPPFLAGS=['-fopenmp'])
 
 
