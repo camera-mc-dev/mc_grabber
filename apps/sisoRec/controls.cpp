@@ -1005,10 +1005,8 @@ gboolean ControlsWindow::PopulateTrialList(gpointer self)
 			Gtk::TreeModel::Row row = *(window->m_refTreeModel->append());
 			row[window->m_Columns.m_col_id] = i;
 			row[window->m_Columns.m_col_name] = trials[i];
-			cout << "spamming" << trials[i] <<endl;	
 		}	
 	}
-	cout << "spamming from out of loop" <<endl;	
 	return FALSE;
 
 }
