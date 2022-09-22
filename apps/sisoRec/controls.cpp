@@ -308,7 +308,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	allCamExpScale.set_range(1,1000);
 	allCamGainLabel.set_label("gain");
 	allCamGainScale.set_range(1,16);
-
+	allCamGainScale.set_value(1);
 	baseGainFrame.set_label("analog base gain");	
 	baseGainButton.set_label("Set All");
 	baseGainLabel.set_label("base gain");
