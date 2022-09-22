@@ -44,8 +44,7 @@ SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 		if( err != 0 )
 		{
 			 cout << "Sgc_scanPorts error for board " << boardInfo[bc].boardIndx << " : " << err << endl;
-			 CleanUp();
-			 exit(0);
+			 continue;
 		}
 	
 		//
