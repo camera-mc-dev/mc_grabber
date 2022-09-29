@@ -17,7 +17,7 @@
 //
 #include "grabber.h"
 #include "misc/types.h"
-#include <cv.hpp>
+#include <opencv2/opencv.hpp>
 
 //
 // System includes
