@@ -6,7 +6,7 @@
 #define MC_GRABBER_GRABBER_H
 
 // include opencv here for typedefs
-#include <cv.hpp>
+#include <opencv2/opencv.hpp>
 using namespace cv;
 
 typedef long int frameindex_t;
