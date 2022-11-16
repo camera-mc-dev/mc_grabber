@@ -998,12 +998,16 @@ gboolean ControlsWindow::PopulateTrialList(gpointer self)
 	std::vector<string> trials = window->sessionConfig->GetTrialNames();
 	
 	//Fill the TreeView's model
-	for (unsigned i =0; i < trials.size(); i++) 
+	if (!trials.empty())
 	{
-		Gtk::TreeModel::Row row = *(window->m_refTreeModel->append());
-		row[window->m_Columns.m_col_id] = i;
-		row[window->m_Columns.m_col_name] = trials[i];	
+		for (unsigned i =0; i < trials.size(); i++) 
+		{
+			Gtk::TreeModel::Row row = *(window->m_refTreeModel->append());
+			row[window->m_Columns.m_col_id] = i;
+			row[window->m_Columns.m_col_name] = trials[i];
+		}	
 	}
+	return FALSE;
 
 }
 
