@@ -523,9 +523,10 @@ int main(int argc, char* argv[])
 					if (prevLiveRecord)
 					{
 						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
+						gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
 						prevLiveRecord = false;	
 					}
-					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
+					
 
 				}
 				
