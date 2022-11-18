@@ -1,7 +1,11 @@
 #ifdef USE_SISO
 
 // #define GRABBER_SAVE_AS_HDF5
+#define GRABBER_SAVE_AS_VIDEO
 
+#ifdef GRABBER_SAVE_AS_VIDEO
+#include "imgio/vidWriter.h"
+#endif
 
 #include <iostream>
 #include <thread>
@@ -198,6 +202,7 @@ int main(int argc, char* argv[])
 			auto gridThread = std::thread(GridDetectThread, &gdtdata);
 			unsigned numVis = 0;
 			
+			//
 			// Launch the batch image saving threads
 			//
 			tdata.savingOdd = false;
@@ -774,6 +779,40 @@ void SaveEven(GrabThreadData *tdata)
 			writer.Flush();
 		}
 		
+#elif defined GRABBER_SAVE_AS_VIDEO
+		
+		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); cc+=2 )
+		{
+			
+			// create video writer.
+			cv::Mat raw = tdata->rawBuffers[cc][ tdata->startIdx ];
+			cv::Mat bgr( raw.rows, raw.cols, CV_8UC3, cv::Scalar(0,0,0) );
+			std::stringstream fnss;
+			fnss << tdata->outDir1 << "/" << std::setw(2) << std::setfill('0') << cc << "/" << std::setw(12) << std::setfill('0') << tdata->bufferFrameIdx[cc][ tdata->startIdx ] << ".mp4";
+			
+			std::string nvEncStr = "-c:v h264_nvenc -preset:v hq -tune:v hq -rc:v vbr_hq -cq:v 19 -b:v 0 -profile:v high";
+			
+			VidWriter vo( fnss.str(), nvEncStr, bgr, tdata->grabber->GetFPS() );
+			
+			for( unsigned ic = 0; ic < tdata->buffersNeeded; ++ic )
+			{
+				int bufIndx = tdata->startIdx + ic;
+				
+				if( bufIndx >= tdata->buffersNeeded )
+					bufIndx = bufIndx - tdata->buffersNeeded;
+				
+				   
+				raw = tdata->rawBuffers[cc][ bufIndx ];
+				cv::cvtColor( raw, bgr, cv::COLOR_BayerGB2BGR_VNG );
+				
+				vo.Write(bgr);
+				
+				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
+			}
+			
+			vo.Finish();
+		}
+		
 #else
 		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); cc+=2 )
 		{
@@ -851,6 +890,40 @@ void SaveOdd(GrabThreadData *tdata)
 				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
 			}
 			writer.Flush();
+		}
+#elif defined GRABBER_SAVE_AS_VIDEO
+		
+		
+		for( unsigned cc = 1; cc < tdata->rawBuffers.size(); cc+=2 )
+		{
+			
+			// create video writer.
+			cv::Mat raw = tdata->rawBuffers[cc][ tdata->startIdx ];
+			cv::Mat bgr( raw.rows, raw.cols, CV_8UC3, cv::Scalar(0,0,0) );
+			std::stringstream fnss;
+			fnss << tdata->outDir1 << "/" << std::setw(2) << std::setfill('0') << cc << "/" <<  std::setw(12) << std::setfill('0') << tdata->bufferFrameIdx[cc][ tdata->startIdx ] << ".mp4";
+			
+			std::string nvEncStr = "-c:v h264_nvenc -preset:v hq -tune:v hq -rc:v vbr_hq -cq:v 19 -b:v 0 -profile:v high";
+			
+			VidWriter vo( fnss.str(), nvEncStr, bgr, tdata->grabber->GetFPS() );
+			
+			for( unsigned ic = 0; ic < tdata->buffersNeeded; ++ic )
+			{
+				int bufIndx = tdata->startIdx + ic;
+				
+				if( bufIndx >= tdata->buffersNeeded )
+					bufIndx = bufIndx - tdata->buffersNeeded;
+				
+				   
+				raw = tdata->rawBuffers[cc][ bufIndx ];
+				cv::cvtColor( raw, bgr, cv::COLOR_BayerGB2BGR_VNG );
+				
+				vo.Write(bgr);
+				
+				tdata->saveProgress[cc] = ic / (float)tdata->buffersNeeded;
+			}
+			
+			vo.Finish();
 		}
 		
 #else

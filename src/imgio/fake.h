@@ -117,6 +117,11 @@ class FakeGrabber : public AbstractGrabber
 	{
 		fps = in_FPS;
 	}
+	
+	float GetFPS()
+	{
+		return fps;
+	}
 
 	//
 	// acts as a wrapper for StartAquision() so we dont need to change too many function calls in the mainfiles.

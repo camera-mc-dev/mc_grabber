@@ -260,8 +260,13 @@ void SiSoGrabber::StopAcquisition( )
 
 void SiSoGrabber::SetFPS(int inFPS, int masterBoard )
 {
-	double fps = inFPS;
+	fps = inFPS;
 	Fg_setParameter(fgHandles[masterBoard], FG_TRIGGER_FRAMESPERSECOND, &fps, 0);
+}
+
+float SiSoGrabber::GetFPS()
+{
+	return fps;
 }
 
 void SiSoGrabber::SetResolution( long int cols, long int rows )

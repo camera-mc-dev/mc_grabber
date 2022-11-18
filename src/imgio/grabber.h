@@ -43,6 +43,7 @@ public:
 	virtual void SetOutput1StateLow( int board ) = 0;
 	virtual unsigned GetNumCameras() = 0;
 	virtual void SetFPS( int in_FPS, int masterBoard ) = 0;
+	virtual float GetFPS() = 0;
 	virtual void SetResolution( long int cols, long int rows ) = 0;
 	virtual void SetResolution( int cam, long int cols, long int rows ) = 0;
 	virtual void GetResolution( int cam, long int &cols, long int &rows ) = 0;

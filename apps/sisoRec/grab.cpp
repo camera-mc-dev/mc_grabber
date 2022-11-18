@@ -28,6 +28,7 @@ void GrabThread( GrabThreadData *tdata )
 		// Grab...
 		//
 		frameindex_t fno = tdata->grabber->GetSyncFrame(2);
+// 		cout << "sync frame: " << fno << endl;
 		if( prevfno > 0 && (fno > prevfno + 1) )
 		{
 			cout << "warning, frame missed, relying on camera internal buffers" << endl;
@@ -47,17 +48,17 @@ void GrabThread( GrabThreadData *tdata )
 			tdata->totalGrabTime = std::chrono::steady_clock::now();;
 		}
 		
-		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
-		{			
-			cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
-		}
+// 		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
+// 		{			
+// 			cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
+// 		}
 		auto t1 = std::chrono::steady_clock::now();
 		auto d = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - tdata->grabTime);
 		
-		cout << "grab time: " << d.count() << " ms ( " << 1000.0f / d.count() << " fps(ish) " << endl;
+// 		cout << "grab time: " << d.count() << " ms ( " << 1000.0f / d.count() << " fps(ish) " << endl;
 		tdata->grabTime = t1;
 		tdata->lastGrabDuration = d;
-		cout << "---" << endl;
+// 		cout << "---" << endl;
 
 		
 		

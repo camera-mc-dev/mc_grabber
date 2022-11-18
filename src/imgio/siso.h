@@ -61,6 +61,7 @@ public:
 
 	// Sets the desired framerate
 	void SetFPS( int in_FPS, int masterBoard );
+	float GetFPS();
 
 
 	// Start acquisition on all cameras
@@ -149,7 +150,8 @@ protected:
 	std::chrono::steady_clock::time_point runStart;
 	
 	void CleanUp();
-
+	
+	double fps; // as last set - not pulled from SISO API!
 };
 
 

@@ -76,6 +76,11 @@ public:
 		return durScale.get_value();
 	}
 	
+	float GetFPS()
+	{
+		return fpsScale.get_value();
+	}
+	
 	GrabThreadData gdata;
 
 protected:
