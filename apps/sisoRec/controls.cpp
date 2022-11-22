@@ -18,7 +18,7 @@ void GUIThread( GUIThreadData *gtdata )
 	SignalHandler * handler = new SignalHandler();
 	gtdata->signalHandler = handler;
 	
-	auto app = Gtk::Application::create(argc, argv, "recording controls");
+	auto app = Gtk::Application::create(argc, argv, "uk.ac.bath.camera.sisoRec.controls");
 
 	ControlsWindow window( gtdata->grabber);
 	window.set_default_size(400, 200);
@@ -725,11 +725,12 @@ void ControlsWindow::FinaliseCalibrationSession()
 	{
 		// what's the grid file for this camera
 		std::stringstream ss;
-		ss << "/data/raid0/recording/" 
+		
+		ss << sessionConfig->GetRootPath().c_str()
 		   << GetSaveDirectory() 
-		   << "/grids-"
-		   << std::setw(2) << std::setfill('0') << cc;
-		   
+		   << "/"
+		   << std::setw(2) << std::setfill('0') << cc << ".grids";
+		cout << "==========================> Saving grids to: " << ss.str() << endl;
 		SaveGrids( ss.str(), gdata.grids[cc] );
 	}
 	gdata.grids.clear();

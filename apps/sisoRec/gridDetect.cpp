@@ -62,6 +62,8 @@ void GridDetectThread( SGridDetectData *data )
 				std::stringstream ss;
 				ss << data->outDir << "/" << std::setw(2) << std::setfill('0') << cc << "/"
 				<< std::setw(12) << std::setfill('0') << *data->gridNo << ".charImg";
+                
+                cout << "Saving (?): " << ss.str() << endl;
 				SaveImage( imgs[cc], ss.str() );
 			}
 			
