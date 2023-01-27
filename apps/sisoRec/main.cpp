@@ -212,6 +212,7 @@ int main(int argc, char* argv[])
 			
 			
 			bool liveRecord = false;
+			bool prevLiveRecord = false;
 			
 			std::vector< cv::Mat > bgrImgs( grabber->GetNumCameras() );
 			
@@ -397,6 +398,10 @@ int main(int argc, char* argv[])
 					// the grabber window from the gtk thread
 					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
 
+					// update the trial list from here so we dont need to wait for the window to close or poll
+					// the grabber window from the gtk thread
+					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
+
 					auto t2 = std::chrono::steady_clock::now();
 					std::stringstream clss;
 					clss << outDir0.string()<< "/capTime.log";
@@ -422,14 +427,17 @@ int main(int argc, char* argv[])
 						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
 						new_liverecord = false;	
 					}
+// 					prevLiveRecord = true;
+					
 					GrabThreadData &tdata = gtdata.window->gdata;
 					buffRecord = false;
 					
 					fs::path outDir = fs::path(gtdata.saveRoot0) / fs::path(gtdata.window->GetSaveDirectory());
-
+					
 					unsigned numCams = tdata.rawBuffers.size();
 					PrepSaveDirectories( {outDir.string()}, numCams, gtdata );
-					
+					gdtdata.outDir = outDir.c_str();
+					                    
 					auto fnos = grabber->GetFrameNumbers();
 					auto earliest = fnos[0];
 					for( unsigned cc = 0; cc < fnos.size(); ++cc )
@@ -481,6 +489,7 @@ int main(int argc, char* argv[])
 						CreateGridNodes(grows, gcols, numVis, renderer, tdata.grids );
 						
 						// we also want to know the sharing of grids between views.
+						float sharesGridMax = 25.0f;
 						sharesGrid = cv::Mat( numCameras, numCameras, CV_32FC1, cv::Scalar(0) );
 						for( unsigned gc = 0; gc < tdata.grids[0].size(); ++gc )
 						{
@@ -492,13 +501,15 @@ int main(int argc, char* argv[])
 									    tdata.grids[cc1][gc].size() > 0   )
 									{
 										float &f = sharesGrid.at<float>(cc0,cc1);
-										f = std::min(f+1.0f, 100.0f);
+										f = std::min(f+1.0f, sharesGridMax);
 									}
 								}
 							}
 						}
+						
 						gdtdata.gridMutex.unlock();
 						sharesGrid /= 100.0f;
+						sharesGrid /= sharesGridMax;
 						sharesGridRen->SetBGImage( sharesGrid );
 						sharesGridRen->StepEventLoop();
 					}
@@ -531,8 +542,16 @@ int main(int argc, char* argv[])
 					T(1,3) = 0.5f;
 					liveRecCircle->SetTransformation(T);
 					new_liverecord = true;
+					if (prevLiveRecord)
+					{
+						// NOTE: Not incrementing on a push of 'r' - need to rethink how that works.
+						//       If this increments here, need to make sure FinaliseCalibSession happens before the increment.
+// 						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
+						prevLiveRecord = false;	
+					}
+					
 					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
-
+					
 				}
 				
 			}

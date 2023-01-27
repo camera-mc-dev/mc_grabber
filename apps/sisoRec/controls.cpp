@@ -18,18 +18,18 @@ void GUIThread( GUIThreadData *gtdata )
 	SignalHandler * handler = new SignalHandler();
 	gtdata->signalHandler = handler;
 	
-	auto app = Gtk::Application::create(argc, argv, "recording controls");
-
+	auto app = Gtk::Application::create(argc, argv, "uk.ac.bath.camera.sisoRec.controls");
+	
 	ControlsWindow window( gtdata->grabber);
 	window.set_default_size(400, 200);
-
+	
 	gtdata->window = &window;
-
+	
 	gtdata->signalHandler->ready = true;
 	gtdata->signalHandler->cv.notify_all();
-
+	
 	app->run(window);
-
+	
 	gtdata->done = true;
 	gtdata->window->UpdateSessionConfig();
 
@@ -62,6 +62,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	vBoxRight.set_orientation(Gtk::ORIENTATION_VERTICAL);
 	hBox.set_border_width(5);
 	hBox.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+
 	
 	//
 	// Dropdown menu
@@ -151,6 +152,46 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	//Connect signal:
 	m_TreeView.signal_row_activated().connect(sigc::mem_fun(*this,
 	          &ControlsWindow::RenderTrial) );
+
+	//
+	// Dropdown menu
+	//
+
+	//Create actions for menus and toolbars:
+	m_refActionGroup = Gtk::ActionGroup::create();
+
+	//File menu:
+	m_refActionGroup->add(Gtk::Action::create("FileMenu", "File"));
+	m_refActionGroup->add(Gtk::Action::create("FileNew",
+	          Gtk::Stock::NEW, "New Session", "Create a new session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileNew));
+	
+	m_refActionGroup->add(Gtk::Action::create("FileLoad", 
+		Gtk::Stock::OPEN, "Load Session", "Load a pre-existing session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileLoad));
+
+	m_refActionGroup->add(Gtk::Action::create("FileMove", 
+		Gtk::Stock::DIRECTORY, "Move/Rename Session", "Move existing session and all trials to different directory"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileMove));
+
+	m_refActionGroup->add(Gtk::Action::create("FileSave", 
+		Gtk::Stock::SAVE, "Save Settings", "Save existing session"),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileSave));
+	
+	m_refActionGroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileQuit));
+
+	//Help menu:
+	m_refActionGroup->add( Gtk::Action::create("HelpMenu", "Help") );
+	m_refActionGroup->add( Gtk::Action::create("HelpAbout", Gtk::Stock::HELP),
+	      sigc::mem_fun(*this, &ControlsWindow::MenuFileUnimplemented) );
+
+	m_refUIManager = Gtk::UIManager::create();
+	m_refUIManager->insert_action_group(m_refActionGroup);
+
+	add_accel_group(m_refUIManager->get_accel_group());
+
+
 
 	//
 	// Create start/stop controls
@@ -308,7 +349,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	allCamExpScale.set_range(1,1000);
 	allCamGainLabel.set_label("gain");
 	allCamGainScale.set_range(1,16);
-
+	allCamGainScale.set_value(1);
 	baseGainFrame.set_label("analog base gain");	
 	baseGainButton.set_label("Set All");
 	baseGainLabel.set_label("base gain");
@@ -730,11 +771,12 @@ void ControlsWindow::FinaliseCalibrationSession()
 	{
 		// what's the grid file for this camera
 		std::stringstream ss;
-		ss << "/data/raid0/recording/" 
+		
+		ss << sessionConfig->GetRootPath().c_str()
 		   << GetSaveDirectory() 
-		   << "/grids-"
-		   << std::setw(2) << std::setfill('0') << cc;
-		   
+		   << "/"
+		   << std::setw(2) << std::setfill('0') << cc << ".grids";
+		cout << "==========================> Saving grids to: " << ss.str() << endl;
 		SaveGrids( ss.str(), gdata.grids[cc] );
 	}
 	gdata.grids.clear();
@@ -1003,12 +1045,16 @@ gboolean ControlsWindow::PopulateTrialList(gpointer self)
 	std::vector<string> trials = window->sessionConfig->GetTrialNames();
 	
 	//Fill the TreeView's model
-	for (unsigned i =0; i < trials.size(); i++) 
+	if (!trials.empty())
 	{
-		Gtk::TreeModel::Row row = *(window->m_refTreeModel->append());
-		row[window->m_Columns.m_col_id] = i;
-		row[window->m_Columns.m_col_name] = trials[i];	
+		for (unsigned i =0; i < trials.size(); i++) 
+		{
+			Gtk::TreeModel::Row row = *(window->m_refTreeModel->append());
+			row[window->m_Columns.m_col_id] = i;
+			row[window->m_Columns.m_col_name] = trials[i];
+		}	
 	}
+	return FALSE;
 
 }
 

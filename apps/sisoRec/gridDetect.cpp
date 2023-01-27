@@ -20,9 +20,10 @@ void GridDetectThread( SGridDetectData *data )
 	
 	
 #ifdef HAVE_MC_NETS
-	//TODO: load from common config or grabber config
-	std::string netPath = "/data2/gridDet/";
-	std::string netName = "cgd-hm-pts-1-bst";
+	CommonConfig ccfg;
+	
+	std::string netPath = ccfg.netsRoot + "/gridDetNets/";
+	std::string netName = "cgd-hm-pts-1";
 	auto ctx = mx::Context::gpu(0);
 	cout << "bs: " << data->numCameras << endl;
 	CalibGridDetectNet cgdNet( netPath, netName, data->numCameras, ctx );
@@ -244,6 +245,8 @@ void GridDetectThread( SGridDetectData *data )
 				std::stringstream ss;
 				ss << data->outDir << "/" << std::setw(2) << std::setfill('0') << cc << "/"
 				<< std::setw(12) << std::setfill('0') << *data->gridNo << ".charImg";
+                
+                cout << "Saving (?): " << ss.str() << endl;
 				SaveImage( imgs[cc], ss.str() );
 			}
 			

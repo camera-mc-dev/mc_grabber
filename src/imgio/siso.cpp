@@ -16,7 +16,6 @@ SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 		if( fg == NULL )
 		{
 			cout << "Error Fg_Init for board: " << boardInfo[bc].boardIndx << endl;
-			cout << Sgc_getErrorDescription(err) << endl;
 			CleanUp();
 			exit(0);
 		}
@@ -47,8 +46,7 @@ SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 		{
 			 cout << "Sgc_scanPorts error for board " << boardInfo[bc].boardIndx << " : " << err << endl;
 			 cout << Sgc_getErrorDescription(err) << endl;
-			 CleanUp();
-			 exit(0);
+			 continue;
 		}
 	
 		//
@@ -511,10 +509,10 @@ void SiSoGrabber::GetCurrent( int timeout )
 bool SiSoGrabber::GetCurrentEnsureSynch( int timeout )
 {
 	bool retVal = true;
-	
+		
 	if( currentFrames.size() != camInfos.size() )
 		currentFrames.resize( camInfos.size() );
-	
+		
 	// the camera who's most recent frame number is smallest should
 	// indicate the frame number that is available on all cameras.
 	frameindex_t earliest = 0;
@@ -563,6 +561,8 @@ bool SiSoGrabber::GetCurrentEnsureSynch( int timeout )
 		else
 			retVal = false;
 	}
+	
+	return retVal;
 }
 
 
@@ -629,6 +629,7 @@ bool SiSoGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout )
 		}
 		memcpy( currentFrames[cc].data, data, camHeight*camWidth );
 	}
+	return true;
 }
 
 bool SiSoGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vector< cv::Mat* > dsts )
@@ -661,6 +662,7 @@ bool SiSoGrabber::GetNumberedFrame( frameindex_t frameIdx, int timeout, std::vec
 	}
 	
 	++numFramesInCurrentRun;
+	return true;
 }
 
 void SiSoGrabber::PowerCycle()
