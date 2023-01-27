@@ -4,6 +4,13 @@
 
 SiSoGrabber::SiSoGrabber(std::vector<SiSoBoardInfo> boardInfo)
 {
+	for( unsigned c = 0; c < 3; ++c )
+	{
+		int t = Fg_getBoardType(c);
+		cout << "board type: " << c << " - " << t << " : " << Fg_getBoardNameByType(t, 0) << endl;
+	}
+	
+	
 	for( unsigned bc = 0; bc < boardInfo.size(); ++bc )
 	{
 		//
@@ -573,7 +580,7 @@ frameindex_t SiSoGrabber::GetSyncFrame( int timeout )
 		int port = camAddrs[cc].second;
 		
 		frameindex_t nfNum = Fg_getLastPicNumberBlockingEx(fgHandles[fc], camFrames[cc]+1, port, timeout, memHandles[cc] );
-// 		cout << "\t " << cc << " <> " << nfNum << endl;
+ 		// cout << "\t " << cc << " <> " << nfNum << endl;
 		if( nfNum > 0 )
 		{
 			if( cc != 0 )
@@ -584,6 +591,11 @@ frameindex_t SiSoGrabber::GetSyncFrame( int timeout )
 			{
 				earliest = nfNum;
 			}
+		}
+		else
+		{
+			cout << "Error in Fg_getLastPicNumberBlockingEx " << Fg_getLastErrorDescription(fgHandles[fc]) << endl;
+			CleanUp();
 		}
 	}
 	return earliest;

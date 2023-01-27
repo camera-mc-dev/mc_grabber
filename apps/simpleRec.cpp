@@ -46,6 +46,7 @@ void GrabThread( ThreadData *tdata )
 		//
 		//tdata->grabber->GetCurrentEnsureSynch(2);
 		frameindex_t fno = tdata->grabber->GetSyncFrame(2);
+		cout << "sync frame: " << fno << endl;
 		unsigned long bufIdx = fno % tdata->buffersNeeded;
 		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
 		{
@@ -56,11 +57,11 @@ void GrabThread( ThreadData *tdata )
 		auto fnos = tdata->grabber->GetFrameNumbers();
 		
 		for( unsigned cc = 0; cc < tdata->rawBuffers.size(); ++cc )
-		{			
+		{
 			cout << cc << " : " << fnos[cc] << "    " << prevfnos[cc] << " " << fnos[cc] - prevfnos[cc] << endl;
 		}
 		cout << "---" << endl;
-		
+		exit(0);
 		
 		
 		prevfnos = fnos;
@@ -216,7 +217,7 @@ int main(int argc, char* argv[])
 					if( tdata.bufferFrameIdx[cc][ bufIndx ] == 0 )
 						continue;
 					std::stringstream ss;
-					ss << "/data-fast/simpleRecTest/" << std::setw(2) << std::setfill('0') << cc << "/"
+					ss << "/data/fast/simpleRecTest/" << std::setw(2) << std::setfill('0') << cc << "/"
 					   << std::setw(12) << std::setfill('0') << tdata.bufferFrameIdx[cc][ bufIndx ] << ".charImg";
 					cout << "\t" << ss.str() << endl;
 					SaveImage( tdata.rawBuffers[cc][ bufIndx ], ss.str() );
