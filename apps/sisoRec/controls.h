@@ -73,7 +73,7 @@ public:
 
 	int GetRecDuration()
 	{
-		return durScale.get_value();
+		return durSpin.get_value();
 	}
 	
 	GrabThreadData gdata;
@@ -184,7 +184,7 @@ protected:
 	Gtk::Frame       sessionFrame;
 	Gtk::Label       xResLabel, yResLabel, fpsLabel, durLabel;
 	Gtk::Entry       xResEntry, yResEntry;
-	Gtk::HScale      fpsScale, durScale;
+	Gtk::SpinButton  fpsSpin, durSpin;
 	Gtk::Label       obsFpsA, obsFpsB;
 	Gtk::Label       sessionNameLabel, trialNameLabel;
 	Gtk::Entry       sessionNameEntry;
@@ -318,7 +318,7 @@ public:
 			// It would be confusing to the user to see meanfps larger than 
 			// the clock fps, so we cap the displayed value.
 			//
-			float clockfps = fpsScale.get_value();
+			float clockfps = fpsSpin.get_value();
 			obsFpsB.set_text( std::to_string( std::min(gdata.meanfps, clockfps) ) );
 		}
 		else
@@ -330,7 +330,7 @@ public:
 	
 	int GetDesiredFPS()
 	{
-		return fpsScale.get_value();
+		return fpsSpin.get_value();
 	}
 	
 	// updates the values in session config. 
