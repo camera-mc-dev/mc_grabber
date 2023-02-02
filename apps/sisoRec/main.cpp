@@ -107,8 +107,8 @@ int main(int argc, char* argv[])
 	}
 	
 	grabber->PrintCameraInfo();
-	grabber->SetOutput1StateLow(0);
-	
+// 	grabber->SetOutput1StateLow(0);
+	grabber->SetOutput1StateHigh(0); // default to being high instead.
 	
 	// 1) Launch the GTKMM GUI thread for controls
 	GUIThreadData gtdata;
@@ -291,7 +291,8 @@ int main(int argc, char* argv[])
 					buffRecord = false;
 					liveRecord = false;
 					grabber->StopTrigger(0);
-					grabber->SetOutput1StateHigh(0);
+// 					grabber->SetOutput1StateHigh(0);
+					grabber->SetOutput1StateLow(0);
 				
 					auto t0 = std::chrono::steady_clock::now();
 	
@@ -416,7 +417,8 @@ int main(int argc, char* argv[])
 					for( unsigned cc = 0; cc < tdata.saveProgress.size(); ++cc )
 						progRects[cc]->RemoveFromParent();
 					grabber->StartTrigger(0);
-					grabber->SetOutput1StateLow(0);
+					//grabber->SetOutput1StateLow(0);
+					grabber->SetOutput1StateHigh(0);
 					tdata.saveProgress.assign( grabber->GetNumCameras(), 0.0f );
 				}
 				
