@@ -205,9 +205,10 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	yResEntry.set_hexpand(true);
 	
 	fpsLabel.set_text("fps");
-	fpsScale.set_range(1,200);
-	fpsScale.set_value(sessionConfig->fps);
-	fpsScale.set_hexpand(true);
+	fpsSpin.set_range(1,200);
+	fpsSpin.set_value(sessionConfig->fps);
+	fpsSpin.set_increments(1,1);
+	fpsSpin.set_hexpand(true);
 
 	obsFpsA.set_text("observed fps:");
 	obsFpsA.set_hexpand(true);
@@ -215,9 +216,10 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	obsFpsB.set_hexpand(true);
 	
 	durLabel.set_text("duration (s)");
-	durScale.set_range(1,20);
-	durScale.set_value(sessionConfig->duration);
-	durScale.set_hexpand(true);
+	durSpin.set_range(1,20);
+	durSpin.set_value(sessionConfig->duration);
+	durSpin.set_increments(1,1);
+	durSpin.set_hexpand(true);
 	
 	sessionNameLabel.set_text("Session:");
 	trialNameLabel.set_text("Trial:");
@@ -259,8 +261,8 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	
 	ssGrid.attach( xResLabel, 0, 0, 1, 1); ssGrid.attach( xResEntry, 1, 0, 4, 1 );
 	ssGrid.attach( yResLabel, 0, 1, 1, 1); ssGrid.attach( yResEntry, 1, 1, 4, 1 );
-	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsScale,  1, 2, 4, 1 );
-	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durScale,  1, 3, 4, 1 );
+	ssGrid.attach( fpsLabel,  0, 2, 1, 1); ssGrid.attach( fpsSpin,  1, 2, 4, 1 );
+	ssGrid.attach( durLabel,  0, 3, 1, 1); ssGrid.attach( durSpin,  1, 3, 4, 1 );
 	ssGrid.attach( obsFpsA,   0, 4, 1, 1); ssGrid.attach( obsFpsB,   1, 4, 1, 1 );
 	
 	ssGrid.attach(     startGrabButton, 0, 7, 2, 1 );
@@ -311,7 +313,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 		camFrames[cc].set_label( ss.str() );
 		camExpLabels[cc].set_label("exp 1/x (s)");
 		camGainLabels[cc].set_label("gain");
-		camExpScales[cc].set_range(fpsScale.get_value(),1000);
+		camExpScales[cc].set_range(fpsSpin.get_value(),1000);
 		camGainScales[cc].set_range(1,16);
 		
 		camFrames[cc].set_hexpand(true);
@@ -360,7 +362,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	baseGain12RB.join_group( baseGain00RB );
 	baseGain00RB.set_active();
 	
-	allCamGainScale.set_value(fpsScale.get_value());
+	allCamGainScale.set_value(fpsSpin.get_value());
 	allCamExpScale.set_value(250);
 	
 	allCamExpGrid.set_hexpand(true);
@@ -393,7 +395,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	camControlSetButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetGainsAndExposures ) );
 	allCamExpSetButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetAllGainsAndExposures ) );
 	baseGainButton.signal_clicked().connect( sigc::mem_fun(*this, &ControlsWindow::SetAllBaseGains ) );
-	fpsScale.signal_value_changed().connect(sigc::mem_fun(*this, &ControlsWindow::SetMaxExposure ) );
+	fpsSpin.signal_value_changed().connect(sigc::mem_fun(*this, &ControlsWindow::SetMaxExposure ) );
 	
 	
 	//
@@ -419,10 +421,10 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 
 void ControlsWindow::SetMaxExposure()
 {
-	allCamExpScale.set_range(fpsScale.get_value(), 1000);
+	allCamExpScale.set_range(fpsSpin.get_value(), 1000);
 	for( unsigned cc = 0; cc < numCameras; ++cc )
 	{
-		camExpScales[cc].set_range(fpsScale.get_value(),1000);
+		camExpScales[cc].set_range(fpsSpin.get_value(),1000);
 	}
 }
 ControlsWindow::~ControlsWindow()
@@ -434,8 +436,8 @@ void ControlsWindow::SetWidgetValues()
 {
 	xResEntry.set_text(std::to_string(sessionConfig->videoWidth));
 	yResEntry.set_text(std::to_string(sessionConfig->videoHeight));
-	fpsScale.set_value(sessionConfig->fps);
-	durScale.set_value(sessionConfig->duration);
+	fpsSpin.set_value(sessionConfig->fps);
+	durSpin.set_value(sessionConfig->duration);
 	sessionNameEntry.set_text(sessionConfig->sessionName);
 	trialNameEntry.set_text(sessionConfig->trialName);
 	trialNumberSpin.set_value(sessionConfig->trialNum);
@@ -461,8 +463,8 @@ void ControlsWindow::UpdateSessionConfig(bool save)
 		sessionConfig->sessionName = sessionNameEntry.get_text();
 		sessionConfig->videoWidth = GetResEntry(&xResEntry);
 		sessionConfig->videoHeight = GetResEntry(&yResEntry);
-		sessionConfig->fps = fpsScale.get_value();
-		sessionConfig->duration = durScale.get_value();
+		sessionConfig->fps = fpsSpin.get_value();
+		sessionConfig->duration = durSpin.get_value();
 		sessionConfig->trialNum = trialNumberSpin.get_value();
 		sessionConfig->trialName = trialNameEntry.get_text();
 		
@@ -491,10 +493,10 @@ void ControlsWindow::StartGrabbing()
 	meanfps = -1.0;
 	
 	startGrabButton.set_sensitive(false);
-	fpsScale.set_sensitive(false);
+	fpsSpin.set_sensitive(false);
 	xResEntry.set_sensitive(false);
 	yResEntry.set_sensitive(false);
-	durScale.set_sensitive(false);
+	durSpin.set_sensitive(false);
 	calibModeCheckBtn.set_sensitive(false);
 	
 	stopGrabButton.set_sensitive(true);
@@ -516,16 +518,16 @@ void ControlsWindow::StartGrabbing()
 	//             
 	unsigned long memLimit = 120 * 1000 * 1000 * 1000;
 	
-	unsigned long fps = fpsScale.get_value();
+	unsigned long fps = fpsSpin.get_value();
 	long int resX = GetResEntry(&xResEntry);
 	long int resY = GetResEntry(&yResEntry);
-	long int recDuration = durScale.get_value();
+	long int recDuration = durSpin.get_value();
 	
 	grabber->SetFPS( fps, 0 );
 	grabber->SetResolution( resX, resY );
 	xResEntry.set_text(std::to_string(resX));
 	yResEntry.set_text(std::to_string(resY));
-	fpsScale.set_value( fps );
+	fpsSpin.set_value( fps );
 	
 	unsigned long memUse = resX * resY * fps * recDuration * grabber->GetNumCameras();
 	while( memUse > memLimit )
@@ -534,7 +536,7 @@ void ControlsWindow::StartGrabbing()
 		memUse = resX * resY * fps * recDuration * grabber->GetNumCameras();
 	}
 	cout << "Calculated memory use: " << memUse << endl;
-	durScale.set_value( recDuration );
+	durSpin.set_value( recDuration );
 	
 	//
 	// Prepare grab thread
@@ -580,10 +582,10 @@ gboolean ControlsWindow::StopGrabbing(gpointer self)
 		ControlsWindow * window  = (ControlsWindow*) self;
 		window->UpdateSessionConfig(true);
 		window->startGrabButton.set_sensitive(true);
-		window->fpsScale.set_sensitive(true);
+		window->fpsSpin.set_sensitive(true);
 		window->xResEntry.set_sensitive(true);
 		window->yResEntry.set_sensitive(true);
-		window->durScale.set_sensitive(true);
+		window->durSpin.set_sensitive(true);
 		window->baseGainButton.set_sensitive(true);
 		window->calibModeCheckBtn.set_sensitive(true);
 	
@@ -624,7 +626,7 @@ void ControlsWindow::CalibModeToggle()
 	
 	if(active)
 	{
-		fpsPreCalibToggle         = fpsScale.get_value();
+		fpsPreCalibToggle         = fpsSpin.get_value();
 		trialNamePreCalibToggle   = trialNameEntry.get_text();
 		trialNumPreCalibToggle = trialNumberSpin.get_value();
 		
@@ -635,8 +637,8 @@ void ControlsWindow::CalibModeToggle()
 		trialNumberSpin.set_increments(1,1);
 		
 		cout << "fps pre calib toggle: " << fpsPreCalibToggle << endl;
-		fpsScale.set_value(5);
-		fpsScale.set_sensitive(false);
+		fpsSpin.set_value(5);
+		fpsSpin.set_sensitive(false);
 		
 		
 		// Create the circle grid detector
@@ -656,13 +658,13 @@ void ControlsWindow::CalibModeToggle()
 	}
 	else
 	{
-		fpsScale.set_value(fpsPreCalibToggle);
+		fpsSpin.set_value(fpsPreCalibToggle);
 		trialNameEntry.set_text( trialNamePreCalibToggle );
 		trialNumberSpin.set_range(0, 99);
 		trialNumberSpin.set_value(trialNumPreCalibToggle);
 		trialNumberSpin.set_increments(1,1);
 		trialNameEntry.set_sensitive(true);
-		fpsScale.set_sensitive(true);
+		fpsSpin.set_sensitive(true);
 	}
 	
 }
@@ -678,7 +680,7 @@ void ControlsWindow::SetGainsAndExposures()
 		long int exp = 1000000 * (1.0 / divisor);
 		
 // 		// make sure the value is smaller than the framerate.
-// 		long int frameDurationMicroSec = 1000000 * (1.0f / fpsScale.get_value());
+// 		long int frameDurationMicroSec = 1000000 * (1.0f / fpsSpin.get_value());
 // 		exp = std::min( frameDurationMicroSec - 10, exp );
 		
 		grabber->SetExposure(cc, exp );

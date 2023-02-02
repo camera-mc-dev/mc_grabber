@@ -547,11 +547,9 @@ int main(int argc, char* argv[])
 						// NOTE: Not incrementing on a push of 'r' - need to rethink how that works.
 						//       If this increments here, need to make sure FinaliseCalibSession happens before the increment.
 // 						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
+						gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
 						prevLiveRecord = false;	
 					}
-					
-					gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
-					
 				}
 				
 			}
