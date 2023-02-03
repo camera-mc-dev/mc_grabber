@@ -9,6 +9,7 @@
 #include <giomm/file.h>
 
 #include "renderer2/showImage.h"
+#include "calib/calibration.h"
 
 void GUIThread( GUIThreadData *gtdata )
 {
@@ -765,6 +766,111 @@ void ControlsWindow::InitialiseCalibrationSession()
 	gdata.calibGrabNo = numGridGrabs;
 }
 
+void ControlsWindow::AutoGenCalibConfig( std::string dataRoot, std::string trialRoot )
+{
+	//
+	// We can read from the base calib file in recent enough versions of mc_core
+	//
+	CommonConfig ccfg;
+	std::stringstream ss;
+	ss << ccfg.coreDataRoot << "/baseConfigs/calib.cfg";
+	std::string baseConfigFile = ss.str();
+	
+	
+	//
+	// but we need to adjust various things.
+	// NOTE: These adjustments are partly based on the assumption that the user is going to 
+	//       set the scene origin using the Qualisys L-frame.
+	//
+	try
+	{
+		libconfig::Config cfg;
+		cfg.readFile( baseConfigFile.c_str() );
+		
+		//
+		// Set the data root and trial root.
+		//
+		cfg.lookup("dataRoot")  =  dataRoot;
+		cfg.lookup("testRoot")  = trialRoot;
+		
+		//
+		// Set the image dirs.
+		//
+		libconfig::Setting &idirs = cfg.lookup("imgDirs");
+		while( idirs.getLength() > 0 )
+			idirs.remove(0u);
+		for( unsigned cc = 0; cc < numCameras; ++cc )
+		{
+			std::stringstream css;
+			css << std::setw(2) << std::setfill('0') << cc << "/";
+			idirs.add( libconfig::Setting::TypeString );
+			idirs[cc] = css.str().c_str();
+		}
+		
+		//
+		// Set the grid shape
+		//
+		libconfig::Setting &gs = cfg.lookup("grid");
+		gs.lookup("rows") = GetCalibGridRows();
+		gs.lookup("cols") = GetCalibGridCols();
+		
+		//
+		// Just a few sensible values a little different from the defaults
+		//
+		cfg.lookup("useExistingGrids")      = true;
+		cfg.lookup("noDistortionOnInitial") = true;
+		cfg.lookup("useExistingIntrinsics") = false;
+		cfg.lookup("forceOneCam")           = false;
+		cfg.lookup("minSharedGrids")        =    40;
+		cfg.lookup("useSBA")                = true;
+		
+		
+		//
+		// These settings assume the L-frame is used for setting the ground plane
+		//
+		cfg.lookup("targetDepth")      = 50.0f;
+		cfg.lookup("alignXisNegative") = true;
+		
+		
+		//
+		// This is the safest setting, but not necessarily the best.
+		//
+		libconfig::Setting &fi = cfg.lookup("frameInds");
+		while( fi.getLength() > 0 )
+			fi.remove(0u);
+		for( unsigned cc = 0; cc < numCameras; ++cc )
+		{
+			fi.add( libconfig::Setting::TypeInt );
+			fi[cc] = 0;
+		}
+		cfg.lookup("originFrame")      = 0;
+		
+		
+		//
+		// And we can write that config out where we want it.
+		//
+		std::stringstream fss;
+		fss << dataRoot << "/" << trialRoot << "/calib.cfg";
+		cfg.writeFile( fss.str().c_str() );
+		
+	}
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
+	}
+	catch( libconfig::ParseException &e )
+	{
+		cout << "Parse error:" << endl;
+		cout << e.what() << endl;
+		cout << e.getError() << endl;
+		cout << e.getFile() << endl;
+		cout << e.getLine() << endl;
+		exit(1);
+	}
+}
 
 void ControlsWindow::FinaliseCalibrationSession()
 {
@@ -777,10 +883,20 @@ void ControlsWindow::FinaliseCalibrationSession()
 		ss << sessionConfig->GetRootPath().c_str()
 		   << GetSaveDirectory() 
 		   << "/"
-		   << std::setw(2) << std::setfill('0') << cc << ".grids";
+		   << std::setw(2) << std::setfill('0') << cc << "/grids";
 		cout << "==========================> Saving grids to: " << ss.str() << endl;
 		SaveGrids( ss.str(), gdata.grids[cc] );
 	}
+	
+	//
+	// Now we need to auto-generate a config file
+	//
+	AutoGenCalibConfig( sessionConfig->GetRootPath().c_str(), GetSaveDirectory() );
+	
+	
+	
+	
+	
 	gdata.grids.clear();
 	trialNumberSpin.set_sensitive(true);
 	

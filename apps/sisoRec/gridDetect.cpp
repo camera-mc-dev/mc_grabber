@@ -65,6 +65,8 @@ void GridDetectThread( SGridDetectData *data )
 		unsigned maxDetections = 0;
 		unsigned goodCount = 0;
 		std::vector< std::vector< CircleGridDetector::GridPoint > > gridPoints( imgs.size() );
+		
+		SaveImage( imgs[0], "tmp.charImg" );
 #ifdef HAVE_MC_NETS
 		
 		// At the moment, the circleGridNet is only accurate enough to give us a detection and 
@@ -201,7 +203,7 @@ void GridDetectThread( SGridDetectData *data )
 				
 				std::stringstream ss;
 				ss << data->outDir << "/" << std::setw(2) << std::setfill('0') << cc << "/"
-				<< std::setw(12) << std::setfill('0') << *data->gridNo << ".charImg";
+				<< std::setw(12) << std::setfill('0') << *data->gridNo << ".jpg";
 				SaveImage( imgs[cc], ss.str() );
 			}
 			

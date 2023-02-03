@@ -349,6 +349,7 @@ public:
 	}
 
 	void FinaliseCalibrationSession();
+	void AutoGenCalibConfig( std::string dataRoot, std::string trialRoot );
 
 protected:
 	//

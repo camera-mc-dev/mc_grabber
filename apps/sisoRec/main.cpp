@@ -491,7 +491,8 @@ int main(int argc, char* argv[])
 						CreateGridNodes(grows, gcols, numVis, renderer, tdata.grids );
 						
 						// we also want to know the sharing of grids between views.
-						float sharesGridMax = 25.0f;
+						float sharesGridMax    = 25.0f;
+						float sharesGridCurMax = 0.0f;
 						sharesGrid = cv::Mat( numCameras, numCameras, CV_32FC1, cv::Scalar(0) );
 						for( unsigned gc = 0; gc < tdata.grids[0].size(); ++gc )
 						{
@@ -504,14 +505,14 @@ int main(int argc, char* argv[])
 									{
 										float &f = sharesGrid.at<float>(cc0,cc1);
 										f = std::min(f+1.0f, sharesGridMax);
+										sharesGridCurMax = std::max( f, sharesGridCurMax );
 									}
 								}
 							}
 						}
 						
 						gdtdata.gridMutex.unlock();
-						sharesGrid /= 100.0f;
-						sharesGrid /= sharesGridMax;
+						sharesGrid /= sharesGridCurMax;
 						sharesGridRen->SetBGImage( sharesGrid );
 						sharesGridRen->StepEventLoop();
 					}
