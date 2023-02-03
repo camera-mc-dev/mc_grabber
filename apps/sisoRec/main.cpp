@@ -212,13 +212,12 @@ int main(int argc, char* argv[])
 			
 			
 			bool liveRecord = false;
-			bool prevLiveRecord = false;
 			
 			std::vector< cv::Mat > bgrImgs( grabber->GetNumCameras() );
 			
 			std::map<int, bool> dispCams;
 			tdata.meanfps = -1.0f;
-			bool new_liverecord = true;
+			bool new_liverecord = false;
 			// run renderer
 			while( !gtdata.done && gtdata.window->grabbing )
 			{
@@ -424,12 +423,8 @@ int main(int argc, char* argv[])
 				
 				if( liveRecord )
 				{
-					if (new_liverecord)
-					{
-						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
-						new_liverecord = false;	
-					}
-// 					prevLiveRecord = true;
+					new_liverecord = true;
+
 					
 					GrabThreadData &tdata = gtdata.window->gdata;
 					buffRecord = false;
@@ -439,7 +434,7 @@ int main(int argc, char* argv[])
 					unsigned numCams = tdata.rawBuffers.size();
 					PrepSaveDirectories( {outDir.string()}, numCams, gtdata );
 					gdtdata.outDir = outDir.c_str();
-					                    
+
 					auto fnos = grabber->GetFrameNumbers();
 					auto earliest = fnos[0];
 					for( unsigned cc = 0; cc < fnos.size(); ++cc )
@@ -544,15 +539,6 @@ int main(int argc, char* argv[])
 					T(0,3) = -5.0f;
 					T(1,3) = 0.5f;
 					liveRecCircle->SetTransformation(T);
-					new_liverecord = true;
-					if (prevLiveRecord)
-					{
-						// NOTE: Not incrementing on a push of 'r' - need to rethink how that works.
-						//       If this increments here, need to make sure FinaliseCalibSession happens before the increment.
-// 						gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
-						gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
-						prevLiveRecord = false;	
-					}
 				}
 				
 			}
@@ -572,6 +558,13 @@ int main(int argc, char* argv[])
 			// clean up renderer
 			cout << "done with current renderer" << endl;
 			sendImgs[0] = cv::Mat(100, 100, CV_8UC1, cv::Scalar(128) );
+
+			if (new_liverecord)
+			{
+				gdk_threads_add_idle(ControlsWindow::IncrementTrialNumber, gtdata.window);
+				gdk_threads_add_idle(ControlsWindow::PopulateTrialList, gtdata.window);
+				new_liverecord = false;
+			}
 		}
 	}
 	
