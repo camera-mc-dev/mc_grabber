@@ -72,9 +72,11 @@ int main(int argc, char* argv[])
 	int numBoards      = atoi(argv[1]);
 	
 	// optional parameters
-	string videoPath;
-	if (argc > 2){
-		videoPath = argv[2];
+	std::vector< std::string > videoPaths;
+	if (argc > 2)
+	{
+		for( unsigned c = 2; c < argc; ++c )
+			videoPaths.push_back( argv[c] );
 	}
 	bool fpsWarningActive = false;
 	
@@ -97,13 +99,13 @@ int main(int argc, char* argv[])
 	
 	cout << "Create Grabber..." << endl;
 	AbstractGrabber* grabber;
-	if (videoPath.empty())
+	if (videoPaths.empty())
 	{
 		grabber = new SiSoGrabber(boardInfo);
 	}
 	else
 	{
-		grabber = new FakeGrabber(videoPath);	
+		grabber = new FakeGrabber(videoPaths);
 	}
 	
 	grabber->PrintCameraInfo();

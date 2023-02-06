@@ -75,10 +75,25 @@ void FakeGrabber::CameraLoop()
 
 FakeGrabber::FakeGrabber(string pathToSource)
 {
+	// arbitrarily chosen, we'll see n cameras all the same.
+	numCameras = 4;
+	
 	paused = false;
 	for (unsigned i = 0; i < GetNumCameras(); i++)
 	{
 		cameras.push_back(FakeCamera(pathToSource));
+		camFrames.push_back(0);
+		fake = true;
+	}
+}
+
+FakeGrabber::FakeGrabber(std::vector<std::string> pathsToSources)
+{
+	numCameras = pathsToSources.size();
+	paused = false;
+	for (unsigned i = 0; i < GetNumCameras(); i++)
+	{
+		cameras.push_back( FakeCamera( pathsToSources[i] ) );
 		camFrames.push_back(0);
 		fake = true;
 	}
@@ -135,5 +150,5 @@ void FakeGrabber::StartAcquisition()
 {
 	done = false;
 	chronoThread = std::thread(RunFakeCamera, this);
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // in lieu of knowing the "cameras" are running.
+	std::this_thread::sleep_for(std::chrono::milliseconds(3000)); // in lieu of knowing the "cameras" are running.
 }

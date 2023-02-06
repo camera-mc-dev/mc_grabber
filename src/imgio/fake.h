@@ -59,7 +59,8 @@ class FakeGrabber : public AbstractGrabber
 {
   public:
 	FakeGrabber(string pathToSource);
-
+	FakeGrabber(std::vector<std::string> pathsToSources);
+	
 	~FakeGrabber()
 	{
 		done = true;
@@ -76,8 +77,7 @@ class FakeGrabber : public AbstractGrabber
 
 	unsigned GetNumCameras()
 	{
-		// always just return 4 for now.
-		return 4;
+		return numCameras;
 	}
 
 	std::vector< Mat > currentFrames;
@@ -209,6 +209,8 @@ class FakeGrabber : public AbstractGrabber
 	bool paused = false;
 	
 	std::mutex grabMutex;
+	
+	unsigned numCameras;
 };
 
 #endif // MC_GRABBER_FAKE_H
