@@ -28,9 +28,12 @@ bk.outputTypes = ["html"]
 
 
 bk.MakeChapter( 1, "Overview", ["chapters/overview.md"] )
+bk.MakeChapter( 2,  "Details", [ "chapters/details.md"] )
+bk.MakeChapter( 3,  "Short calibration guide", [ "chapters/calib.md"] )
+bk.MakeChapter( 4,  "Post processing (session manager)", [ "chapters/session.md"] )
+bk.MakeChapter( 5,  "Advanced Concepts", [ "chapters/advanced.md"] )
 
-
-bk.MakeChapter( 2, "SiSoRec: Code", ["chapters/fakeGrabber-dev.md"])
+bk.MakeChapter( 6, "SiSoRec: Code", ["chapters/fakeGrabber-dev.md"])
 
 
 
