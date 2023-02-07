@@ -120,4 +120,6 @@ Just before abandoning the framegrabbers used by Grabbie, Basler (who presumably
 
 There may be API changes and configuration changes that affect `sisoRec` in as-yet unknown ways, so, as yet, it has not been deemed timely to update the driver etc.
 
-*NOTE*: If you have having problems with the grabbers, it can be very useful to familiarise yourself with the various SiSo runtime tools, like `microDisplayX`, `microDiagnostics` etc. `microDisplayX` is particularly useful for showing the current temperatures of the grabbers. You may also find it advantageous to see what the system log reports wrt. the menable module: `$> dmesg | grep menable`
+## Hardware debugging
+
+If you have having problems with the grabbers, it can be very useful to familiarise yourself with the various SiSo runtime tools, like `microDisplayX`, `microDiagnostics` etc. `microDisplayX` is particularly useful for showing the current temperatures of the grabbers. You may also find it advantageous to see what the system log reports wrt. the menable module: `$> dmesg | grep menable`
