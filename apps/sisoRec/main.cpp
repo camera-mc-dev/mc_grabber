@@ -191,14 +191,18 @@ int main(int argc, char* argv[])
 			// Launch the grid detection thread which will probably spend 
 			// most of its time idling.
 			SGridDetectData gdtdata; // hmmm... to many g*datas!
-			gdtdata.done = false;
-			gdtdata.renderer = renderer;
-			gdtdata.gridNo = &tdata.calibGrabNo;
-			gdtdata.grids  = &tdata.grids;
-			gdtdata.outDir = gtdata.saveRoot0;
-			gdtdata.numCameras = grabber->GetNumCameras();
-			
-			auto gridThread = std::thread(GridDetectThread, &gdtdata);
+			std::shared_ptr< std::thread > gridThread;
+			if( gtdata.window->IsLiveGridDetectEnabled() )
+			{
+				gdtdata.done = false;
+				gdtdata.renderer = renderer;
+				gdtdata.gridNo = &tdata.calibGrabNo;
+				gdtdata.grids  = &tdata.grids;
+				gdtdata.outDir = gtdata.saveRoot0;
+				gdtdata.numCameras = grabber->GetNumCameras();
+				
+				gridThread.reset( new std::thread(GridDetectThread, &gdtdata) );
+			}
 			unsigned numVis = 0;
 			
 			// Launch the batch image saving threads
@@ -545,10 +549,12 @@ int main(int argc, char* argv[])
 				
 			}
 			
-			cout << "wait for grid detect thread..." << endl;
-			gdtdata.done = true;
-			gridThread.join();
-			
+			if( gtdata.window->IsLiveGridDetectEnabled() )
+			{
+				cout << "wait for grid detect thread..." << endl;
+				gdtdata.done = true;
+				gridThread->join();
+			}
 			
 			cout << "wait for odd/even save threads..." << endl;
 			tdata.needSavingThreads = false;
