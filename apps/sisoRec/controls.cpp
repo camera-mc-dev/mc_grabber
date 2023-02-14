@@ -217,7 +217,7 @@ ControlsWindow::ControlsWindow(AbstractGrabber *in_grabber)
 	obsFpsB.set_hexpand(true);
 	
 	durLabel.set_text("duration (s)");
-	durSpin.set_range(1,20);
+	durSpin.set_range(1,60);
 	durSpin.set_value(sessionConfig->duration);
 	durSpin.set_increments(1,1);
 	durSpin.set_hexpand(true);
