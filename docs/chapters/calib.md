@@ -49,7 +49,7 @@ Once you have captured the calibration sequence:
      $> /opt/mc_bin/mc_core/pointMatcher calib.cfg
      $> /opt/mc_bin/mc_core/circleGridCamNetwork calib.cfg
      $> /opt/mc_bin/mc_core/manualAlignNetwork calib.cfg
-     $> /opt/mc_bin/mc_core/checkCalib calib.cfg
+     $> /opt/mc_bin/mc_core/calibCheck calib.cfg
      $> /opt/mc_bin/mc_core/makeGroundPlaneImage calib.cfg -3000 -3000 6000 1000
 ```
 
@@ -59,5 +59,7 @@ NOTE: The auto-generated `calib.cfg` file is set up on the assumption that you h
   2) The annotated x-axis, y-axis, and origin points are 50 mm _above_ the ground plane.
 
 If this is not the case, then you can edit the `calib.cfg` file and adjust the settings `targetDepth`, `alignXisNegative` and `alignYisNegative` to better suit your data.
+
+NOTE: The arguments to `makeGroundPlaneImage` are `<min x> <min y> <world size> <image size>`, thus the above command will show a square map of 6000 mm starting from (-3000,-3000).
 
 For a more complete discussion of calibration see the documentation in `mc_core`.
