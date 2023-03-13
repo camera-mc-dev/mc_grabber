@@ -6,6 +6,8 @@
 #include <set>
 #include <iostream>
 #include <iomanip>
+#include <pwd.h>
+#include "libconfig.h++"
 using std::cout;
 using std::endl;
 
@@ -14,7 +16,92 @@ using std::endl;
 
 MainWindow::MainWindow() : sessionsLBox(1), trialsLBox(1), camsLBox(1), debayerJobsList(1)
 {
-	recPaths = { "/data/raid0/recording/", "/data/raid1/recording/" };
+	//
+	// We need three things from the grabber config:
+	//  1) recording paths
+	//  2) where the sessionDaemon binary is
+	//
+	
+	std::string userHome;
+#if defined(__APPLE__) || defined( __gnu_linux__ )
+	struct passwd* pwd = getpwuid(getuid());
+	if (pwd)
+	{
+		userHome = pwd->pw_dir;
+	}
+	else
+	{
+		// try the $HOME environment variable
+		userHome = getenv("HOME");
+	}
+#else
+	throw std::runtime_error("yeah, I've not done this for Windows or unknown unix!");
+#endif
+	
+	std::stringstream ss;
+	ss << userHome << "/.mc_dev.grabber.cfg";
+	boost::filesystem::path p(ss.str());
+	
+	if( !boost::filesystem::exists(p) )
+	{
+		throw std::runtime_error("No grabber config found at: " + p.string());	
+	}
+	try
+	{
+		libconfig::Config cfg;
+		cfg.readFile( ss.str().c_str() );
+		
+		std::string saveRoot0 = (const char*) cfg.lookup("saveRoot0");
+		std::string saveRoot1 = (const char*) cfg.lookup("saveRoot1");
+		recPaths = {saveRoot0, saveRoot1};
+
+		// we need to know where the session daemon binary is.
+		if(!cfg.exists("daemonBinary"))
+		{
+			auto &cfgRoot = cfg.getRoot();
+			cfgRoot.add("daemonBinary", libconfig::Setting::TypeString);
+			cfg.lookup("daemonBinary") = "/opt/mc_bin/mc_grabber/sessionDaemon";
+		}
+		daemonBinary = (const char*) cfg.lookup("daemonBinary");
+		
+		// we need to know where the calibration binaries are.
+		if(!cfg.exists("calibBinariesDir"))
+		{
+			auto &cfgRoot = cfg.getRoot();
+			cfgRoot.add("calibBinariesDir", libconfig::Setting::TypeString);
+			cfg.lookup("calibBinariesDir") = "/opt/mc_bin/mc_core/";
+		}
+		calibBinariesDir = (const char*) cfg.lookup("calibBinariesDir");
+		
+		
+		// we need to know where we're putting processed (debayered) videos
+		if(!cfg.exists("processedSessionsRoot"))
+		{
+			auto &cfgRoot = cfg.getRoot();
+			cfgRoot.add("processedSessionsRoot", libconfig::Setting::TypeString);
+			cfg.lookup("processedSessionsRoot") = "/data/processedSessions/";
+		}
+		processedSessionsRoot = (const char*) cfg.lookup("processedSessionsRoot");
+		
+		// and we'd best make sure this exists as well.
+		if(!cfg.exists("debayerBinary"))
+		{
+			auto &cfgRoot = cfg.getRoot();
+			cfgRoot.add("debayerBinary", libconfig::Setting::TypeString);
+			cfg.lookup("debayerBinary") = "/opt/mc_bin/mc_imgproc/debayer";
+		}
+		
+		cfg.writeFile( ss.str().c_str() );
+		
+	}
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
+	}
+	
 	
 	ScanForSessions();
 	
@@ -31,8 +118,12 @@ void MainWindow::ScanForSessions()
 {
 	//
 	// We make the assumption that the recording tool creates recordings in:
-	// /data/raid0/recording/<session>/<trial>
-	// /data/raid1/recording/<session>/<trial>
+	// recPaths[0]/<session>/<trial>
+	// recPaths[1]/<session>/<trial>
+	//
+	// We also assume that all processed (debayered etc... videos, calibs) are in:
+	// processedSessionsRoot/<session>/<trial>
+	//
 	//
 	// We don't assume that there is already a meta-file.
 	//
@@ -47,10 +138,12 @@ void MainWindow::ScanForSessions()
 	
 	// scan for sessions.
 	std::set<std::string> sessionNames;
+	std::vector< std::string > scanPaths = recPaths;
+	scanPaths.push_back( processedSessionsRoot );
 	
-	for(unsigned rpc = 0; rpc < recPaths.size(); ++rpc )
+	for(unsigned pc = 0; pc < scanPaths.size(); ++pc )
 	{
-		boost::filesystem::path p(recPaths[rpc]);
+		boost::filesystem::path p(scanPaths[pc]);
 		if( boost::filesystem::exists(p) && boost::filesystem::is_directory(p))
 		{
 			boost::filesystem::directory_iterator di(p), endi;
@@ -79,40 +172,35 @@ void MainWindow::ScanForSessions()
 
 void MainWindow::ScanSession( Ssession &sess )
 {
-	// do we have a meta-file?
+	// TODO: Meta-file information.
 	
-	// scan for trials.
 	//
-	// Directories inside of a session are assumed to be trials iff they have 
-	// the format <stuff>_??
+	// First job is to (re)discover where this session's files are located.
+	// There's a reason to re-do this - and that is so that we can easily re-scan a session
+	// without doing a global re-scan.
 	//
-	// which is to say, that the size()-3 character is '_'
-	// TODO: even better test?
+	std::vector< std::string > scanPaths = recPaths;
+	scanPaths.push_back( processedSessionsRoot );
 	
-	for( unsigned rpc = 0; rpc < recPaths.size(); ++rpc )
+	sess.paths.clear();
+	for( unsigned pc = 0; pc < scanPaths.size(); ++pc )
 	{
 		std::stringstream ss;
-		ss << recPaths[rpc] << "/" << sess.name << "/";
+		ss << scanPaths[pc] << "/" << sess.name << "/";
 		
 		boost::filesystem::path p(ss.str());
 		if( boost::filesystem::exists(p) && boost::filesystem::is_directory(p) )
 		{
 			sess.paths.push_back( ss.str() );
 		}
-		
-		ss.str("");
-		ss << recPaths[rpc] << "/" << sess.name << "/raw/";
-		
-		boost::filesystem::path p2(ss.str());
-		if( boost::filesystem::exists(p2) && boost::filesystem::is_directory(p2) )
-		{
-			sess.paths.push_back( ss.str() );
-		}
-		
 	}
 	
+	//
+	// Now we can search in those locations for the trials.
+	//
+	
+	
 	cout << "sess: " << sess.name << endl;
-	std::vector< std::string > calibFiles;
 	for( unsigned spc = 0; spc < sess.paths.size(); ++spc )
 	{
 		boost::filesystem::path p( sess.paths[spc] );
@@ -144,75 +232,15 @@ void MainWindow::ScanSession( Ssession &sess )
 						}
 					}
 				}
-				else if( s.find(".calib") != std::string::npos )
-				{
-					calibFiles.push_back(s);
-				}
 			}
 		}
 	}
 	
-	std::vector< std::string > calibTrials;
 	for( auto ti = sess.trials.begin(); ti != sess.trials.end(); ++ti )
 	{
-		if( ti->first.find("calib_") == 0 )
-			calibTrials.push_back(ti->first);
 		ScanTrial( ti->second );
 	}
 	
-	//
-	// Do we have an active calibration?
-	// How would we know?
-	// Scan the session dir for any .calib files, which should be symLinks into a specific trial.
-	//
-	if( calibFiles.size() > 0 )
-	{
-		//
-		// TODO: check that these are symlinks, and if they are, figure out which 
-		//       calib trial they point to.
-		//
-	}
-	else if( calibTrials.size() > 0 )
-	{
-		//
-		// Default to this otherwise.
-		//
-		sess.activeCalibTrial = calibTrials[0];
-	}
-	else
-	{
-		sess.activeCalibTrial = "N/A";
-	}
-	
-	if( sess.activeCalibTrial.compare("N/A") != 0 )
-	{
-		Strial &act = sess.trials[ sess.activeCalibTrial ];
-		if( act.hasAlignedCalib )
-		{
-			sess.calibStatus = "(3) has aligned";
-		}
-		else if( act.hasInitialCalib )
-		{
-			sess.calibStatus = "(2) has initial";
-		}
-		else if( act.hasGrids )
-		{
-			sess.calibStatus = "(1) has grids files";
-		}
-		else
-		{
-			sess.calibStatus = "(0) no calib";
-		}
-		
-		if( act.hasMatches )
-		{
-			sess.matchesStatus = "(1) has matches file";
-		}
-		else
-		{
-			sess.matchesStatus = "(1) no matches file";
-		}
-	}
 	
 }
 
@@ -231,6 +259,7 @@ void MainWindow::ScanTrial( Strial &trial )
 	//
 	// We assume the recording software dumps cameras to numbered directories: 00,01,02,03,..,99
 	//
+	trial.cameras.clear();
 	for( unsigned cc = 0; cc < 99; ++cc )
 	{
 		ScanCamera( trial, cc );
@@ -309,20 +338,27 @@ void MainWindow::ScanCamera( Strial &trial, unsigned camNum )
 	// Check for raw Data
 	//
 	bool gotRawPath = false;
+	bool gotRGBPath = false;
 	for( unsigned tpc = 0; tpc < trial.paths.size(); ++tpc )
 	{
-		std::stringstream ss;
-		ss << trial.paths[tpc] << "/" << std::setw(2) << std::setfill('0') << camNum;
-		
+		// first off, check that this trial path actually exists...
 		boost::filesystem::path tp( trial.paths[tpc] );
 		if( boost::filesystem::exists(tp) && boost::filesystem::is_directory(tp))
 		{
-			boost::filesystem::path cp( ss.str() );
-			if( boost::filesystem::exists(cp) && boost::filesystem::is_directory(cp) )
+			// now look for:
+			//  1) "??/"    : two-digit camera directory, we assume full of raw unprocessed images.
+			//  2) "??.mp4" : two-digit camera video file
+			std::stringstream rss, vss;
+			rss << trial.paths[tpc] << "/" << std::setw(2) << std::setfill('0') << camNum;
+			vss << trial.paths[tpc] << "/" << std::setw(2) << std::setfill('0') << camNum << ".mp4";
+			
+			boost::filesystem::path rp( rss.str() );
+			if( boost::filesystem::exists(rp) && boost::filesystem::is_directory(rp) )
 			{
+				// found a possible raw path. Make sure it is the _only_ raw path we've found.
 				if( !gotRawPath )
 				{
-					camInfo.rawPath = cp.string();
+					camInfo.rawPath = rp.string();
 					
 					gotRawPath = true;
 				}
@@ -332,7 +368,32 @@ void MainWindow::ScanCamera( Strial &trial, unsigned camNum )
 					msgss << "Warning: More than one location for raw camera image directory: " << endl;
 					msgss << "\ttrial: " << trial.name << endl;
 					msgss << "\t  (1): " << camInfo.rawPath << endl;
-					msgss << "\t  (2): " << cp << endl;
+					msgss << "\t  (2): " << rp << endl;
+					msgss << "\t  keeping (1) " << endl;
+					
+					cout << msgss.str() << endl;
+					messageLog.push_back( msgss.str() );
+					
+				}
+			}
+			
+			boost::filesystem::path vp( vss.str() );
+			if( boost::filesystem::exists(vp) )
+			{
+				// found a possible raw path. Make sure it is the _only_ raw path we've found.
+				if( !gotRGBPath )
+				{
+					camInfo.rgbPath = vp.string();
+					
+					gotRGBPath = true;
+				}
+				else
+				{
+					std::stringstream msgss;
+					msgss << "Warning: More than one location for rgb camera video: " << endl;
+					msgss << "\ttrial: " << trial.name << endl;
+					msgss << "\t  (1): " << camInfo.rgbPath << endl;
+					msgss << "\t  (2): " << vp << endl;
 					msgss << "\t  keeping (1) " << endl;
 					
 					cout << msgss.str() << endl;
@@ -344,46 +405,13 @@ void MainWindow::ScanCamera( Strial &trial, unsigned camNum )
 	}
 	
 	
-	
-	//
-	// Check for debayered data
-	//
-	// We're assuming that we debayer to .mp4 videos still.
-	//
-	Ssession &sess = sessions[ trial.sessionName ];
-	bool gotRGBPath = false;
-	for( unsigned spc = 0; spc < sess.paths.size(); ++spc )
-	{
-		std::stringstream ss;
-		ss << sess.paths[spc] << "/rgb/" << trial.name << "/" << std::setw(2) << std::setfill('0') << camNum << ".mp4";
-		
-		
-		boost::filesystem::path cp( ss.str() );
-		if( boost::filesystem::exists(cp) && !boost::filesystem::is_directory(cp))
-		{
-			if( !gotRGBPath )
-			{
-				camInfo.rgbPath = cp.string();
-				gotRGBPath = true;
-			}
-			else
-			{
-				std::stringstream msgss;
-				msgss << "Warning: More than one location for colour camera data: " << endl;
-				msgss << "\ttrial: " << trial.name << endl;
-				msgss << "\t  (1): " << camInfo.rgbPath << endl;
-				msgss << "\t  (2): " << cp << endl;
-				msgss << "\t  keeping (1) " << endl;
-				
-				cout << msgss.str() << endl;
-				messageLog.push_back( msgss.str() );
-			}
-		}
-	}
-	
 	if( gotRGBPath )
 	{
 		camInfo.isDebayered = true;
+	}
+	else
+	{
+		camInfo.isDebayered = false;
 	}
 	if( gotRawPath || gotRGBPath )
 	{
@@ -441,22 +469,11 @@ void MainWindow::CreateInterface()
 	//
 	sessNameLabel0.set_text("Session:");
 	sessNameLabel.set_text("(none selected)");
-	sessActiveCalibLabel0.set_text(  "active calib:"  );   sessActiveCalibLabel.set_text("N/A");
-	sessCalibStatusLabel0.set_text(  "calib status:"  );   sessCalibStatusLabel.set_text("N/A");
-	sessMatchesStatusLabel0.set_text("matches     :"  );   sessMatchesStatusLabel.set_text("N/A");
+	
 	
 	sessFrameGrid.attach( sessNameLabel0,  0, 0, 1, 1);
 	sessFrameGrid.attach( sessNameLabel,  1, 0, 1, 1);
 	
-	
-	
-	sessFrameGrid.attach(   sessActiveCalibLabel0,  0, 2, 1, 1);
-	sessFrameGrid.attach(   sessCalibStatusLabel0,  0, 3, 1, 1);
-	sessFrameGrid.attach( sessMatchesStatusLabel0,  0, 4, 1, 1);
-	
-	sessFrameGrid.attach(   sessActiveCalibLabel ,  1, 2, 1, 1);
-	sessFrameGrid.attach(   sessCalibStatusLabel ,  1, 3, 1, 1);
-	sessFrameGrid.attach( sessMatchesStatusLabel ,  1, 4, 1, 1);
 	
 	sessFrame.add( sessFrameGrid );
 	
@@ -504,10 +521,36 @@ void MainWindow::CreateInterface()
 	sessTrialCamGrid.attach(   trialFrame,   1, 3, 1, 1);
 	sessTrialCamGrid.attach(     camFrame,   2, 3, 1, 1);
 	
+	sourceFrame.set_label("data");
+	sourceFrame.add( sessTrialCamGrid );
+	
+	//
+	// vis Frame
+	//
+	visTrialBtn.set_label("Visualise Trial");
+	visCameraBtn.set_label("Visualise Camera");
+	visGrid.attach(  visTrialBtn,  0, 0, 1, 1 );
+	visGrid.attach( visCameraBtn,  1, 0, 1, 1 );
+	visFrame.add( visGrid );
+	visFrame.set_label("Visualise");
+	
+	visTrialBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::VisTrialClick ) );
+	visCameraBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::VisCameraClick ) );
+	
+	//
+	// The bottom half of the window is two tabs, one for calibration, 
+	// one for debayering. We put those in a notebook.
+	//
+	botBook.set_name( "Processing:" );
+	procFrame.add( botBook );
+	procFrame.set_label("Processing");
 	
 	//
 	// Add tools
 	//
+	
+	
+	
 	
 	
 	//
@@ -524,7 +567,7 @@ void MainWindow::CreateInterface()
 	debayerModeRBCVEA.set_label( "OpenCV_EA" );
 	debayerModeRBLED.set_label( "LED" );           debayerModeRBLED.join_group(debayerModeRBCVEA);
 	debayerModeRBFCNN.set_label( "FCNN" );         debayerModeRBFCNN.join_group(debayerModeRBCVEA);
-	debayerModeRBLED.set_active();
+	debayerModeRBCVEA.set_active();
 	
 	debayerModeGrid.attach( debayerModeRBCVEA, 0, 0, 1, 1 );
 	debayerModeGrid.attach( debayerModeRBLED,  0, 1, 1, 1 );
@@ -563,8 +606,8 @@ void MainWindow::CreateInterface()
 	debayerFrame.set_label("Debayering");
 	debayerFrame.add( debayerFrameGrid );
 	
-	debayerSep.set_hexpand(true);
-	debayerSep.set_vexpand(true);
+	topbotSep.set_hexpand(true);
+	topbotSep.set_vexpand(true);
 	
 	debayerFrame.set_sensitive(false);
 	
@@ -584,6 +627,7 @@ void MainWindow::CreateInterface()
 	//
 	// Calibration
 	//
+	calibInitConfigBtn.set_label("Initialise config");
 	calibRunCalibBtn.set_label("Run calibration");
 	calibRunPointMatcherBtn.set_label("Run point matcher");
 	calibRunAlignToolBtn.set_label("Run alignment");
@@ -596,25 +640,38 @@ void MainWindow::CreateInterface()
 	calibUseBundleCheck.set_label("use bundle adjust");
 	
 	
-	calibInnerFrameGrid.attach(     calibRunCalibBtn, 0, 0, 1, 1 );
-	calibInnerFrameGrid.attach( calibUseMatchesCheck, 0, 1, 1, 1 );
-	calibInnerFrameGrid.attach( calibUseExGridsCheck, 0, 2, 1, 1 );
-	calibInnerFrameGrid.attach(  calibUseBundleCheck, 0, 3, 1, 1 );
-	calibInnerFrame.add( calibInnerFrameGrid );
-	
 	calibVisFrameScroll.add( calibVisFrameGrid );
 	calibVisFrameFrame.add( calibVisFrameScroll );
-	calibVisFrameFrame.set_label("vis frame (for point matcher etc) " );
+	calibVisFrameFrame.set_label("vis frame (for point matcher etc)..." );
+	calibVisFrameFrame.set_hexpand(true);
+	calibVisFrameFrame.set_vexpand(true);
+	
+	calibInnerFrameGrid.attach( calibUseMatchesCheck, 0, 0, 1, 1 );
+	calibInnerFrameGrid.attach( calibUseExGridsCheck, 0, 1, 1, 1 );
+	calibInnerFrameGrid.attach(  calibUseBundleCheck, 0, 2, 1, 1 );
+	calibInnerFrameGrid.attach(   calibVisFrameFrame, 1, 0, 2, 5 );
+	calibInnerFrame.set_label("config");
+	calibInnerFrame.add( calibInnerFrameGrid );
+	
+	calibRawRadioBtn.set_label(  "raw dir" );        
+	calibProcRadioBtn.set_label( "rgb dir" );         calibProcRadioBtn.join_group(calibRawRadioBtn);
+	calibProcRadioBtn.set_active();
+	calibRaw2ProcBtn.set_label("Raw -> RGB");
 	
 	calibFrameGrid.set_column_spacing(5);
 	calibFrameGrid.set_row_spacing(5);
-	calibFrameGrid.attach(         calibInnerFrame, 0, 0, 1, 4 );
-	calibFrameGrid.attach( calibRunPointMatcherBtn, 1, 0, 1, 1 );
-	calibFrameGrid.attach(    calibRunAlignToolBtn, 1, 1, 1, 1 );
-	calibFrameGrid.attach(    calibRunCheckToolBtn, 1, 2, 1, 1 );
-	calibFrameGrid.attach(       calibSetActiveBtn, 1, 3, 1, 1 );
-	calibFrameGrid.attach(      calibVisFrameFrame, 3, 0, 2, 4 );
-	calibFrameGrid.attach(            calibHelpBtn, 6, 0, 1, 1 );
+	calibFrameGrid.attach(         calibInnerFrame, 0, 0, 1, 5 );
+	calibFrameGrid.attach(      calibInitConfigBtn, 1, 0, 1, 1 );
+	calibFrameGrid.attach(        calibRawRadioBtn, 1, 2, 1, 1 );
+	calibFrameGrid.attach(       calibProcRadioBtn, 1, 3, 1, 1 );
+	calibFrameGrid.attach(        calibRaw2ProcBtn, 1, 4, 1, 1 );
+	
+	calibFrameGrid.attach(        calibRunCalibBtn, 2, 0, 1, 1 );
+	calibFrameGrid.attach( calibRunPointMatcherBtn, 2, 1, 1, 1 );
+	calibFrameGrid.attach(    calibRunAlignToolBtn, 2, 2, 1, 1 );
+	calibFrameGrid.attach(    calibRunCheckToolBtn, 2, 3, 1, 1 );
+	calibFrameGrid.attach(       calibSetActiveBtn, 2, 4, 1, 1 );
+	calibFrameGrid.attach(            calibHelpBtn, 4, 0, 1, 1 );
 	
 	calibFrame.set_label("Calibration");
 	calibFrame.set_hexpand(true);
@@ -631,6 +688,10 @@ void MainWindow::CreateInterface()
 	
 	calibFrame.set_sensitive(false);
 	
+	
+
+	
+	
 	//
 	// Put everything in place.
 	//
@@ -638,9 +699,14 @@ void MainWindow::CreateInterface()
 	mainGrid.set_row_spacing(10);
 	
 	
-	mainGrid.attach( sessTrialCamGrid,   0, 0, 3, 2);
-	mainGrid.attach(     debayerFrame,   0, 2, 3, 1);
-	mainGrid.attach(       calibFrame,   0, 3, 3, 1);
+	botBook.append_page( debayerFrame,  "Debayering" );
+	botBook.append_page(   calibFrame, "Calibration" );
+	
+	
+	mainGrid.attach(      sourceFrame,   0, 0, 3, 2);
+	mainGrid.attach(         visFrame,   0, 2, 3, 1);
+// 	mainGrid.attach(        topbotSep,   0, 3, 3, 1);
+	mainGrid.attach(        procFrame,   0, 4, 3, 2);
 	
 	allBox.pack_start( mainGrid );
 	
@@ -686,10 +752,6 @@ void MainWindow::SessionBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::T
 		trialDebayerStatusLabel.set_text("N/A");
 		
 		
-		sessActiveCalibLabel.set_text(sessions[sn].activeCalibTrial);
-		sessCalibStatusLabel.set_text(sessions[sn].calibStatus);
-		sessMatchesStatusLabel.set_text(sessions[sn].matchesStatus);
-		
 		for( unsigned c = 0; c < calibVisFrameSpins.size(); ++c )
 		{
 			calibVisFrameGrid.remove( calibVisFrameSpins[c] );
@@ -705,15 +767,24 @@ void MainWindow::SessionBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::T
 
 void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column)
 {
+	// find the selected session and trial
 	auto ssel = sessionsLBox.get_selected();
 	auto tsel = trialsLBox.get_selected();
+	
+	// clear the camera list
 	camsLBox.clear_items();
 	
 	if( ssel.size() > 0 && tsel.size() > 0 )
 	{
+		// get session and trial names.
 		std::string sn = sessionsLBox.get_text( ssel[0] );
 		std::string tn = trialsLBox.get_text( tsel[0] );
 		
+		// re-scan the trial while we're here.
+		ScanTrial( sessions[sn].trials[tn] );
+		
+		
+		// update basic bits of the interface
 		trialNameLabel.set_text( tn );
 		
 		int numDebayered = 0;
@@ -728,10 +799,53 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 				++numDebayered;
 		}
 		
+		// is it a calibration trial?
 		
 		if( sessions[sn].trials[tn].isCalib )
 		{
 			calibFrame.set_sensitive(true);
+			
+			// do we have "raw" calibration config / grids?
+			std::stringstream rss, pss;
+			rss << recPaths[0] << "/" << sn << "/" << tn << "/calib.cfg";
+			pss << processedSessionsRoot << "/" << sn << "/" << tn << "/calib.cfg";
+			boost::filesystem::path rpth( rss.str() ), ppth( pss.str() );
+			cout << "rpth: " << boost::filesystem::exists( rpth ) << endl;
+			cout << "ppth: " << boost::filesystem::exists( ppth ) << endl;
+			if( boost::filesystem::exists( rpth ) )
+			{
+				if( boost::filesystem::exists( ppth ) && numDebayered == sessions[sn].trials[tn].cameras.size())
+				{
+					calibProcRadioBtn.set_active();
+					calibProcRadioBtn.set_sensitive(true);
+					calibRawRadioBtn.set_sensitive(true);
+					calibRaw2ProcBtn.set_sensitive(true);
+				}
+				else if( numDebayered == sessions[sn].trials[tn].cameras.size() )
+				{
+					calibRawRadioBtn.set_active();
+					calibProcRadioBtn.set_sensitive(false);
+					calibRawRadioBtn.set_sensitive(false);
+					calibRaw2ProcBtn.set_sensitive(true);
+				}
+				else
+				{
+					calibRawRadioBtn.set_active();
+					calibProcRadioBtn.set_sensitive(false);
+					calibRawRadioBtn.set_sensitive(false);
+					calibRaw2ProcBtn.set_sensitive(false);
+				}
+				
+			}
+			else if( numDebayered == sessions[sn].trials[tn].cameras.size() )
+			{
+				calibProcRadioBtn.set_active();
+				calibProcRadioBtn.set_sensitive(false);
+				calibRawRadioBtn.set_sensitive(false);
+				calibRaw2ProcBtn.set_sensitive(false);
+			}
+			
+			
 		}
 		else
 		{
@@ -793,10 +907,11 @@ void MainWindow::CamBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::TreeV
 		std::stringstream ss;
 		ss << std::setw(2) << std::setfill('0') << ci.id;
 		camNumLabel.set_text( ss.str() );
-		camRawPathLabel.set_text( ci.rawPath );
+		
+		camRawPathLabel.set_text( SimplifyPath( ci.rawPath ) );
 		if( ci.isDebayered )
 		{
-			camDebayerPathLabel.set_text( ci.rgbPath );
+			camDebayerPathLabel.set_text( SimplifyPath( ci.rgbPath ) );
 		}
 		else
 		{
@@ -806,4 +921,100 @@ void MainWindow::CamBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::TreeV
 }
 
 
+std::string MainWindow::SimplifyPath( std::string inpth )
+{
+	bool got = false;
+	std::stringstream ss;
+	for( unsigned rcp = 0; rcp < recPaths.size(); ++rcp )
+	{
+		if( inpth.find( recPaths[rcp] ) == 0 && !got)
+		{
+			got = true;
+			ss << "<recPath" << rcp << ">/";
+			ss << inpth.substr( recPaths[rcp].size() );
+		}
+	}
+	
+	if( !got && inpth.find( processedSessionsRoot ) == 0)
+	{
+		got = true;
+		ss << "<procPath>/";
+		ss << inpth.substr( processedSessionsRoot.size() );
+	}
+	
+	return ss.str();
+	
+}
 
+
+
+void MainWindow::VisTrialClick()
+{
+	cout << "vis trial" << endl;
+	
+	auto ssel = sessionsLBox.get_selected();
+	auto tsel = trialsLBox.get_selected();
+	if( ssel.size() == 0 || tsel.size() == 0 )
+	{
+		return;
+	}
+	
+	std::string sn = sessionsLBox.get_text( ssel[0] );
+	std::string tn = trialsLBox.get_text( tsel[0] );
+	
+	Strial &trial = sessions[sn].trials[tn];
+	
+	std::stringstream ss;
+	ss << "konsole --workdir ~/ -e " << calibBinariesDir << "/renderSyncedSources ";
+	for( unsigned c = 0; c < trial.cameras.size(); ++c )
+	{
+		if( trial.cameras[c].isDebayered )
+		{
+			ss << trial.cameras[c].rgbPath << " ";
+		}
+		else
+		{
+			ss << trial.cameras[c].rawPath << " ";
+		}
+	}
+	cout << ss.str() << endl;
+	std::system( ss.str().c_str() );
+	
+	
+}
+
+void MainWindow::VisCameraClick()
+{
+	cout << "vis camera" << endl;
+	
+	auto ssel = sessionsLBox.get_selected();
+	auto tsel = trialsLBox.get_selected();
+	auto csel = camsLBox.get_selected();
+	if( ssel.size() == 0 || tsel.size() == 0 || csel.size() == 0)
+	{
+		cout << "one of session, trial or camera not selected. Can't vis camera." << endl;
+		return;
+	}
+	
+	std::string sn = sessionsLBox.get_text( ssel[0] );
+	std::string tn = trialsLBox.get_text( tsel[0] );
+	int idx = csel[0];
+	
+	Strial &trial = sessions[sn].trials[tn];
+	
+	cout << idx << " | " << trial.cameras[idx].rgbPath << " | " << trial.cameras[idx].rawPath << " |" << endl;
+	
+	std::stringstream ss;
+	ss << "konsole --workdir ~/ -e " << calibBinariesDir << "/renderSyncedSources ";
+	if( trial.cameras[idx].isDebayered )
+	{
+		ss << trial.cameras[idx].rgbPath << " ";
+	}
+	else
+	{
+		ss << trial.cameras[idx].rawPath << " ";
+	}
+	
+	cout << ss.str() << endl;
+	std::system( ss.str().c_str() );
+}

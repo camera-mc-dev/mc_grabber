@@ -9,6 +9,7 @@
 using std::cout;
 using std::endl;
 
+#include "commonConfig/commonConfig.h"
 #include "libconfig.h++"
 
 
@@ -43,7 +44,7 @@ void MainWindow::CalibRunClick()
 	// TODO: Run a process in a way we know that it has completed!
 	//
 	std::stringstream ss;
-	ss << "konsole --workdir ~/ -e /opt/mc_bin/circleGridCamNetwork " << filename;
+	ss << "konsole --workdir ~/ -e " << calibBinariesDir << "/circleGridCamNetwork " << filename;
 	cout << ss.str() << endl;
 	std::system( ss.str().c_str() );
 	
@@ -72,7 +73,7 @@ void MainWindow::CalibPMRunClick()
 	// TODO: Run a process in a way we know that it has completed!
 	//
 	std::stringstream ss;
-	ss << "konsole --workdir ~/ -e /opt/mc_bin/pointMatcher " << filename;
+	ss << "konsole --workdir ~/ -e  " << calibBinariesDir << "/pointMatcher " << filename;
 	cout << ss.str() << endl;
 	std::system( ss.str().c_str() );
 	
@@ -84,6 +85,30 @@ void MainWindow::CalibPMRunClick()
 
 void MainWindow::CalibAlignRunClick()
 {
+	//
+	// Create the calibration config file
+	//
+	std::string filename;
+	if( !CreateCalibConfig(true, filename) )
+	{
+		cout << "aborting calib check run due to previous error" << endl;
+		return;
+	}
+	
+	
+	//
+	// Run the point matcher. We start a process that can run in the background
+	// without blocking the session manager.
+	// TODO: Run a process in a way we know that it has completed!
+	//
+	std::stringstream ss;
+	ss << "konsole --workdir ~/ -e  " << calibBinariesDir << "/manualAlignNetwork " << filename;
+	cout << ss.str() << endl;
+	std::system( ss.str().c_str() );
+	
+	//
+	// TODO: Update the session/trial once this completes.
+	//
 }
 
 void MainWindow::CalibCheckRunClick()
@@ -105,7 +130,7 @@ void MainWindow::CalibCheckRunClick()
 	// TODO: Run a process in a way we know that it has completed!
 	//
 	std::stringstream ss;
-	ss << "konsole --workdir ~/ -e /opt/mc_bin/calibCheck " << filename;
+	ss << "konsole --workdir ~/ -e  " << calibBinariesDir << "/calibCheck " << filename;
 	cout << ss.str() << endl;
 	std::system( ss.str().c_str() );
 	
@@ -118,90 +143,148 @@ void MainWindow::CalibCheckRunClick()
 
 bool MainWindow::CreateCalibConfig( bool forPointMatcher, std::string &out_filename )
 {
+	
+	//
+	// Check what the currently selected session and trial are, and make sure 
+	// that it is a "calib_" trial.
+	//
+	auto ssel = sessionsLBox.get_selected();
+	auto tsel = trialsLBox.get_selected();
+	if( ssel.size() == 0 || tsel.size() == 0 )
+	{
+		return false;
+	}
+	
+	std::string sn = sessionsLBox.get_text( ssel[0] );
+	std::string tn = trialsLBox.get_text( tsel[0] );
+	
+	Strial &trial = sessions[sn].trials[tn];
+	if( !trial.isCalib )
+	{
+		cout << "trial is not calib, aborting calib file write: " << sn << " " << tn << endl;
+		return false;
+	}
+	
+	
+	std::string calibConfigFile;
+	
+	
+	//
+	// This is where things get a little bit tricky.
+	//
+	// If a person has done a live grid detection, then they already have debayered images in
+	// the "raw" calib directory, and can already start to work on a calibration.
+	//
+	// However, it could also be that there is a "debayered" calib video as well as this raw data,
+	// so how do we know what we should be using?
+	//
+	// The answer is that we have to ask the user, so we now have that option.
+	//
+	
+	
+	//
+	// There are 3 possible sources for the calibration file we open up:
+	//
+	CommonConfig ccfg;
+	std::stringstream pss, rss, bss;
+	pss << processedSessionsRoot << "/" << sn << "/" << tn << "/calib.cfg";
+	rss << recPaths[0] << "/" << sn << "/" << tn << "/calib.cfg";
+	bss << ccfg.coreDataRoot << "/baseConfigs/calib.cfg";
+	
+	// but which do we use?
+	boost::filesystem::path cfgPth;
+	boost::filesystem::path rpth( rss.str() ), ppth( pss.str() ), bpth( bss.str() );
+	if( calibProcRadioBtn.get_active() )
+	{
+		cfgPth = ppth;
+	}
+	else if( calibRawRadioBtn.get_active() )
+	{
+		cfgPth = rpth;
+	}
+	
 	try
 	{
-		auto ssel = sessionsLBox.get_selected();
-		auto tsel = trialsLBox.get_selected();
-		auto csel = camsLBox.get_selected();
-		if( ssel.size() == 0 || tsel.size() == 0 )
-		{
-			return false;
-		}
-		
-		std::string sn = sessionsLBox.get_text( ssel[0] );
-		std::string tn = trialsLBox.get_text( tsel[0] );
-		
-		Strial &trial = sessions[sn].trials[tn];
-		if( !trial.isCalib )
-		{
-			cout << "trial is not calib, aborting calib file write: " << sn << " " << tn << endl;
-			return false;
-		}
-		
-		std::stringstream ss;
-		ss << "/data/raid0/recording/";
-		
-		std::string dataRoot = ss.str();
-		
-		ss.str("");
-		ss << sn << "/rgb/" << tn << "/";
-		std::string testRoot = ss.str();
-		
-		ss.str("");
-		ss << dataRoot << testRoot << "/sm-calib.cfg"; // sm because this is the file written by the session manager
-		out_filename = ss.str();
-		
 		libconfig::Config cfg;
-		auto &cfgRoot = cfg.getRoot();
 		
-		cfgRoot.add("dataRoot", libconfig::Setting::TypeString) = dataRoot;
-		cfgRoot.add("testRoot", libconfig::Setting::TypeString) = testRoot;
-		
-		cfgRoot.add("imgDirs", libconfig::Setting::TypeList );
-		auto &id = cfg.lookup("imgDirs");
-		for( unsigned cc = 0; cc < trial.cameras.size(); ++cc )
+		if( boost::filesystem::exists( cfgPth ) )
 		{
-			if( !trial.cameras[cc].isDebayered )
+			cfg.readFile( boost::filesystem::canonical( cfgPth ).string().c_str() );
+		}
+		else
+		{
+			// need to use the base config and initialise parts of it.
+			cfg.readFile( boost::filesystem::canonical( bpth ).string().c_str() );
+			
+			if( calibProcRadioBtn.get_active() )
 			{
-				cout << "camera not debayered, aborting calib file write: " << sn << " " << tn << " " << cc << endl;
+				//
+				// Set the data root and trial root.
+				//
+				std::stringstream tss;
+				tss << sn << "/" << tn << "/";
+				cfg.lookup("dataRoot")  = processedSessionsRoot;
+				cfg.lookup("testRoot")  = tss.str();
+				
+				//
+				// Set the image dirs.
+				//
+				libconfig::Setting &idirs = cfg.lookup("imgDirs");
+				while( idirs.getLength() > 0 )
+					idirs.remove(0u);
+				for( unsigned cc = 0; cc < sessions[sn].trials[tn].cameras.size(); ++cc )
+				{
+					std::stringstream css;
+					css << std::setw(2) << std::setfill('0') << cc << ".mp4";
+					idirs.add( libconfig::Setting::TypeString );
+					idirs[cc] = css.str().c_str();
+				}
+				cout << "check idirs: " << sessions[sn].trials[tn].cameras.size() << " " << idirs.getLength() << endl;
+				assert( idirs.getLength() == sessions[sn].trials[tn].cameras.size() );
+				
+				
+				//
+				// Just a few sensible values a little different from the defaults
+				//
+				cfg.lookup("noDistortionOnInitial") = true;
+				cfg.lookup("useExistingIntrinsics") = false;
+				cfg.lookup("forceOneCam")           = false;
+				cfg.lookup("minSharedGrids")        =    40;
+				
+				
+				//
+				// These settings assume the L-frame is used for setting the ground plane
+				//
+				cfg.lookup("targetDepth")      = 50.0f;
+				cfg.lookup("alignXisNegative") = true;
+				
+				cfg.writeFile( cfgPth.string().c_str() );
+				
+				cfg.readFile( cfgPth.string().c_str() );
+			}
+			else
+			{
+				cout << "not initialising calib for raw data. It would already exist if used liveGridDetect." << endl;
 				return false;
 			}
-			auto i = trial.cameras[cc].rgbPath.rfind("/")+1;
-			std::string tmp( trial.cameras[cc].rgbPath.begin()+i, trial.cameras[cc].rgbPath.end() );
-			id.add( libconfig::Setting::TypeString ) = tmp;
 		}
-		cfgRoot.add("maxGridsForInitial", libconfig::Setting::TypeInt ) = 50;
-		
-		auto &g = cfgRoot.add("grid", libconfig::Setting::TypeGroup );
-		g.add("rows", libconfig::Setting::TypeInt ) =  9;
-		g.add("cols", libconfig::Setting::TypeInt ) = 10;
-		g.add("rspacing", libconfig::Setting::TypeFloat ) = 78.5;
-		g.add("cspacing", libconfig::Setting::TypeFloat ) = 78.5;
-		g.add("isLightOnDark", libconfig::Setting::TypeBoolean ) = false;
-		g.add("useHypothesis", libconfig::Setting::TypeBoolean ) = false;
-		g.add("hasAlignmentDots", libconfig::Setting::TypeBoolean ) = true;
 		
 		
-		cfgRoot.add("useExistingGrids", libconfig::Setting::TypeBoolean ) = calibUseExGridsCheck.get_active();
-		cfgRoot.add("useExistingIntrinsics", libconfig::Setting::TypeBoolean ) = false;
-		cfgRoot.add("noDistortionOnInitial", libconfig::Setting::TypeBoolean ) = true;
-		cfgRoot.add("forceOneCam", libconfig::Setting::TypeBoolean ) = true;
-		cfgRoot.add("numDistortionToSolve", libconfig::Setting::TypeInt ) =  2;
-		cfgRoot.add("numIntrinsicsToSolve", libconfig::Setting::TypeInt ) =  3;
-		cfgRoot.add("useSBA", libconfig::Setting::TypeBoolean ) = calibUseBundleCheck.get_active();
-		cfgRoot.add("SBAVerbosity", libconfig::Setting::TypeInt ) =  3;
-		cfgRoot.add("minSharedGrids", libconfig::Setting::TypeInt ) =  30;
+		cfg.lookup("useExistingGrids") = calibUseExGridsCheck.get_active();
+		cfg.lookup("useSBA") = calibUseBundleCheck.get_active();
 		
-		
-		
-		cfgRoot.add("originFrame", libconfig::Setting::TypeInt ) =  1;
-		cfgRoot.add("targetDepth", libconfig::Setting::TypeFloat ) =  0.0;
-		cfgRoot.add("alignXisNegative", libconfig::Setting::TypeBoolean ) = false;
-		cfgRoot.add("alignYisNegative", libconfig::Setting::TypeBoolean ) = false;
-		cfgRoot.add("visualise", libconfig::Setting::TypeInt ) =  4;
+		auto &cfgRoot = cfg.getRoot();
+		if( cfg.exists("matchesFile") )
+		{
+			cfgRoot.remove("matchesFile");
+			cfgRoot.remove("frameInds");
+			cfgRoot.remove("winX");
+			cfgRoot.remove("winY");
+		}
 		
 		if( forPointMatcher || calibUseMatchesCheck.get_active() )
 		{
+			
 			cfgRoot.add("matchesFile", libconfig::Setting::TypeString) = "matches";
 			auto &fi = cfgRoot.add("frameInds", libconfig::Setting::TypeList );
 			for( unsigned cc = 0; cc < trial.cameras.size(); ++cc )
@@ -212,14 +295,11 @@ bool MainWindow::CreateCalibConfig( bool forPointMatcher, std::string &out_filen
 			cfgRoot.add("winX", libconfig::Setting::TypeInt ) =  1800;
 			cfgRoot.add("winY", libconfig::Setting::TypeInt ) =  1000;
 			
-			auto &ap = cfgRoot.add("axisPoints", libconfig::Setting::TypeList );
-			ap.add( libconfig::Setting::TypeInt ) = 0;
-			ap.add( libconfig::Setting::TypeInt ) = 1;
-			ap.add( libconfig::Setting::TypeInt ) = 2;
 		}
 		
-		cout << "writing: " << out_filename << endl;
-		cfg.writeFile( out_filename.c_str() );
+		cfg.writeFile( cfgPth.string().c_str() );
+		
+		out_filename = cfgPth.string();
 	}
 	catch( libconfig::SettingException &e)
 	{

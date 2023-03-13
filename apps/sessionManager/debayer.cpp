@@ -125,28 +125,7 @@ void MainWindow::DebayerProcessJobsClick()
 	mainGrid.set_sensitive(false);
 	cout << "processing debayer jobs" << endl;
 	
-	if( 0 == std::system("pidof -x sessionDaemon > /dev/null") )
-	{
-		cout << "daemon is running" << endl;
-	}
-	else
-	{
-		cout << "daemon not running -> starting daemon" << endl;
-		//
-		// sessionDaemon is not running, so start that process in the background.
-		// I'm sure this is bad form and will be frowned upon
-		//
-		std::system("/opt/mc_bin/sessionDaemon");
-		
-		if( 0 == std::system("pidof -x sessionDaemon > /dev/null") )
-		{
-			cout << "daemon is running" << endl;
-		}
-		else
-		{
-			throw std::runtime_error("Can't start debayer sessionDaemon :(" );
-		}
-	}
+	CheckDemonStatus();
 	
 	
 	
@@ -213,30 +192,21 @@ void MainWindow::DebayerProcessJobsClick()
 			ScameraInfo &ci = sessions[sn].trials[tn].cameras[idx];
 			
 			//
-			// We will create a string which are the arguments for the debayer tool.
-			// We put those job strings in a set so that we only have one of them!
-			// (Note: We still might have multiple algorithms on a single session/trial/camera
-			//  in which case only the first will get processed because after that the output already exists)
+			// We don't do any processing in the manager. Rather, the job of the manager is to feed the 
+			// damon with jobs. 
 			//
-			
+			// We can't just send through the command to be run - that would be a security risk....
+			//
+			std::string fps; // TODO: Where to get this from? Session config file which we've not processed yet.
+			fps = "200";
+			if( tn.find("calib") != std::string::npos )
+				fps = "5";
 			std::stringstream ss;
-			
-			if( ci.rawPath.find("/data/raid0") == 0 )
-			{
-				ss << ci.rawPath 
-				<< " /data/raid0/recording/" << sn << "/rgb/" << tn << "/" << std::setw(2) << std::setfill('0') << ci.id
-				<< ".mp4 " << alg << endl;
-			}
-			else if( ci.rawPath.find("/data/raid1") == 0 )
-			{
-				ss << ci.rawPath 
-				<< " /data/raid1/recording/" << sn << "/rgb/" << tn << "/" << std::setw(2) << std::setfill('0') << ci.id
-				<< ".mp4 " << alg << endl;
-			}
-			else
-			{
-				throw std::runtime_error("Expected camera rawPath to be /data/raid0/... or /data/raid1/..., but got: " + ci.rawPath );
-			}
+			ss << "debayer " << ci.rawPath << " " 
+			                 << processedSessionsRoot << "/" << sn << "/" << tn << "/" << std::setw(2) << std::setfill('0') << ci.id << ".mp4"
+			                 << " " << alg
+			                 << " " << fps
+			                 << endl;
 			
 			jobsSet.insert( ss.str() );
 		}
@@ -282,18 +252,24 @@ void MainWindow::DebayerProcessJobsClick()
 
 bool MainWindow::CheckDemonStatus()
 {
+	boost::filesystem::path p("/opt/sessionDaemon/todo/");
+	if( !boost::filesystem::exists(p) )
+	{
+		boost::filesystem::create_directories(p);
+	}
+	
 	if( 0 == std::system("pidof -x sessionDaemon > /dev/null") )
 	{
 		demonStatusLabel.set_text("running");
 	}
 	else
 	{
-		cout << "daemon not running -> starting daemon" << endl;
+		cout << "daemon not running -> starting daemon: " << daemonBinary << endl;
 		//
 		// sessionDaemon is not running, so start that process in the background.
 		// I'm sure this is bad form and will be frowned upon
 		//
-		std::system("/opt/mc_bin/sessionDaemon");
+		std::system(daemonBinary.c_str());
 		
 		if( 0 == std::system("pidof -x sessionDaemon > /dev/null") )
 		{
@@ -305,7 +281,10 @@ bool MainWindow::CheckDemonStatus()
 		}
 	}
 	
-	boost::filesystem::path p("/opt/sessionDaemon/todo/");
+	
+	
+	
+	
 	int cnt = 0;
 	if( boost::filesystem::exists(p) && boost::filesystem::is_directory(p))
 	{

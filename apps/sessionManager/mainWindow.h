@@ -33,13 +33,23 @@ public:
 	
 	struct Strial
 	{
+		// name of the trial.
 		std::string name;
+		
+		// name of the session the trial was in
 		std::string sessionName;
+		
+		// paths on the filesystem where trial files are located.
 		std::vector< std::string > paths;
 		
+		// information about each camera in the trial
 		std::vector< ScameraInfo > cameras;
 		
+		// is it a calibration file?
 		bool isCalib;
+		
+		// what stages of calibration have been done?
+		bool hasRawCalib;
 		bool hasInitialCalib;
 		bool hasMatches;
 		bool hasAlignedCalib;
@@ -49,15 +59,15 @@ public:
 	
 	struct Ssession
 	{
+		// session name
 		std::string name;
+		
+		// paths where we can find this session.
 		std::vector< std::string > paths;
 		
+		// trials of this session
 		std::map< std::string, Strial > trials;
 		
-		std::string activeCalibTrial;
-		std::string calibStatus;
-		std::string matchesStatus;
-		std::string alignStatus;
 	};
 	
 protected:
@@ -66,6 +76,10 @@ protected:
 	// General data and vars.
 	//
 	std::vector< std::string > recPaths;
+	std::string processedSessionsRoot;
+	std::string daemonBinary;
+	std::string calibBinariesDir;
+	
 	
 	std::vector< std::string > messageLog;
 	
@@ -85,6 +99,7 @@ protected:
 	
 	// Our first couple things display the sessions that we found
 	// and the trials within the selected session.
+	Gtk::Frame          sourceFrame;
 	Gtk::Frame          sessLBFrame;
 	Gtk::ScrolledWindow sessLBScroll;
 	Gtk::ListViewText   sessionsLBox;
@@ -108,9 +123,6 @@ protected:
 	Gtk::Frame           sessFrame;
 	Gtk::Grid            sessFrameGrid0, sessFrameGrid;
 	Gtk::Label           sessNameLabel0, sessNameLabel;
-	Gtk::Label           sessActiveCalibLabel0,    sessActiveCalibLabel;
-	Gtk::Label           sessCalibStatusLabel0,    sessCalibStatusLabel;
-	Gtk::Label           sessMatchesStatusLabel0,  sessMatchesStatusLabel;
 	
 	
 	
@@ -129,12 +141,21 @@ protected:
 	Gtk::Grid            sessTrialCamGrid;
 	
 	
+	Gtk::Frame           visFrame;
+	Gtk::Grid            visGrid;
+	Gtk::Button          visTrialBtn;
+	Gtk::Button          visCameraBtn;
+	
 	
 	
 	//
 	// Now we need frames for the various tools the user can make use of.
 	//
-	Gtk::Separator       debayerSep;
+	Gtk::Separator       topbotSep;
+	Gtk::Frame           procFrame;
+	Gtk::Notebook        botBook;
+	
+	
 	//
 	// Debayering
 	//
@@ -161,11 +182,17 @@ protected:
 	//
 	// Calibration
 	//
-	Gtk::Separator                  calibSep;
 	Gtk::Frame                      calibFrame;
 	Gtk::Grid                       calibFrameGrid;
 	Gtk::Frame                      calibInnerFrame;
 	Gtk::Grid                       calibInnerFrameGrid;
+	
+	Gtk::Button                     calibInitConfigBtn;
+	Gtk::RadioButton                calibRawRadioBtn;
+	Gtk::RadioButton                calibProcRadioBtn;
+	Gtk::Button                     calibRaw2ProcBtn;
+	
+	
 	Gtk::Button                     calibRunCalibBtn;
 	Gtk::Button                     calibRunPointMatcherBtn;
 	Gtk::Button                     calibRunAlignToolBtn;
@@ -211,11 +238,15 @@ protected:
 	void ScanTrial( Strial &trial );
 	void ScanCamera( Strial &trial, unsigned camNum );
 	
+	void VisTrialClick();
+	void VisCameraClick();
+	
 	void CalibHelpClick();
 	void CalibRunClick();
 	void CalibPMRunClick();
 	void CalibAlignRunClick();
 	void CalibCheckRunClick();
+	void CalibRaw2ProcClick();
 	
 	void DebayerAddSessionClick();
 	void DebayerAddTrialClick();
@@ -228,6 +259,7 @@ protected:
 	
 	bool CreateCalibConfig( bool forPointMatcher, std::string &out_filename );
 	
+	std::string SimplifyPath(std::string inpth );
 	
 	
 	
