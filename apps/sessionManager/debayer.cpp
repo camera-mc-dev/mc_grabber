@@ -125,9 +125,6 @@ void MainWindow::DebayerProcessJobsClick()
 	mainGrid.set_sensitive(false);
 	cout << "processing debayer jobs" << endl;
 	
-	CheckDemonStatus();
-	
-	
 	
 	//
 	// Create jobs files for the sessionDaemon.
@@ -252,52 +249,98 @@ void MainWindow::DebayerProcessJobsClick()
 
 bool MainWindow::CheckDemonStatus()
 {
-	boost::filesystem::path p("/opt/sessionDaemon/todo/");
-	if( !boost::filesystem::exists(p) )
-	{
-		boost::filesystem::create_directories(p);
-	}
+	bool retVal;
 	
-	if( 0 == std::system("pidof -x sessionDaemon > /dev/null") )
+	auto checkVal = std::system("pidof -x sessionDaemon > /dev/null");
+// 	cout << "checkVal " <<  checkVal << endl;
+	if( 0 == checkVal )
 	{
-		demonStatusLabel.set_text("running");
+		demonStatusLabel.set_text("status: running");
+		demonStatusLabel.override_color (Gdk::RGBA("green"), Gtk::STATE_FLAG_NORMAL);
+		retVal = true;
 	}
 	else
 	{
+		retVal = false;
+		demonStatusLabel.set_text("status: stopped");
+		demonStatusLabel.override_color (Gdk::RGBA("red"), Gtk::STATE_FLAG_NORMAL);
+	}
+	
+	int cnt = 0;
+	boost::filesystem::path p("/opt/sessionDaemon/todo/");
+	if( boost::filesystem::exists(p) && boost::filesystem::is_directory(p))
+	{
+		boost::filesystem::directory_iterator di(p), endi;
+		for( ; di != endi; ++di )
+		{
+			std::string fn = di->path().string();
+			if( fn.find("000-stopSessionDemon") != std::string::npos && retVal == true)
+			{
+				demonStatusLabel.set_text("status: stopping");
+				demonStatusLabel.override_color (Gdk::RGBA("orange"), Gtk::STATE_FLAG_NORMAL);
+			}
+			++cnt;
+		}
+	}
+	
+	std::stringstream ss;
+	ss << "  jobs:   " << cnt;
+	demonJobsLabel.set_text(ss.str() );
+	
+	return retVal;
+}
+
+bool MainWindow::CheckDemonStatusAndStart()
+{
+	if( !CheckDemonStatus() )
+	{
+		
+		boost::filesystem::path p("/opt/sessionDaemon/todo/");
+		if( !boost::filesystem::exists(p) )
+		{
+			boost::filesystem::create_directories(p);
+		}
+		
 		cout << "daemon not running -> starting daemon: " << daemonBinary << endl;
+		
 		//
 		// sessionDaemon is not running, so start that process in the background.
 		// I'm sure this is bad form and will be frowned upon
 		//
 		std::system(daemonBinary.c_str());
 		
-		if( 0 == std::system("pidof -x sessionDaemon > /dev/null") )
-		{
-			demonStatusLabel.set_text("running");
-		}
-		else
-		{
-			throw std::runtime_error("Can't start debayer sessionDaemon :(" );
-		}
+		sleep(1);
 	}
 	
-	
-	
-	
-	
-	int cnt = 0;
-	if( boost::filesystem::exists(p) && boost::filesystem::is_directory(p))
-	{
-		boost::filesystem::directory_iterator di(p), endi;
-		for( ; di != endi; ++di )
-		{
-			++cnt;
-		}
-	}
-	
-	std::stringstream ss;
-	ss << cnt << " jobs remaining" << endl;
-	demonJobsLabel.set_text(ss.str() );
-	
+	return CheckDemonStatus();
+}
+
+
+bool MainWindow::CheckDemonStatusTimer()
+{
+	CheckDemonStatus();
 	return true;
+}
+
+void MainWindow::DemonStopClick()
+{
+	std::string fn = "/tmp/000-stopSessionDemon";
+	std::ofstream outfi(fn);
+	if( !outfi )
+	{
+		throw std::runtime_error("Couldn't open temporary job file: " + fn );
+	}
+	
+	outfi << "stop";
+	outfi.close();
+	
+	// move the job file where the demon will see it
+	std::stringstream ss;
+	ss << "mv " << fn << " /opt/sessionDaemon/todo/";
+	std::system( ss.str().c_str() );
+}
+
+void MainWindow::DemonStartClick()
+{
+	CheckDemonStatusAndStart();
 }

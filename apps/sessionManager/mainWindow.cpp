@@ -537,6 +537,30 @@ void MainWindow::CreateInterface()
 	visTrialBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::VisTrialClick ) );
 	visCameraBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::VisCameraClick ) );
 	
+	
+	//
+	// Demon Frame
+	//
+	demonFrame.set_label("Processing 'demon':");
+	
+	demonStatusLabel.set_label("status: (waiting info...)");
+	demonJobsLabel.set_text(   "jobs  : (waiting info...)");
+	demonStartBtn.set_label("Start Demon");
+	demonStopBtn.set_label("Stop Demon");
+	demonGrid.attach(    demonStartBtn, 0, 0, 1, 1);
+	demonGrid.attach(     demonStopBtn, 1, 0, 1, 1);
+	demonGrid.attach(   demonStatusSep, 2, 0, 1, 1);
+	demonGrid.attach( demonStatusLabel, 3, 0, 1, 1);
+	demonGrid.attach(     demonJobsSep, 4, 0, 1, 1);
+	demonGrid.attach(   demonJobsLabel, 5, 0, 1, 1);
+	demonFrame.add( demonGrid );
+	
+	
+	
+	demonStopBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonStopClick ) );
+	demonStartBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonStartClick ) );
+	
+	
 	//
 	// The bottom half of the window is two tabs, one for calibration, 
 	// one for debayering. We put those in a notebook.
@@ -560,7 +584,7 @@ void MainWindow::CreateInterface()
 	debayerTrialBtn.set_label("Queue Trial");
 	debayerCameraBtn.set_label("Queue Camera");
 	debayerRemoveBtn.set_label("Remove job");
-	debayerActionBtn.set_label("Process debayer jobs");
+	debayerActionBtn.set_label("Launch jobs");
 	debayerHelpBtn.set_label("Help!");
 	
 	debayerModeFrame.set_label( "Debayer Algorithm" );
@@ -580,12 +604,7 @@ void MainWindow::CreateInterface()
 	debayerJobsFrame.set_vexpand(true);
 	debayerJobsScroll.add( debayerJobsFrame );
 	
-	demonStatusFrame.set_label("Debayer daemon status");
-	demonStatusLabel.set_label("(waiting info...)");
-	demonJobsLabel.set_text("? jobs remaining");
-	demonStatusGrid.attach( demonStatusLabel, 0, 0, 1, 1);
-	demonStatusGrid.attach( demonJobsLabel, 0, 1, 1, 1);
-	demonStatusFrame.add( demonStatusGrid );
+	
 	
 	debayerFrameGrid.set_column_spacing(5);
 	debayerFrameGrid.set_row_spacing(5);
@@ -593,12 +612,12 @@ void MainWindow::CreateInterface()
 	debayerFrameGrid.attach( debayerSessBtn,   0, 1, 1, 1 );
 	debayerFrameGrid.attach( debayerTrialBtn,  0, 2, 1, 1 );
 	debayerFrameGrid.attach( debayerCameraBtn, 0, 3, 1, 1 );
+	debayerFrameGrid.attach( debayerActionBtn, 0, 4, 2, 2 );
+	
 	debayerFrameGrid.attach( debayerRemoveBtn, 1, 1, 1, 1 );
 	debayerFrameGrid.attach( debayerModeFrame, 1, 2, 1, 2 );
-	debayerFrameGrid.attach( debayerJobsScroll,  2, 0, 2, 4 );
+	debayerFrameGrid.attach( debayerJobsScroll,  2, 0, 2, 6 );
 	
-	debayerFrameGrid.attach( demonStatusFrame, 4, 0, 1, 2 );
-	debayerFrameGrid.attach( debayerActionBtn, 4, 2, 1, 2 );
 	
 	
 	
@@ -606,8 +625,7 @@ void MainWindow::CreateInterface()
 	debayerFrame.set_label("Debayering");
 	debayerFrame.add( debayerFrameGrid );
 	
-	topbotSep.set_hexpand(true);
-	topbotSep.set_vexpand(true);
+	
 	
 	debayerFrame.set_sensitive(false);
 	
@@ -621,7 +639,9 @@ void MainWindow::CreateInterface()
 	debayerRemoveBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DebayerRemoveJobClick ) );
 	debayerActionBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DebayerProcessJobsClick ) );
 	
-	Glib::signal_timeout().connect(sigc::mem_fun(*this, &MainWindow::CheckDemonStatus), 5000);
+	
+	
+	Glib::signal_timeout().connect(sigc::mem_fun(*this, &MainWindow::CheckDemonStatusTimer), 100);
 	
 	
 	//
@@ -705,7 +725,7 @@ void MainWindow::CreateInterface()
 	
 	mainGrid.attach(      sourceFrame,   0, 0, 3, 2);
 	mainGrid.attach(         visFrame,   0, 2, 3, 1);
-// 	mainGrid.attach(        topbotSep,   0, 3, 3, 1);
+	mainGrid.attach(       demonFrame,   0, 3, 3, 1);
 	mainGrid.attach(        procFrame,   0, 4, 3, 2);
 	
 	allBox.pack_start( mainGrid );

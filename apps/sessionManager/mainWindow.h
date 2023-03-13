@@ -151,7 +151,6 @@ protected:
 	//
 	// Now we need frames for the various tools the user can make use of.
 	//
-	Gtk::Separator       topbotSep;
 	Gtk::Frame           procFrame;
 	Gtk::Notebook        botBook;
 	
@@ -159,6 +158,14 @@ protected:
 	//
 	// Debayering
 	//
+	Gtk::Frame           demonFrame;
+	Gtk::Grid            demonGrid;
+	Gtk::Button          demonStartBtn;
+	Gtk::Button          demonStopBtn;
+	Gtk::Label           demonStatusLabel;
+	Gtk::Label           demonJobsLabel;
+	Gtk::Separator       demonStatusSep, demonJobsSep;
+	
 	Gtk::Frame           debayerFrame;
 	Gtk::Grid            debayerFrameGrid;
 	Gtk::Button          debayerSessBtn;
@@ -174,10 +181,9 @@ protected:
 	Gtk::Grid            debayerModeGrid;
 	Gtk::RadioButton     debayerModeRBLED, debayerModeRBCVEA, debayerModeRBFCNN;
 	
-	Gtk::Frame           demonStatusFrame;
-	Gtk::Grid            demonStatusGrid;
-	Gtk::Label           demonStatusLabel;
-	Gtk::Label           demonJobsLabel;
+	
+	
+	
 	
 	//
 	// Calibration
@@ -255,7 +261,12 @@ protected:
 	void DebayerProcessJobsClick();
 	void DebayerHelpClick();
 	
+	void DemonStopClick();
+	void DemonStartClick();
+	
+	bool CheckDemonStatusTimer();
 	bool CheckDemonStatus();
+	bool CheckDemonStatusAndStart();
 	
 	bool CreateCalibConfig( bool forPointMatcher, std::string &out_filename );
 	
