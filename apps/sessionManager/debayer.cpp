@@ -42,6 +42,14 @@ void MainWindow::DebayerAddSessionClick()
 			ss << " FCNN ";
 		
 		debayerJobsList.append( ss.str() );
+		
+		if( mirrorToRaidCheck.get_active() )
+		{
+			cout << "add session mirror job" << endl;
+			ss.str("");
+			ss << "(mirror) session " << sn;
+			debayerJobsList.append( ss.str() );
+		}
 	}
 }
 
@@ -66,6 +74,14 @@ void MainWindow::DebayerAddTrialClick()
 			ss << " FCNN ";
 		
 		debayerJobsList.append( ss.str() );
+		
+		if( mirrorToRaidCheck.get_active() )
+		{
+			cout << "add trial mirror job" << endl;
+			ss.str("");
+			ss << "(mirror) trial " << sn << " " << tn;
+			debayerJobsList.append( ss.str() );
+		}
 	}
 }
 
@@ -93,6 +109,14 @@ void MainWindow::DebayerAddCameraClick()
 			ss << " FCNN ";
 		
 		debayerJobsList.append( ss.str() );
+		
+		if( mirrorToRaidCheck.get_active() )
+		{
+			cout << "add camera mirror job" << endl;
+			ss.str("");
+			ss << "(mirror) camera " << sn << " " << tn << " " << idx;
+			debayerJobsList.append( ss.str() );
+		}
 	}
 }
 
@@ -207,9 +231,40 @@ void MainWindow::DebayerProcessJobsClick()
 			
 			jobsSet.insert( ss.str() );
 		}
+		else if( tokens[0].compare("(mirror)") == 0 )
+		{
+			cout << job << endl;
+			std::stringstream ss;
+			ss << "mirror " << processedSessionsRoot << "/ ";
+			if( tokens[1].compare("session") == 0 )
+			{
+				std::string sn  = tokens[2];
+				
+				ss << sn << "/ ";
+			}
+			else if( tokens[1].compare("trial") == 0 )
+			{
+				std::string sn  = tokens[2];
+				std::string tn  = tokens[3];
+				ss << sn << "/" << tn << "/";
+			}
+			else if( tokens[1].compare("camera") == 0 )
+			{
+				std::string sn  = tokens[2];
+				std::string tn  = tokens[3];
+				unsigned idx    = atoi( tokens[4].c_str() );
+				
+				ss << sn << "/" << tn << "/" << std::setw(2) << std::setfill('0') << idx << ".mp4 ";
+			}
+			
+			ss << " " << raidUserEntry.get_text() << " " << raidDirEntry.get_text();
+			cout << ss.str() << endl;
+			jobsSet.insert( ss.str() );
+		}
 	}
 	
 	cout << "making job files..." << endl;
+	int i = 0;
 	for( auto ji = jobsSet.begin(); ji != jobsSet.end(); ++ji )
 	{
 		//
@@ -221,7 +276,7 @@ void MainWindow::DebayerProcessJobsClick()
 		unsigned r = rand()%1000;
 		
 		std::stringstream ss;
-		ss << "/tmp/" << n << "-" << r << "-" << std::setw(2) << std::setfill('0');
+		ss << "/tmp/" << n << "-" << std::setw(4) << std::setfill('0') << i << "-" << std::setw(4) << std::setfill('0') << r;
 		std::string fn = ss.str();
 		
 		std::ofstream outfi(fn);
@@ -237,6 +292,8 @@ void MainWindow::DebayerProcessJobsClick()
 		ss.str("");
 		ss << "mv " << fn << " /opt/sessionDaemon/todo/";
 		std::system( ss.str().c_str() );
+		
+		++i;
 	}
 	
 	cout << "done..." << endl;

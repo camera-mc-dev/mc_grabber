@@ -542,6 +542,8 @@ void MainWindow::CreateInterface()
 	// Demon Frame
 	//
 	demonFrame.set_label("Processing 'demon':");
+	demonGrid.set_column_spacing(5);
+	demonGrid.set_row_spacing(5);
 	
 	demonStatusLabel.set_label("status: (waiting info...)");
 	demonJobsLabel.set_text(   "jobs  : (waiting info...)");
@@ -678,25 +680,25 @@ void MainWindow::CreateInterface()
 	calibProcRadioBtn.set_active();
 	calibRaw2ProcBtn.set_label("Raw -> RGB");
 	
-	calibFrameGrid.set_column_spacing(5);
-	calibFrameGrid.set_row_spacing(5);
-	calibFrameGrid.attach(         calibInnerFrame, 0, 0, 1, 5 );
-	calibFrameGrid.attach(      calibInitConfigBtn, 1, 0, 1, 1 );
-	calibFrameGrid.attach(        calibRawRadioBtn, 1, 2, 1, 1 );
-	calibFrameGrid.attach(       calibProcRadioBtn, 1, 3, 1, 1 );
-	calibFrameGrid.attach(        calibRaw2ProcBtn, 1, 4, 1, 1 );
+	calibPageFrameGrid.set_column_spacing(5);
+	calibPageFrameGrid.set_row_spacing(5);
+	calibPageFrameGrid.attach(         calibInnerFrame, 0, 0, 1, 5 );
+	calibPageFrameGrid.attach(      calibInitConfigBtn, 1, 0, 1, 1 );
+	calibPageFrameGrid.attach(        calibRawRadioBtn, 1, 2, 1, 1 );
+	calibPageFrameGrid.attach(       calibProcRadioBtn, 1, 3, 1, 1 );
+	calibPageFrameGrid.attach(        calibRaw2ProcBtn, 1, 4, 1, 1 );
 	
-	calibFrameGrid.attach(        calibRunCalibBtn, 2, 0, 1, 1 );
-	calibFrameGrid.attach( calibRunPointMatcherBtn, 2, 1, 1, 1 );
-	calibFrameGrid.attach(    calibRunAlignToolBtn, 2, 2, 1, 1 );
-	calibFrameGrid.attach(    calibRunCheckToolBtn, 2, 3, 1, 1 );
-	calibFrameGrid.attach(       calibSetActiveBtn, 2, 4, 1, 1 );
-	calibFrameGrid.attach(            calibHelpBtn, 4, 0, 1, 1 );
+	calibPageFrameGrid.attach(        calibRunCalibBtn, 2, 0, 1, 1 );
+	calibPageFrameGrid.attach( calibRunPointMatcherBtn, 2, 1, 1, 1 );
+	calibPageFrameGrid.attach(    calibRunAlignToolBtn, 2, 2, 1, 1 );
+	calibPageFrameGrid.attach(    calibRunCheckToolBtn, 2, 3, 1, 1 );
+	calibPageFrameGrid.attach(       calibSetActiveBtn, 2, 4, 1, 1 );
+	calibPageFrameGrid.attach(            calibHelpBtn, 4, 0, 1, 1 );
 	
-	calibFrame.set_label("Calibration");
-	calibFrame.set_hexpand(true);
-	calibFrame.set_vexpand(true);
-	calibFrame.add( calibFrameGrid );
+	calibPageFrame.set_label("Calibration");
+	calibPageFrame.set_hexpand(true);
+	calibPageFrame.set_vexpand(true);
+	calibPageFrame.add( calibPageFrameGrid );
 	
 	
 	
@@ -706,11 +708,27 @@ void MainWindow::CreateInterface()
 	calibRunCheckToolBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibCheckRunClick ) );
 	calibHelpBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibHelpClick ) );
 	
-	calibFrame.set_sensitive(false);
+	calibPageFrame.set_sensitive(false);
 	
 	
-
+	exportFrame.set_label("Upload");
+	exportFrameGrid.set_column_spacing(5);
+	mirrorToRaidCheck.set_label("Mirror to RAID");
+	raidUserLabel.set_label("RAID user:");
+	raidUserEntry.set_text("ftpResearcher");
+	raidDirLabel.set_label("RAID dir:");
+	raidDirEntry.set_text("data/");
+	exportFrameGrid.attach( mirrorToRaidCheck, 0, 0, 1, 1 );
+	exportFrameGrid.attach(     raidUserLabel, 1, 1, 1, 1 );
+	exportFrameGrid.attach(     raidUserEntry, 2, 1, 1, 1 );
+// 	exportFrameGrid.attach(         exportSep, 3, 0, 1, 1 );
+	exportFrameGrid.attach(      raidDirLabel, 1, 2, 1, 1 );
+	exportFrameGrid.attach(      raidDirEntry, 2, 2, 1, 1 );
+	exportFrame.add( exportFrameGrid );
 	
+	procPageGrid.attach( debayerFrame,  0, 0, 1, 6 );
+	procPageGrid.attach(  exportFrame,  0, 7, 1, 1 );
+	procPageFrame.add( procPageGrid );
 	
 	//
 	// Put everything in place.
@@ -719,8 +737,8 @@ void MainWindow::CreateInterface()
 	mainGrid.set_row_spacing(10);
 	
 	
-	botBook.append_page( debayerFrame,  "Debayering" );
-	botBook.append_page(   calibFrame, "Calibration" );
+	botBook.append_page(    procPageFrame,  "Processing" );
+	botBook.append_page(   calibPageFrame, "Calibration" );
 	
 	
 	mainGrid.attach(      sourceFrame,   0, 0, 3, 2);
@@ -823,7 +841,7 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 		
 		if( sessions[sn].trials[tn].isCalib )
 		{
-			calibFrame.set_sensitive(true);
+			calibPageFrame.set_sensitive(true);
 			
 			// do we have "raw" calibration config / grids?
 			std::stringstream rss, pss;
@@ -869,7 +887,7 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 		}
 		else
 		{
-			calibFrame.set_sensitive(false);
+			calibPageFrame.set_sensitive(false);
 		}
 		
 		debayerFrame.set_sensitive(true);

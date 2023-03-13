@@ -182,14 +182,17 @@ protected:
 	Gtk::RadioButton     debayerModeRBLED, debayerModeRBCVEA, debayerModeRBFCNN;
 	
 	
+	Gtk::Frame           procPageFrame;
+	Gtk::Grid            procPageGrid;
+	
 	
 	
 	
 	//
 	// Calibration
 	//
-	Gtk::Frame                      calibFrame;
-	Gtk::Grid                       calibFrameGrid;
+	Gtk::Frame                      calibPageFrame;
+	Gtk::Grid                       calibPageFrameGrid;
 	Gtk::Frame                      calibInnerFrame;
 	Gtk::Grid                       calibInnerFrameGrid;
 	
@@ -222,7 +225,12 @@ protected:
 	//
 	Gtk::Frame           exportFrame;
 	Gtk::Grid            exportFrameGrid;
-	
+	Gtk::CheckButton     mirrorToRaidCheck;
+	Gtk::Label           raidUserLabel;
+	Gtk::Entry           raidUserEntry;
+	Gtk::Separator       exportSep;
+	Gtk::Label           raidDirLabel;
+	Gtk::Entry           raidDirEntry;
 	
 	
 // 	Gtk::Frame           trialFrame;
