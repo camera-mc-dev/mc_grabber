@@ -549,19 +549,21 @@ void MainWindow::CreateInterface()
 	demonJobsLabel.set_text(   "jobs  : (waiting info...)");
 	demonStartBtn.set_label("Start Demon");
 	demonStopBtn.set_label("Stop Demon");
+	demonClearBtn.set_label("Clear jobs");
 	demonGrid.attach(    demonStartBtn, 0, 0, 1, 1);
 	demonGrid.attach(     demonStopBtn, 1, 0, 1, 1);
 	demonGrid.attach(   demonStatusSep, 2, 0, 1, 1);
 	demonGrid.attach( demonStatusLabel, 3, 0, 1, 1);
 	demonGrid.attach(     demonJobsSep, 4, 0, 1, 1);
 	demonGrid.attach(   demonJobsLabel, 5, 0, 1, 1);
+	demonGrid.attach(    demonClearBtn, 6, 0, 1, 1);
 	demonFrame.add( demonGrid );
 	
 	
 	
 	demonStopBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonStopClick ) );
 	demonStartBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonStartClick ) );
-	
+	demonClearBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonClearClick ) );
 	
 	//
 	// The bottom half of the window is two tabs, one for calibration, 
@@ -714,16 +716,29 @@ void MainWindow::CreateInterface()
 	exportFrame.set_label("Upload");
 	exportFrameGrid.set_column_spacing(5);
 	mirrorToRaidCheck.set_label("Mirror to RAID");
+	raidHostLabel.set_label("RAID host:");
+	raidHostEntry.set_text("cssv-camera.bath.ac.uk");
 	raidUserLabel.set_label("RAID user:");
 	raidUserEntry.set_text("ftpResearcher");
 	raidDirLabel.set_label("RAID dir:");
 	raidDirEntry.set_text("data/");
+	
+	raidAddBookmark.set_label("Bookmark raid login");
+	raidDelBookmark.set_label("Delete login bookmark");
+	raidAddBookmark.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::AddBookmarkClick ) );
+	raidDelBookmark.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DelBookmarkClick ) );
+	
 	exportFrameGrid.attach( mirrorToRaidCheck, 0, 0, 1, 1 );
+	exportFrameGrid.attach(     raidHostLabel, 1, 0, 1, 1 );
+	exportFrameGrid.attach(     raidHostEntry, 2, 0, 1, 1 );
+	exportFrameGrid.attach(     raidUserLabel, 1, 1, 1, 1 );
 	exportFrameGrid.attach(     raidUserLabel, 1, 1, 1, 1 );
 	exportFrameGrid.attach(     raidUserEntry, 2, 1, 1, 1 );
 // 	exportFrameGrid.attach(         exportSep, 3, 0, 1, 1 );
 	exportFrameGrid.attach(      raidDirLabel, 1, 2, 1, 1 );
 	exportFrameGrid.attach(      raidDirEntry, 2, 2, 1, 1 );
+	exportFrameGrid.attach(   raidAddBookmark, 3, 1, 1, 1 );
+	exportFrameGrid.attach(   raidDelBookmark, 3, 2, 1, 1 );
 	exportFrame.add( exportFrameGrid );
 	
 	procPageGrid.attach( debayerFrame,  0, 0, 1, 6 );
@@ -1055,4 +1070,39 @@ void MainWindow::VisCameraClick()
 	
 	cout << ss.str() << endl;
 	std::system( ss.str().c_str() );
+}
+
+void MainWindow::AddBookmarkClick()
+{
+	std::string username = raidUserEntry.get_text();
+// 	if( username.compare("ftpResearcher") == 0 )
+// 	{
+// 		cout << "ftpResearcher bookmark should already exist, not adding" << endl;
+// 		return;
+// 	}
+// 	else
+	{
+		std::stringstream ss;
+		ss << "konsole --workdir ~/ -e lftp -u " << username 
+		                                         << " ftps://" 
+		                                         << raidHostEntry.get_text() 
+		                                         << " -e \"bookmark add " << username << "-" << raidHostEntry.get_text() << "\"";
+		std::system( ss.str().c_str() );
+	}
+}
+
+void MainWindow::DelBookmarkClick()
+{
+	std::string username = raidUserEntry.get_text();
+	if( username.compare("ftpResearcher") == 0 )
+	{
+		cout << "Not deleting ftpResearcher login bookmark" << endl;
+		return;
+	}
+	else
+	{
+		std::stringstream ss;
+		ss << "konsole -e lftp -e bookmark del " << username << "-" << raidHostEntry.get_text();
+		std::system( ss.str().c_str() );
+	}
 }

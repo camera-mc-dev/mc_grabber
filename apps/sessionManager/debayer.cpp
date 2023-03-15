@@ -257,7 +257,7 @@ void MainWindow::DebayerProcessJobsClick()
 				ss << sn << "/" << tn << "/" << std::setw(2) << std::setfill('0') << idx << ".mp4 ";
 			}
 			
-			ss << " " << raidUserEntry.get_text() << " " << raidDirEntry.get_text();
+			ss << " " << raidHostEntry.get_text() << " " << raidUserEntry.get_text() << " " << raidDirEntry.get_text();
 			cout << ss.str() << endl;
 			jobsSet.insert( ss.str() );
 		}
@@ -400,4 +400,9 @@ void MainWindow::DemonStopClick()
 void MainWindow::DemonStartClick()
 {
 	CheckDemonStatusAndStart();
+}
+
+void MainWindow::DemonClearClick()
+{
+	system( "rm /opt/sessionDaemon/todo/*" );
 }

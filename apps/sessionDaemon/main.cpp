@@ -181,6 +181,40 @@ int main(void)
 					log << "got -stop- command. Quitting demon." << endl;
 					exit(0);
 				}
+				else if( command.compare("mirror") == 0 )
+				{
+					std::vector< std::string > params;
+					std::string procDataRoot;
+					std::string source;
+					std::string host;
+					std::string user;
+					std::string dest;
+					
+					infi >> procDataRoot;
+					infi >> source;
+					infi >> host;
+					infi >> user;
+					infi >> dest;
+					
+					
+					// in this case we use lftp to mirror data from the local system to some remote ftps server.
+					// (typically the CAMERA RAID)
+					std::stringstream ss;
+					ss << "lftp ";
+					
+					// the user should have bookmarked their credentials and we know the bookmark name will be "<username>-<host>"
+					ss << user << "-" << host << " ";
+					
+					// now construct the mirror command.
+					ss << "-e \"lcd " << procDataRoot << "; mirror -R --parallel=10 --only-newer " << source << " " << dest << "/" << source << ";exit;\" " ;
+					
+					log << "running mirror command: " << ss.str() << endl;
+					auto ret = std::system(ss.str().c_str());
+					if( ret == 0 )
+						log << "completed mirror " << ss.str() << endl;
+					else
+						log << "(Error) on stated mirror command" << endl;
+				}
 				else
 				{
 					std::vector< std::string > params;

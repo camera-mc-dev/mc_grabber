@@ -162,6 +162,7 @@ protected:
 	Gtk::Grid            demonGrid;
 	Gtk::Button          demonStartBtn;
 	Gtk::Button          demonStopBtn;
+	Gtk::Button          demonClearBtn;
 	Gtk::Label           demonStatusLabel;
 	Gtk::Label           demonJobsLabel;
 	Gtk::Separator       demonStatusSep, demonJobsSep;
@@ -226,11 +227,16 @@ protected:
 	Gtk::Frame           exportFrame;
 	Gtk::Grid            exportFrameGrid;
 	Gtk::CheckButton     mirrorToRaidCheck;
+	Gtk::Label           raidHostLabel;
+	Gtk::Entry           raidHostEntry;
 	Gtk::Label           raidUserLabel;
 	Gtk::Entry           raidUserEntry;
 	Gtk::Separator       exportSep;
 	Gtk::Label           raidDirLabel;
 	Gtk::Entry           raidDirEntry;
+	
+	Gtk::Button          raidAddBookmark;
+	Gtk::Button          raidDelBookmark;
 	
 	
 // 	Gtk::Frame           trialFrame;
@@ -271,10 +277,14 @@ protected:
 	
 	void DemonStopClick();
 	void DemonStartClick();
+	void DemonClearClick();
 	
 	bool CheckDemonStatusTimer();
 	bool CheckDemonStatus();
 	bool CheckDemonStatusAndStart();
+	
+	void AddBookmarkClick();
+	void DelBookmarkClick();
 	
 	bool CreateCalibConfig( bool forPointMatcher, std::string &out_filename );
 	
