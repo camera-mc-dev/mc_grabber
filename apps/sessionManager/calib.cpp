@@ -139,7 +139,26 @@ void MainWindow::CalibCheckRunClick()
 	//
 }
 
-
+void MainWindow::CalibMGPClick()
+{
+	std::string filename;
+	if( !CreateCalibConfig(false, filename) )
+	{
+		cout << "aborting calib check run due to previous error" << endl;
+		return;
+	}
+	
+	//
+	// Run the point matcher. We start a process that can run in the background
+	// without blocking the session manager.
+	// TODO: Run a process in a way we know that it has completed!
+	// TODO: options for how much of the ground plane to view.
+	std::stringstream ss;
+	ss << "konsole --workdir ~/ -e  " << calibBinariesDir << "/makeGroundPlaneImage " << filename << " -3000 -3000 6000 1000 ";
+	cout << ss.str() << endl;
+	std::system( ss.str().c_str() );
+	
+}
 
 bool MainWindow::CreateCalibConfig( bool forPointMatcher, std::string &out_filename )
 {
@@ -252,12 +271,6 @@ bool MainWindow::CreateCalibConfig( bool forPointMatcher, std::string &out_filen
 				cfg.lookup("minSharedGrids")        =    40;
 				
 				
-				//
-				// These settings assume the L-frame is used for setting the ground plane
-				//
-				cfg.lookup("targetDepth")      = 50.0f;
-				cfg.lookup("alignXisNegative") = true;
-				
 				cfg.writeFile( cfgPth.string().c_str() );
 				
 				cfg.readFile( cfgPth.string().c_str() );
@@ -269,6 +282,10 @@ bool MainWindow::CreateCalibConfig( bool forPointMatcher, std::string &out_filen
 			}
 		}
 		
+		
+		cfg.lookup("targetDepth")      = atof( calibOriginHeightEntry.get_text().c_str() );
+		cfg.lookup("alignXisNegative") = calibXAxisIsNegCheck.get_active();
+		cfg.lookup("alignYisNegative") = calibYAxisIsNegCheck.get_active();
 		
 		cfg.lookup("useExistingGrids") = calibUseExGridsCheck.get_active();
 		cfg.lookup("useSBA") = calibUseBundleCheck.get_active();

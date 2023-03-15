@@ -194,25 +194,33 @@ protected:
 	//
 	Gtk::Frame                      calibPageFrame;
 	Gtk::Grid                       calibPageFrameGrid;
-	Gtk::Frame                      calibInnerFrame;
-	Gtk::Grid                       calibInnerFrameGrid;
+	Gtk::Frame                      calibConfigFrame;
+	Gtk::Grid                       calibConfigGrid;
+	Gtk::Frame                      calibToolsFrame;
+	Gtk::Grid                       calibToolsGrid;
 	
+	
+	// config 
 	Gtk::Button                     calibInitConfigBtn;
 	Gtk::RadioButton                calibRawRadioBtn;
 	Gtk::RadioButton                calibProcRadioBtn;
 	Gtk::Button                     calibRaw2ProcBtn;
+	Gtk::CheckButton                calibUseMatchesCheck;
+	Gtk::CheckButton                calibUseExGridsCheck;
+	Gtk::CheckButton                calibUseBundleCheck;
+	Gtk::CheckButton                calibXAxisIsNegCheck;
+	Gtk::CheckButton                calibYAxisIsNegCheck;
+	Gtk::Label                      calibOriginHeightLabel;
+	Gtk::Entry                      calibOriginHeightEntry;
 	
-	
+	// tools
 	Gtk::Button                     calibRunCalibBtn;
 	Gtk::Button                     calibRunPointMatcherBtn;
 	Gtk::Button                     calibRunAlignToolBtn;
 	Gtk::Button                     calibRunCheckToolBtn;
-	Gtk::Button                     calibSetActiveBtn;
+	Gtk::Button                     calibRunMGPBtn;
 	Gtk::Button                     calibHelpBtn;
 	                                
-	Gtk::CheckButton                calibUseMatchesCheck;
-	Gtk::CheckButton                calibUseExGridsCheck;
-	Gtk::CheckButton                calibUseBundleCheck;
 	                                
 	Gtk::Frame                      calibVisFrameFrame;
 	Gtk::ScrolledWindow             calibVisFrameScroll;
@@ -257,6 +265,7 @@ protected:
 	void ScanSession( Ssession &sess );
 	void ScanTrial( Strial &trial );
 	void ScanCamera( Strial &trial, unsigned camNum );
+	void UpdateCalibSettingsFrom( std::string );
 	
 	void VisTrialClick();
 	void VisCameraClick();
@@ -267,6 +276,7 @@ protected:
 	void CalibAlignRunClick();
 	void CalibCheckRunClick();
 	void CalibRaw2ProcClick();
+	void CalibMGPClick();
 	
 	void DebayerAddSessionClick();
 	void DebayerAddTrialClick();

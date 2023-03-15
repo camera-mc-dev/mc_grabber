@@ -656,46 +656,71 @@ void MainWindow::CreateInterface()
 	calibRunPointMatcherBtn.set_label("Run point matcher");
 	calibRunAlignToolBtn.set_label("Run alignment");
 	calibRunCheckToolBtn.set_label("Run check");
-	calibSetActiveBtn.set_label("Set active");
+	calibRunMGPBtn.set_label("Run Make Ground Plane Image");
 	calibHelpBtn.set_label("Help!");
 	
 	calibUseMatchesCheck.set_label("use matches");
 	calibUseExGridsCheck.set_label("use existing grids");
 	calibUseBundleCheck.set_label("use bundle adjust");
-	
+	calibXAxisIsNegCheck.set_label("align: X-Axis is negative");
+	calibYAxisIsNegCheck.set_label("align: Y-Axis is negative");
+	calibOriginHeightLabel.set_label("align: origin target height");
+	calibOriginHeightEntry.set_text("50");
 	
 	calibVisFrameScroll.add( calibVisFrameGrid );
 	calibVisFrameFrame.add( calibVisFrameScroll );
 	calibVisFrameFrame.set_label("vis frame (for point matcher etc)..." );
-	calibVisFrameFrame.set_hexpand(true);
+	calibVisFrameFrame.set_hexpand(false);
 	calibVisFrameFrame.set_vexpand(true);
 	
-	calibInnerFrameGrid.attach( calibUseMatchesCheck, 0, 0, 1, 1 );
-	calibInnerFrameGrid.attach( calibUseExGridsCheck, 0, 1, 1, 1 );
-	calibInnerFrameGrid.attach(  calibUseBundleCheck, 0, 2, 1, 1 );
-	calibInnerFrameGrid.attach(   calibVisFrameFrame, 1, 0, 2, 5 );
-	calibInnerFrame.set_label("config");
-	calibInnerFrame.add( calibInnerFrameGrid );
+// 	calibInnerFrameGrid.attach( calibUseMatchesCheck, 0, 0, 1, 1 );
+// 	calibInnerFrameGrid.attach( calibUseExGridsCheck, 0, 1, 1, 1 );
+// 	calibInnerFrameGrid.attach(  calibUseBundleCheck, 0, 2, 1, 1 );
+// 	calibInnerFrameGrid.attach(   calibVisFrameFrame, 1, 0, 2, 5 );
+// 	calibInnerFrame.set_label("config");
+// 	calibInnerFrame.add( calibInnerFrameGrid );
 	
 	calibRawRadioBtn.set_label(  "raw dir" );        
 	calibProcRadioBtn.set_label( "rgb dir" );         calibProcRadioBtn.join_group(calibRawRadioBtn);
 	calibProcRadioBtn.set_active();
 	calibRaw2ProcBtn.set_label("Raw -> RGB");
 	
+	
+	
+	calibConfigGrid.attach(      calibRawRadioBtn, 0, 0, 1, 1 );
+	calibConfigGrid.attach(     calibProcRadioBtn, 1, 0, 1, 1 );
+	calibConfigGrid.attach(      calibRaw2ProcBtn, 2, 0, 1, 1 );
+	calibConfigGrid.attach(      calibRaw2ProcBtn, 0, 1, 1, 1 );
+	calibConfigGrid.attach(  calibUseMatchesCheck, 0, 2, 1, 1 );
+	calibConfigGrid.attach(  calibUseExGridsCheck, 0, 3, 1, 1 );
+	calibConfigGrid.attach(   calibUseBundleCheck, 0, 4, 1, 1 );
+	calibConfigGrid.attach(  calibXAxisIsNegCheck, 0, 5, 1, 1 );
+	calibConfigGrid.attach(  calibYAxisIsNegCheck, 0, 6, 1, 1 );
+	calibConfigGrid.attach(calibOriginHeightLabel, 0, 7, 1, 1 );
+	calibConfigGrid.attach(calibOriginHeightEntry, 1, 7, 1, 1 );
+	calibConfigGrid.attach(    calibVisFrameFrame, 0, 8, 1, 1 );
+	calibConfigFrame.set_label("Config");
+	calibConfigFrame.add( calibConfigGrid );
+	
+	
+	calibToolsGrid.attach(        calibRunCalibBtn, 0, 0, 1, 1 );
+	calibToolsGrid.attach( calibRunPointMatcherBtn, 0, 1, 1, 1 );
+	calibToolsGrid.attach(    calibRunAlignToolBtn, 0, 2, 1, 1 );
+	calibToolsGrid.attach(    calibRunCheckToolBtn, 0, 3, 1, 1 );
+	calibToolsGrid.attach(          calibRunMGPBtn, 0, 4, 1, 1 );
+	calibToolsGrid.attach(            calibHelpBtn, 0, 5, 1, 1 );
+	calibToolsFrame.set_label("Tools");
+	calibToolsFrame.add( calibToolsGrid );
+	
 	calibPageFrameGrid.set_column_spacing(5);
 	calibPageFrameGrid.set_row_spacing(5);
-	calibPageFrameGrid.attach(         calibInnerFrame, 0, 0, 1, 5 );
-	calibPageFrameGrid.attach(      calibInitConfigBtn, 1, 0, 1, 1 );
-	calibPageFrameGrid.attach(        calibRawRadioBtn, 1, 2, 1, 1 );
-	calibPageFrameGrid.attach(       calibProcRadioBtn, 1, 3, 1, 1 );
-	calibPageFrameGrid.attach(        calibRaw2ProcBtn, 1, 4, 1, 1 );
+	calibPageFrameGrid.attach(         calibConfigFrame, 0, 0, 1, 5 );
+	calibPageFrameGrid.attach(          calibToolsFrame, 1, 0, 1, 5 );
 	
-	calibPageFrameGrid.attach(        calibRunCalibBtn, 2, 0, 1, 1 );
-	calibPageFrameGrid.attach( calibRunPointMatcherBtn, 2, 1, 1, 1 );
-	calibPageFrameGrid.attach(    calibRunAlignToolBtn, 2, 2, 1, 1 );
-	calibPageFrameGrid.attach(    calibRunCheckToolBtn, 2, 3, 1, 1 );
-	calibPageFrameGrid.attach(       calibSetActiveBtn, 2, 4, 1, 1 );
-	calibPageFrameGrid.attach(            calibHelpBtn, 4, 0, 1, 1 );
+	
+	
+	
+
 	
 	calibPageFrame.set_label("Calibration");
 	calibPageFrame.set_hexpand(true);
@@ -708,6 +733,7 @@ void MainWindow::CreateInterface()
 	calibRunPointMatcherBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibPMRunClick ) );
 	calibRunAlignToolBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibAlignRunClick ) );
 	calibRunCheckToolBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibCheckRunClick ) );
+	calibRunMGPBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibMGPClick ) );
 	calibHelpBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibHelpClick ) );
 	
 	calibPageFrame.set_sensitive(false);
@@ -853,7 +879,8 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 		}
 		
 		// is it a calibration trial?
-		
+		bool updateCalib = false;
+		std::string cfPth;
 		if( sessions[sn].trials[tn].isCalib )
 		{
 			calibPageFrame.set_sensitive(true);
@@ -869,6 +896,8 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 			{
 				if( boost::filesystem::exists( ppth ) && numDebayered == sessions[sn].trials[tn].cameras.size())
 				{
+					cfPth = ppth.string();
+					updateCalib = true;
 					calibProcRadioBtn.set_active();
 					calibProcRadioBtn.set_sensitive(true);
 					calibRawRadioBtn.set_sensitive(true);
@@ -876,6 +905,8 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 				}
 				else if( numDebayered == sessions[sn].trials[tn].cameras.size() )
 				{
+					cfPth = rpth.string();
+					updateCalib = true;
 					calibRawRadioBtn.set_active();
 					calibProcRadioBtn.set_sensitive(false);
 					calibRawRadioBtn.set_sensitive(false);
@@ -936,7 +967,10 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 		ss << numDebayered << " of " << sessions[sn].trials[tn].cameras.size();
 		trialDebayerStatusLabel.set_text( ss.str() );
 		
-		
+		if( updateCalib )
+		{
+			UpdateCalibSettingsFrom( cfPth );
+		}
 	}
 }
 
@@ -1104,5 +1138,56 @@ void MainWindow::DelBookmarkClick()
 		std::stringstream ss;
 		ss << "konsole -e lftp -e bookmark del " << username << "-" << raidHostEntry.get_text();
 		std::system( ss.str().c_str() );
+	}
+}
+
+
+void MainWindow::UpdateCalibSettingsFrom( std::string cfgPath)
+{
+	try
+	{
+		libconfig::Config cfg;
+		cfg.readFile( cfgPath.c_str() );
+		
+		if( cfg.exists("alignXisNegative" ) )
+		{
+			calibXAxisIsNegCheck.set_active(cfg.lookup("alignXisNegative"));
+		}
+		if( cfg.exists("alignYisNegative" ) )
+		{
+			calibYAxisIsNegCheck.set_active(cfg.lookup("alignYisNegative"));
+		}
+		if( cfg.exists("targetDepth") )
+		{
+			std::stringstream ss;
+			ss << (float)cfg.lookup("targetDepth");
+			calibOriginHeightEntry.set_text( ss.str() );
+		}
+		
+		calibUseMatchesCheck.set_active(  cfg.exists("matchesFile")  );
+		if( cfg.exists("useExistingGrids") )
+		{
+			calibUseExGridsCheck.set_active( cfg.lookup("useExistingGrids") );
+		}
+		if( cfg.exists("useSBA") )
+		{
+			calibUseBundleCheck.set_active( cfg.lookup("useSBA") );
+		}
+		if( cfg.exists("frameInds") )
+		{
+			auto &fi = cfg.lookup("frameInds");
+			for( int cc = 0; cc < fi.getLength(); ++cc )
+			{
+				calibVisFrameSpins[cc].set_value( (int)fi[cc] );
+			}
+		}
+		
+	}
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		exit(0);
 	}
 }
