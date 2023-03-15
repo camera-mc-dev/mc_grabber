@@ -277,6 +277,7 @@ protected:
 	void CalibCheckRunClick();
 	void CalibRaw2ProcClick();
 	void CalibMGPClick();
+	void Raw2ProcClick();
 	
 	void DebayerAddSessionClick();
 	void DebayerAddTrialClick();

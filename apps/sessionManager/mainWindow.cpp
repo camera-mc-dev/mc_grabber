@@ -728,7 +728,7 @@ void MainWindow::CreateInterface()
 	calibPageFrame.add( calibPageFrameGrid );
 	
 	
-	
+	calibRaw2ProcBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::Raw2ProcClick ) );
 	calibRunCalibBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibRunClick ) );
 	calibRunPointMatcherBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibPMRunClick ) );
 	calibRunAlignToolBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::CalibAlignRunClick ) );

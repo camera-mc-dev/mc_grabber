@@ -339,3 +339,95 @@ bool MainWindow::CreateCalibConfig( bool forPointMatcher, std::string &out_filen
 	
 	return true;
 }
+
+
+void MainWindow::Raw2ProcClick()
+{
+	// TODO: copy calib config file to new location, updating the dataroot
+	//       copy grid files to new location
+	//       copy calibration files to new location.
+	
+	
+	auto ssel = sessionsLBox.get_selected();
+	auto tsel = trialsLBox.get_selected();
+	if( ssel.size() == 0 || tsel.size() == 0 )
+	{
+		return;
+	}
+	
+	std::string sn = sessionsLBox.get_text( ssel[0] );
+	std::string tn = trialsLBox.get_text( tsel[0] );
+	Strial &trial = sessions[sn].trials[tn];
+	if( !trial.isCalib )
+	{
+		cout << "trial is not calib, aborting calib file write: " << sn << " " << tn << endl;
+		return;
+	}
+	
+	
+	
+	std::stringstream pss, rss;
+	pss << processedSessionsRoot << "/" << sn << "/" << tn << "/calib.cfg";
+	rss << recPaths[0] << "/" << sn << "/" << tn << "/calib.cfg";
+	
+	
+	
+	try
+	{
+		
+		libconfig::Config cfg;
+		
+		if( boost::filesystem::exists( rss.str() ) )
+		{
+			cfg.readFile( rss.str().c_str() );
+			
+			std::stringstream tss;
+			tss << sn << "/" << tn << "/";
+			cfg.lookup("dataRoot")  = processedSessionsRoot;
+			cfg.lookup("testRoot")  = tss.str();
+			
+			cfg.writeFile( pss.str().c_str() );
+		}
+	}
+	catch( libconfig::SettingException &e)
+	{
+		cout << "Setting error: " << endl;
+		cout << e.what() << endl;
+		cout << e.getPath() << endl;
+		return;
+	}
+	catch( libconfig::ParseException &e )
+	{
+		cout << "Parse error:" << endl;
+		cout << e.what() << endl;
+		cout << e.getError() << endl;
+		cout << e.getFile() << endl;
+		cout << e.getLine() << endl;
+		return;
+	}
+	
+	for( unsigned cc = 0; cc < trial.cameras.size(); ++cc )
+	{
+		ScameraInfo &ci = trial.cameras[cc];
+		
+		std::stringstream cfss;
+		cfss << ci.rawPath << "/calibFile";
+		if( boost::filesystem::exists( cfss.str() ) )
+		{
+			std::stringstream cfss2;
+			cfss2 << ci.rgbPath << ".calib";
+			boost::filesystem::copy_file( cfss.str(), cfss2.str(), boost::filesystem::copy_option::overwrite_if_exists);
+		}
+		
+		
+		std::stringstream gfss;
+		gfss << ci.rawPath << "/grids";
+		if( boost::filesystem::exists( gfss.str() ) )
+		{
+			std::stringstream gfss2;
+			gfss2 << ci.rgbPath << ".grids";
+			boost::filesystem::copy_file( gfss.str(), gfss2.str(), boost::filesystem::copy_option::overwrite_if_exists);
+		}
+	}
+	
+}
