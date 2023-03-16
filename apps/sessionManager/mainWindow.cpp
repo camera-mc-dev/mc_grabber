@@ -473,7 +473,9 @@ void MainWindow::CreateInterface()
 	sessTrialCamGrid.attach(     camFrame,   2, 3, 1, 1);
 	
 	sourceFrame.set_label("data");
-	sourceFrame.add( sessTrialCamGrid );
+	sourceAlign.set( 0.5, 0.5, 0.95, 0.95 );
+	sourceAlign.add( sessTrialCamGrid );
+	sourceFrame.add( sourceAlign );
 	
 	//
 	// vis Frame
@@ -482,7 +484,11 @@ void MainWindow::CreateInterface()
 	visCameraBtn.set_label("Visualise Camera");
 	visGrid.attach(  visTrialBtn,  0, 0, 1, 1 );
 	visGrid.attach( visCameraBtn,  1, 0, 1, 1 );
-	visFrame.add( visGrid );
+	
+	visAlign.set( 0.5, 0.5, 0.95, 0.95 );
+	visAlign.add( visGrid );
+	
+	visFrame.add( visAlign );
 	visFrame.set_label("Visualise");
 	
 	visTrialBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::VisTrialClick ) );
@@ -508,7 +514,10 @@ void MainWindow::CreateInterface()
 	demonGrid.attach(     demonJobsSep, 4, 0, 1, 1);
 	demonGrid.attach(   demonJobsLabel, 5, 0, 1, 1);
 	demonGrid.attach(    demonClearBtn, 6, 0, 1, 1);
-	demonFrame.add( demonGrid );
+	
+	demonAlign.set( 0.5, 0.5, 0.95, 0.95 );
+	demonAlign.add( demonGrid );
+	demonFrame.add( demonAlign );
 	
 	
 	
@@ -521,7 +530,9 @@ void MainWindow::CreateInterface()
 	// one for debayering. We put those in a notebook.
 	//
 	botBook.set_name( "Processing:" );
-	procFrame.add( botBook );
+	procAlign.set( 0.5, 0.5, 0.95, 0.95 );
+	procAlign.add( botBook );
+	procFrame.add( procAlign );
 	procFrame.set_label("Processing");
 	
 	//
@@ -739,7 +750,9 @@ void MainWindow::CreateInterface()
 	mainGrid.attach(       demonFrame,   0, 3, 3, 1);
 	mainGrid.attach(        procFrame,   0, 4, 3, 2);
 	
-	allBox.pack_start( mainGrid );
+	allAlign.set( 0.5, 0.5, 0.9, 0.9 );
+	allAlign.add( mainGrid );
+	allBox.pack_start( allAlign );
 	
 	
 	

@@ -92,11 +92,13 @@ protected:
 	
 	// box and grid to contain all display frames
 	Gtk::Box            allBox;
+	Gtk::Alignment      allAlign;
 	Gtk::Grid           mainGrid;
 	
 	// Our first couple things display the sessions that we found
 	// and the trials within the selected session.
 	Gtk::Frame          sourceFrame;
+	Gtk::Alignment      sourceAlign;
 	Gtk::Frame          sessLBFrame;
 	Gtk::ScrolledWindow sessLBScroll;
 	Gtk::ListViewText   sessionsLBox;
@@ -139,6 +141,7 @@ protected:
 	
 	
 	Gtk::Frame           visFrame;
+	Gtk::Alignment       visAlign;
 	Gtk::Grid            visGrid;
 	Gtk::Button          visTrialBtn;
 	Gtk::Button          visCameraBtn;
@@ -149,6 +152,7 @@ protected:
 	// Now we need frames for the various tools the user can make use of.
 	//
 	Gtk::Frame           procFrame;
+	Gtk::Alignment       procAlign;
 	Gtk::Notebook        botBook;
 	
 	
@@ -156,6 +160,7 @@ protected:
 	// Debayering
 	//
 	Gtk::Frame           demonFrame;
+	Gtk::Alignment       demonAlign;
 	Gtk::Grid            demonGrid;
 	Gtk::Button          demonStartBtn;
 	Gtk::Button          demonStopBtn;

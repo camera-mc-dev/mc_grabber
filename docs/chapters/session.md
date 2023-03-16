@@ -99,6 +99,7 @@ When the `Mirror to RAID` box is active, any time you create a debayer job, you 
 
 Another advantage of letting `lftp` handle all the copying for us is that it has the ability to run multiple copy jobs in parallel - that can make a big difference when copying many small files. 
 
+If you previously processed a session / trial / camera _without_ having `Mirror to RAID` enabled, simply re-do the debayer job. (The debayer tool will skip videos that already exist and thus rapidly skip through the jobs, and then the mirroring job will start ).
 
 #### Debayering
 
@@ -114,4 +115,5 @@ Once the daemon is running you can quit the session manager, and even log out of
 
 If you need to do more grabbing and want to stop the daemon to free up disk resources, start up the session manager and click the `Stop Daemon` button. The daemon will finish its current job and will then quit. (The `Stop Daemon` button basically creates a special job on the daemon's job list that tells it to quit.).
 
+If you run create jobs to debayer a session/trial/camera and there are already video outputs, the debayer tool will skip those files.
 
