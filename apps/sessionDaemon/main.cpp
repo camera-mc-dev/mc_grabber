@@ -110,7 +110,7 @@ int main(void)
 			boost::filesystem::directory_iterator di(p);
 			while( di != boost::filesystem::directory_iterator{} )
 			{
-				cout << di->path() << endl;
+// 				cout << di->path() << endl;
 				if(boost::filesystem::is_regular_file( di->path() ) )
 					paths.push_back( di->path() );
 				++di;
@@ -148,7 +148,7 @@ int main(void)
 					boost::filesystem::path outp( outTarget );
 					auto outDir = outp.parent_path();
 					boost::filesystem::create_directories(outDir);
-					
+					assert( boost::filesystem::exists( outDir ) );
 					log << "od: " << outDir << endl;
 					
 					
@@ -162,6 +162,8 @@ int main(void)
 					std::stringstream cmd;
 					cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p >> /dev/null 2>&1" << endl;
 					
+					std::system(cmd.str().c_str());
+					
 					// some simplistic checks.
 					if( boost::filesystem::exists(outp) )
 					{
@@ -172,7 +174,7 @@ int main(void)
 						log << "ERROR: " << "debayer " << rawSource << " -> " << outTarget << " failed to create file. Command was: " << cmd.str() << endl;
 					}
 					
-					std::system(cmd.str().c_str());
+					
 					
 				}
 				else if( command.compare("stop") == 0 )

@@ -113,6 +113,11 @@ MainWindow::~MainWindow()
 {
 }
 
+bool MainWindow::RescanSessionsTimer()
+{
+	ScanForSessions();
+	return true;
+}
 
 void MainWindow::ScanForSessions()
 {
@@ -200,7 +205,7 @@ void MainWindow::ScanSession( Ssession &sess )
 	//
 	
 	
-	cout << "sess: " << sess.name << endl;
+// 	cout << "sess: " << sess.name << endl;
 	for( unsigned spc = 0; spc < sess.paths.size(); ++spc )
 	{
 		boost::filesystem::path p( sess.paths[spc] );
@@ -222,11 +227,11 @@ void MainWindow::ScanSession( Ssession &sess )
 						auto ti = sess.trials.find( trialName );
 						if( ti != sess.trials.end() )
 						{
-							ti->second.paths.push_back( s );
+							ti->second.paths.insert( s );
 						}
 						else
 						{
-							sess.trials[ trialName ].paths.push_back(s);
+							sess.trials[ trialName ].paths.insert(s);
 							sess.trials[ trialName ].name = trialName;
 							sess.trials[ trialName ].sessionName = sess.name; // useful to keep with trial too.
 						}
@@ -247,7 +252,7 @@ void MainWindow::ScanSession( Ssession &sess )
 
 void MainWindow::ScanTrial( Strial &trial )
 {
-	cout << "\ttrial: " << trial.name << endl;
+// 	cout << "\ttrial: " << trial.name << endl;
 	
 	//
 	// Have we got a meta-file?
@@ -270,61 +275,7 @@ void MainWindow::ScanTrial( Strial &trial )
 	//
 	if( trial.name.find("calib_") == 0 )
 	{
-		//
-		// Have we got:
-		//
-		//  1) calib files?
-		//  2) matches file?
-		//  3) floor-aligned calib files?
-		//
-		//  we assume these things are raid0
-		//
-		
-		std::stringstream ss;
-		ss << "/data/raid0/recording/" << trial.sessionName << "/rgb/" << trial.name << "/";
-		std::string calibFilesPath( ss.str() );
-		
-		bool gotCalibs = true;
-		for( unsigned cc = 0; cc < trial.cameras.size(); ++cc )
-		{
-			ss.str("");
-			int camNum = trial.cameras[cc].id;
-			ss << calibFilesPath << std::setw(2) << std::setfill('0') << camNum << ".mp4.calib";
-			boost::filesystem::path p(ss.str());
-			if( !boost::filesystem::exists(p) )
-				gotCalibs = false;
-		}
-		
 		trial.isCalib = true;
-		if( !gotCalibs )
-		{
-			trial.hasInitialCalib   = false;
-		}
-		
-		{
-			ss.str("");
-			ss << calibFilesPath << "/matches";
-			boost::filesystem::path p(ss.str());
-			if( boost::filesystem::exists(p) )
-				trial.hasMatches = true;
-		}
-		
-		
-		gotCalibs = true;
-		for( unsigned cc = 0; cc < trial.cameras.size(); ++cc )
-		{
-			ss.str("");
-			int camNum = trial.cameras[cc].id;
-			ss << calibFilesPath << std::setw(2) << std::setfill('0') << camNum << ".mp4.floorAligned.calib";
-			boost::filesystem::path p(ss.str());
-			if( !boost::filesystem::exists(p) )
-				gotCalibs = false;
-		}
-		
-		if( !gotCalibs )
-		{
-			trial.hasAlignedCalib  = false;
-		}
 	}
 }
 
@@ -339,18 +290,18 @@ void MainWindow::ScanCamera( Strial &trial, unsigned camNum )
 	//
 	bool gotRawPath = false;
 	bool gotRGBPath = false;
-	for( unsigned tpc = 0; tpc < trial.paths.size(); ++tpc )
+	for( auto tpi = trial.paths.begin(); tpi != trial.paths.end(); ++tpi )
 	{
 		// first off, check that this trial path actually exists...
-		boost::filesystem::path tp( trial.paths[tpc] );
+		boost::filesystem::path tp( *tpi );
 		if( boost::filesystem::exists(tp) && boost::filesystem::is_directory(tp))
 		{
 			// now look for:
 			//  1) "??/"    : two-digit camera directory, we assume full of raw unprocessed images.
 			//  2) "??.mp4" : two-digit camera video file
 			std::stringstream rss, vss;
-			rss << trial.paths[tpc] << "/" << std::setw(2) << std::setfill('0') << camNum;
-			vss << trial.paths[tpc] << "/" << std::setw(2) << std::setfill('0') << camNum << ".mp4";
+			rss << *tpi << "/" << std::setw(2) << std::setfill('0') << camNum;
+			vss << *tpi << "/" << std::setw(2) << std::setfill('0') << camNum << ".mp4";
 			
 			boost::filesystem::path rp( rss.str() );
 			if( boost::filesystem::exists(rp) && boost::filesystem::is_directory(rp) )
@@ -646,6 +597,7 @@ void MainWindow::CreateInterface()
 	
 	
 	Glib::signal_timeout().connect(sigc::mem_fun(*this, &MainWindow::CheckDemonStatusTimer), 100);
+	Glib::signal_timeout().connect(sigc::mem_fun(*this, &MainWindow::RescanSessionsTimer), 1000);
 	
 	
 	//
@@ -846,6 +798,11 @@ void MainWindow::SessionBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::T
 
 void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column)
 {
+	TrialBoxRowActivatedImpl();
+}
+
+void MainWindow::TrialBoxRowActivatedImpl()
+{
 	// find the selected session and trial
 	auto ssel = sessionsLBox.get_selected();
 	auto tsel = trialsLBox.get_selected();
@@ -902,6 +859,7 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 					calibProcRadioBtn.set_sensitive(true);
 					calibRawRadioBtn.set_sensitive(true);
 					calibRaw2ProcBtn.set_sensitive(true);
+					cout << "set a" << endl;
 				}
 				else if( numDebayered == sessions[sn].trials[tn].cameras.size() )
 				{
@@ -911,6 +869,7 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 					calibProcRadioBtn.set_sensitive(false);
 					calibRawRadioBtn.set_sensitive(false);
 					calibRaw2ProcBtn.set_sensitive(true);
+					cout << "set b" << endl;
 				}
 				else
 				{
@@ -918,6 +877,7 @@ void MainWindow::TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::Tre
 					calibProcRadioBtn.set_sensitive(false);
 					calibRawRadioBtn.set_sensitive(false);
 					calibRaw2ProcBtn.set_sensitive(false);
+					cout << "set c" << endl;
 				}
 				
 			}

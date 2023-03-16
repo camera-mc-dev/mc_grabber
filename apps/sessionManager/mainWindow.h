@@ -10,6 +10,8 @@
 #include <gtkmm/separator.h>
 #include <gtkmm/checkbutton.h>
 
+#include <set>
+
 class MainWindow : public Gtk::Window
 {
 public:
@@ -40,20 +42,13 @@ public:
 		std::string sessionName;
 		
 		// paths on the filesystem where trial files are located.
-		std::vector< std::string > paths;
+		std::set< std::string > paths;
 		
 		// information about each camera in the trial
 		std::vector< ScameraInfo > cameras;
 		
 		// is it a calibration file?
 		bool isCalib;
-		
-		// what stages of calibration have been done?
-		bool hasRawCalib;
-		bool hasInitialCalib;
-		bool hasMatches;
-		bool hasAlignedCalib;
-		bool hasGrids;
 	};
 	
 	
@@ -92,6 +87,8 @@ protected:
 	void SessionBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
 	void TrialBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
 	void CamBoxRowActivated(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
+	
+	void TrialBoxRowActivatedImpl();
 	
 	// box and grid to contain all display frames
 	Gtk::Box            allBox;
@@ -266,6 +263,7 @@ protected:
 	void ScanTrial( Strial &trial );
 	void ScanCamera( Strial &trial, unsigned camNum );
 	void UpdateCalibSettingsFrom( std::string );
+	bool RescanSessionsTimer();
 	
 	void VisTrialClick();
 	void VisCameraClick();

@@ -386,6 +386,21 @@ void MainWindow::Raw2ProcClick()
 			cfg.lookup("dataRoot")  = processedSessionsRoot;
 			cfg.lookup("testRoot")  = tss.str();
 			
+			// we know that it currently points to directories, we need it to point to videos.
+			libconfig::Setting &idirs = cfg.lookup("imgDirs");
+			for( unsigned dc = 0; dc < idirs.getLength(); ++dc )
+			{
+				std::string dn = (const char*) idirs[dc];
+				std::stringstream ss;
+				for( unsigned c = 0; c < dn.size(); ++c )
+				{
+					if( dn[c] != '/' )
+						ss << dn[c];
+				}
+				ss << ".mp4";
+				idirs[dc] = ss.str().c_str();
+			}
+			
 			cfg.writeFile( pss.str().c_str() );
 		}
 	}
@@ -430,4 +445,5 @@ void MainWindow::Raw2ProcClick()
 		}
 	}
 	
+	TrialBoxRowActivatedImpl();
 }
