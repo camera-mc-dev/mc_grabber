@@ -110,6 +110,7 @@ void GridDetectThread( SGridDetectData *data )
 		// speed/accuracy trade off and resize the grid detection window to half 
 		// its original size, just because the accuracy cost is small enough (probably)
 		//
+		std::vector< std::stringstream > logMsgs(detections.size());
 		#pragma omp parallel for
 		for( unsigned ic = 0; ic < detections.size(); ++ic )
 		{
@@ -134,7 +135,9 @@ void GridDetectThread( SGridDetectData *data )
 				}
 			}
 			
+			logMsgs[ic] << "cgdNet -- " << ic << " -- " << got << " -> ";
 			
+
 			cv::Rect win;
 			if( got > 3 )
 			{
@@ -157,10 +160,10 @@ void GridDetectThread( SGridDetectData *data )
 				// is the window still quite ... big?
 				bool halved = false;
 				//if( win.width > 0.25 * raw.cols )
-				{
-					cv::resize( greyW, greyW, cv::Size( ), 0.5, 0.5 );
-					halved = true;
-				}
+				//{
+				//	cv::resize( greyW, greyW, cv::Size( ), 0.5, 0.5 );
+				//	halved = true;
+				//}
 				
 				// run the normal grid detector on that window
 				cgDetectors[ic]->FindGrid( greyW, 9, 10, false, false, gridPoints[ic] );
@@ -179,15 +182,21 @@ void GridDetectThread( SGridDetectData *data )
 				}
 				maxDetections = std::max( maxDetections, (unsigned)gridPoints[ic].size() );
 				
-				cgdbg << "cgdNet -- " << ic << " --" << endl;
-				cgdbg << "\t" << got << " : " << gridPoints[ic].size() << endl;
+				logMsgs[ic] << gridPoints[ic].size() << endl;
+			}
+			else
+			{
+				logMsgs[ic] << " no detect" << endl;
 			}
 		}
 		
 		
 		auto t4 = std::chrono::steady_clock::now();
 		
-		
+		for( unsigned ic = 0; ic < logMsgs.size(); ++ic )
+		{
+			cgdbg << logMsgs[ic].str();
+		}
 		
 		auto r = data->renderer.lock();
 		// have we got grids?

@@ -7,12 +7,25 @@ using std::endl;
 #include <signal.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/process.hpp>
 #include <fstream>
 #include <sstream>
 #include <pwd.h>
 #include "libconfig.h++"
+#include <iomanip>
 
 using std::endl;
+namespace bp = boost::process;
+
+std::string TimeStr()
+{
+	std::stringstream ss;
+
+	auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    ss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
+	return ss.str();
+}
 
 int main(void)
 {
@@ -149,7 +162,7 @@ int main(void)
 					auto outDir = outp.parent_path();
 					boost::filesystem::create_directories(outDir);
 					assert( boost::filesystem::exists( outDir ) );
-					log << "od: " << outDir << endl;
+					
 					
 					
 					// 
@@ -162,16 +175,16 @@ int main(void)
 					std::stringstream cmd;
 					cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p >> /dev/null 2>&1" << endl;
 					
-					std::system(cmd.str().c_str());
+					bp::system(cmd.str().c_str());
 					
 					// some simplistic checks.
 					if( boost::filesystem::exists(outp) )
 					{
-						log << "debayer " << rawSource << " -> " << outTarget << " successfully created file" << endl;
+						log << TimeStr() << " SUCESS: debayer " << rawSource << " -> " << outTarget << endl;
 					}
 					else
 					{
-						log << "ERROR: " << "debayer " << rawSource << " -> " << outTarget << " failed to create file. Command was: " << cmd.str() << endl;
+						log << TimeStr() << " ERROR: " << "debayer " << rawSource << " -> " << outTarget << " failed to create file. Command was: " << cmd.str() << endl;
 					}
 					
 					
@@ -201,21 +214,22 @@ int main(void)
 					
 					// in this case we use lftp to mirror data from the local system to some remote ftps server.
 					// (typically the CAMERA RAID)
-					std::stringstream ss;
-					ss << "lftp ";
-					
-					// the user should have bookmarked their credentials and we know the bookmark name will be "<username>-<host>"
-					ss << user << "-" << host << " ";
-					
-					// now construct the mirror command.
-					ss << "-e \"lcd " << procDataRoot << "; mirror -R --parallel=10 --only-newer " << source << " " << dest << "/" << source << ";exit;\" " ;
-					
-					log << "running mirror command: " << ss.str() << endl;
-					auto ret = std::system(ss.str().c_str());
+
+					// first off, make a script file for lftp to run.
+					std::ofstream lftp("/tmp/sessionDaemon.lftp");
+					lftp << "open " << user << "-" << host << endl;
+					lftp << "lcd " << procDataRoot << "; mirror -R --parallel=10 --only-newer --no-perms " << source << " " << dest << "/" << source << endl;
+					lftp << "exit";
+					std::string command = "lftp -f /tmp/sessionDaemon.lftp";
+					auto ret = bp::system( command.c_str() );
 					if( ret == 0 )
-						log << "completed mirror " << ss.str() << endl;
+					{
+						log << TimeStr() << " SUCCESS: lftp returned " << ret << " when mirroring " << source << endl;
+					}
 					else
-						log << "(Error) on stated mirror command" << endl;
+					{
+						log << TimeStr() << " ERROR: lftp returned " << ret << " when mirroring " << source << endl;
+					}
 				}
 				else
 				{

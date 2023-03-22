@@ -20,7 +20,7 @@ void MainWindow::DebayerHelpClick()
 	//
 	// A basic "system" call should be safe here as we don't need to block.
 	//
-	std::system( "firefox /opt/sessionManager/DebayerGuide.html");
+	std::system( "firefox /opt/software/mc_dev/mc_grabber/docs/html/index.html");
 }
 
 

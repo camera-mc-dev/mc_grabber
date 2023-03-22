@@ -21,7 +21,7 @@ void MainWindow::CalibHelpClick()
 	//
 	// A basic "system" call should be safe here as we don't need to block.
 	//
-	std::system( "firefox /opt/sessionManager/CalibGuide.html");
+	std::system( "firefox /opt/software/mc_dev/mc_grabber/docs/html/index.html");
 }
 
 
