@@ -52,7 +52,7 @@ Once you have captured the calibration sequence, you can make use of the calibra
      2) click the "Raw -> RGB" button to move all calibration data to the processed output. 
      3) If "mirroring" your data to a remote host, re-run the debayer to ensure calibration files are mirrored.
 
-
+Note that each time you run the calibration tool ("Run Calib") you be shown the final calibration output in a text editor (Kate). The calibration errors are always written to a file `/tmp/mc_calib_err`. 
 
 ### Calibrating from the command line
 

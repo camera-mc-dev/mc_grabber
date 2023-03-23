@@ -49,6 +49,14 @@ void MainWindow::CalibRunClick()
 	std::system( ss.str().c_str() );
 	
 	//
+	// Perversely simplistic way of viewing the final calibration errors.
+	//
+	ss.str("");
+	ss << "konsole --workdir ~/ -e kate /tmp/mc_calib_err &";
+	cout << ss.str() << endl;
+	std::system( ss.str().c_str() );
+	
+	//
 	// TODO: Update the session/trial once this completes.
 	//
 }
