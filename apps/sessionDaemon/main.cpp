@@ -160,35 +160,41 @@ int main(void)
 					// make sure the directories above the output target exist.
 					boost::filesystem::path outp( outTarget );
 					auto outDir = outp.parent_path();
-					boost::filesystem::create_directories(outDir);
-					assert( boost::filesystem::exists( outDir ) );
-					
-					
-					
-					// 
-					// We'll assume debayering to h265 with a crf of 15 - which is quite high quality
-					// in a way I'd rather use yuv444p but, well, the debayering is probably so poor that anything more that yuv420p 
-					// is probably pointless anyway.
-					//
-					// We'll pipe the output to null to keep things quiet
-					// TODO: upgrade from the "system" call to something that will give us a return value.
-					std::stringstream cmd;
-					cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p >> /dev/null 2>&1" << endl;
-					
-					bp::system(cmd.str().c_str());
-					
-					// some simplistic checks.
-					if( boost::filesystem::exists(outp) )
+					try
 					{
-						log << TimeStr() << " SUCESS: debayer " << rawSource << " -> " << outTarget << endl;
+						boost::filesystem::create_directories(outDir);
+
+						assert( boost::filesystem::exists( outDir ) );
+					
+					
+					
+						// 
+						// We'll assume debayering to h265 with a crf of 15 - which is quite high quality
+						// in a way I'd rather use yuv444p but, well, the debayering is probably so poor that anything more that yuv420p 
+						// is probably pointless anyway.
+						//
+						// We'll pipe the output to null to keep things quiet
+						// TODO: upgrade from the "system" call to something that will give us a return value.
+						std::stringstream cmd;
+						// cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p >> /tmp/mc_debayer_out 2>&1";
+						cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p";					
+						auto ret = bp::system(cmd.str().c_str());
+						
+						// some simplistic checks.
+						if( boost::filesystem::exists(outp) )
+						{
+							log << TimeStr() << " SUCCESS: debayer " << rawSource << " -> " << outTarget << endl;
+						}
+						else
+						{
+							log << TimeStr() << " ERROR: " << "debayer " << rawSource << " -> " << outTarget << " failed to create file. Command was: " << cmd.str() << endl;
+						}
 					}
-					else
+					catch( const std::exception& ex )
 					{
-						log << TimeStr() << " ERROR: " << "debayer " << rawSource << " -> " << outTarget << " failed to create file. Command was: " << cmd.str() << endl;
+						log << TimeStr() << " ERROR: debayer " << rawSource << " -> " << outTarget << end;
+						log << "\t\t" << ex.what() << "\n";
 					}
-					
-					
-					
 				}
 				else if( command.compare("stop") == 0 )
 				{
@@ -261,10 +267,6 @@ int main(void)
 			log << "no todo directory!" << endl;
 			exit(-1);
 		}
-		
-		
-		
-		
 		
 	}
 }
