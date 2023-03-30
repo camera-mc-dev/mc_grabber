@@ -344,7 +344,34 @@ bool MainWindow::CheckDemonStatus()
 	ss << "  jobs:   " << cnt;
 	demonJobsLabel.set_text(ss.str() );
 	
+	
+	boost::filesystem::path ep("/opt/sessionDaemon/errorFlag");
+	if( boost::filesystem::exists(ep) )
+	{
+		// open file. it should have a single line on it, which says the last time there was an error.
+		std::ifstream effi( ep.str() );
+		std::string errStr = std::get_line( effi );
+		std::stringstream ss;
+		ss << "Last Error: " << errStr << endl; 
+		demonErrLabel.set_text( ss.str() );
+		demonErrLabel.override_color (Gdk::RGBA("red"), Gtk::STATE_FLAG_NORMAL);
+	}
+	else
+	{
+		demonErrLabel.set_text( "No errors" );
+		demonErrLabel.override_color (Gdk::RGBA("green"), Gtk::STATE_FLAG_NORMAL);
+	}
+	
 	return retVal;
+}
+
+void MainWindow::DemonClearClick()
+{
+	boost::filesystem::path ep("/opt/sessionDaemon/errorFlag");
+	if( boost::filesystem::exists(ep) )
+	{
+		boost::filesystem::remove(ep);
+	}
 }
 
 bool MainWindow::CheckDemonStatusAndStart()
@@ -405,4 +432,16 @@ void MainWindow::DemonStartClick()
 void MainWindow::DemonClearClick()
 {
 	system( "rm /opt/sessionDaemon/todo/*" );
+}
+
+
+void MainWindow::DemonLogClick()
+{
+	//
+	// Perversely simplistic way of viewing the demon log
+	//
+	ss.str("");
+	ss << "konsole --workdir ~/ -e kate /opt/sessionDaemon/log &";
+	cout << ss.str() << endl;
+	std::system( ss.str().c_str() );
 }

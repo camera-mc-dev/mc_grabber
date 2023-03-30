@@ -504,9 +504,12 @@ void MainWindow::CreateInterface()
 	
 	demonStatusLabel.set_label("status: (waiting info...)");
 	demonJobsLabel.set_text(   "jobs  : (waiting info...)");
+	demonErrLabel.set_text(    "errors: (waiting info...)");
 	demonStartBtn.set_label("Start Demon");
 	demonStopBtn.set_label("Stop Demon");
 	demonClearBtn.set_label("Clear jobs");
+	demonLogBtn.set_label("Check log");
+	demonErrBtn.set_label("Clear err");
 	demonGrid.attach(    demonStartBtn, 0, 0, 1, 1);
 	demonGrid.attach(     demonStopBtn, 1, 0, 1, 1);
 	demonGrid.attach(   demonStatusSep, 2, 0, 1, 1);
@@ -514,6 +517,10 @@ void MainWindow::CreateInterface()
 	demonGrid.attach(     demonJobsSep, 4, 0, 1, 1);
 	demonGrid.attach(   demonJobsLabel, 5, 0, 1, 1);
 	demonGrid.attach(    demonClearBtn, 6, 0, 1, 1);
+	demonGrid.attach(      demonErrSep, 7, 0, 1, 1);
+	demonGrid.attach(    demonErrLabel, 8, 0, 1, 1);
+	demonGrid.attach(      demonLogBtn, 9, 0, 1, 1);
+	demonGrid.attach(      demonErrBtn,10, 0, 1, 1);
 	
 	demonAlign.set( 0.5, 0.5, 0.95, 0.95 );
 	demonAlign.add( demonGrid );
@@ -524,6 +531,7 @@ void MainWindow::CreateInterface()
 	demonStopBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonStopClick ) );
 	demonStartBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonStartClick ) );
 	demonClearBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonClearClick ) );
+	demonLogBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonLogClick ) );
 	
 	//
 	// The bottom half of the window is two tabs, one for calibration, 

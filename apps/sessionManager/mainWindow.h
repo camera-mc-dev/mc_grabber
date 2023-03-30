@@ -167,7 +167,9 @@ protected:
 	Gtk::Button          demonClearBtn;
 	Gtk::Label           demonStatusLabel;
 	Gtk::Label           demonJobsLabel;
-	Gtk::Separator       demonStatusSep, demonJobsSep;
+	Gtk::Button          demonLogButton;
+	Gtk::Button          demonErrButton;
+	Gtk::Separator       demonStatusSep, demonJobsSep, demonErrSep;
 	
 	Gtk::Frame           debayerFrame;
 	Gtk::Grid            debayerFrameGrid;
@@ -292,6 +294,8 @@ protected:
 	void DemonStopClick();
 	void DemonStartClick();
 	void DemonClearClick();
+	void DemonLogClick();
+	void DemonErrClick();
 	
 	bool CheckDemonStatusTimer();
 	bool CheckDemonStatus();

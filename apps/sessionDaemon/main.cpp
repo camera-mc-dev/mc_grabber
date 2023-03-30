@@ -27,6 +27,19 @@ std::string TimeStr()
 	return ss.str();
 }
 
+void RunDebayer( std::ifstream &infi, std::ofstream &log );
+void RunMirror( std::ifstream &infi, std::ofstream &log );
+
+void SetError()
+{
+	// if an error occurs, we make sure there's a file "/opt/sessionDaemon/errorFlag"
+	// The session manager can see that file and make a mark in the GUI telling the user 
+	// to check the log.
+	std::ofstream err("/opt/sessionDaemon/errorFlag" );
+	err << TimeStr() << endl;
+	err.close();
+}
+
 int main(void)
 {
 	//
@@ -144,57 +157,7 @@ int main(void)
 				infi >> command;
 				if( command.compare("debayer") == 0 )
 				{
-					std::string rawSource;
-					infi >> rawSource;
-					
-					std::string outTarget;
-					infi >> outTarget;
-					
-					std::string alg;
-					infi >> alg;
-					
-					std::string fps;
-					infi >> fps;
-					
-					
-					// make sure the directories above the output target exist.
-					boost::filesystem::path outp( outTarget );
-					auto outDir = outp.parent_path();
-					try
-					{
-						boost::filesystem::create_directories(outDir);
-
-						assert( boost::filesystem::exists( outDir ) );
-					
-					
-					
-						// 
-						// We'll assume debayering to h265 with a crf of 15 - which is quite high quality
-						// in a way I'd rather use yuv444p but, well, the debayering is probably so poor that anything more that yuv420p 
-						// is probably pointless anyway.
-						//
-						// We'll pipe the output to null to keep things quiet
-						// TODO: upgrade from the "system" call to something that will give us a return value.
-						std::stringstream cmd;
-						// cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p >> /tmp/mc_debayer_out 2>&1";
-						cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p";					
-						auto ret = bp::system(cmd.str().c_str());
-						
-						// some simplistic checks.
-						if( boost::filesystem::exists(outp) )
-						{
-							log << TimeStr() << " SUCCESS: debayer " << rawSource << " -> " << outTarget << endl;
-						}
-						else
-						{
-							log << TimeStr() << " ERROR: " << "debayer " << rawSource << " -> " << outTarget << " failed to create file. Command was: " << cmd.str() << endl;
-						}
-					}
-					catch( const std::exception& ex )
-					{
-						log << TimeStr() << " ERROR: debayer " << rawSource << " -> " << outTarget << end;
-						log << "\t\t" << ex.what() << "\n";
-					}
+					RunDebayer( infi, log );
 				}
 				else if( command.compare("stop") == 0 )
 				{
@@ -204,38 +167,7 @@ int main(void)
 				}
 				else if( command.compare("mirror") == 0 )
 				{
-					std::vector< std::string > params;
-					std::string procDataRoot;
-					std::string source;
-					std::string host;
-					std::string user;
-					std::string dest;
-					
-					infi >> procDataRoot;
-					infi >> source;
-					infi >> host;
-					infi >> user;
-					infi >> dest;
-					
-					
-					// in this case we use lftp to mirror data from the local system to some remote ftps server.
-					// (typically the CAMERA RAID)
-
-					// first off, make a script file for lftp to run.
-					std::ofstream lftp("/tmp/sessionDaemon.lftp");
-					lftp << "open " << user << "-" << host << endl;
-					lftp << "lcd " << procDataRoot << "; mirror -R --parallel=10 --only-newer --no-perms " << source << " " << dest << "/" << source << endl;
-					lftp << "exit";
-					std::string command = "lftp -f /tmp/sessionDaemon.lftp";
-					auto ret = bp::system( command.c_str() );
-					if( ret == 0 )
-					{
-						log << TimeStr() << " SUCCESS: lftp returned " << ret << " when mirroring " << source << endl;
-					}
-					else
-					{
-						log << TimeStr() << " ERROR: lftp returned " << ret << " when mirroring " << source << endl;
-					}
+					RunMirror( infi, log );
 				}
 				else
 				{
@@ -270,3 +202,100 @@ int main(void)
 		
 	}
 }
+
+
+void RunDebayer( std::ifstream &infi, std::ofstream &log )
+{
+	std::string rawSource;
+	infi >> rawSource;
+	
+	std::string outTarget;
+	infi >> outTarget;
+	
+	std::string alg;
+	infi >> alg;
+	
+	std::string fps;
+	infi >> fps;
+	
+	
+	// make sure the directories above the output target exist.
+	boost::filesystem::path outp( outTarget );
+	auto outDir = outp.parent_path();
+	try
+	{
+		boost::filesystem::create_directories(outDir);
+		
+		assert( boost::filesystem::exists( outDir ) );
+		
+		
+		
+		// 
+		// We'll assume debayering to h265 with a crf of 15 - which is quite high quality
+		// in a way I'd rather use yuv444p but, well, the debayering is probably so poor that anything more that yuv420p 
+		// is probably pointless anyway.
+		//
+		// We'll pipe the output to null to keep things quiet
+		// TODO: upgrade from the "system" call to something that will give us a return value.
+		std::stringstream cmd;
+		// cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p >> /tmp/mc_debayer_out 2>&1";
+		cmd << debayerBin << " " << rawSource << " GRBG " << outTarget << " " << alg << " " << fps << " h265 15 yuv420p";					
+		auto ret = bp::system(cmd.str().c_str());
+		
+		// some simplistic checks.
+		if( boost::filesystem::exists(outp) )
+		{
+			log << TimeStr() << " SUCCESS: debayer " << rawSource << " -> " << outTarget << endl;
+		}
+		else
+		{
+			log << TimeStr() << " ERROR: " << "debayer " << rawSource << " -> " << outTarget << " failed to create file. Command was: " << cmd.str() << endl;
+			SetError();
+		}
+	}
+	catch( const std::exception& ex )
+	{
+		log << TimeStr() << " ERROR: debayer " << rawSource << " -> " << outTarget << end;
+		log << "\t\t" << ex.what() << "\n";
+		SetError();
+	}
+}
+
+void RunMirror( std::ifstream &infi, std::ofstream &log )
+{
+	std::vector< std::string > params;
+	std::string procDataRoot;
+	std::string source;
+	std::string host;
+	std::string user;
+	std::string dest;
+	
+	infi >> procDataRoot;
+	infi >> source;
+	infi >> host;
+	infi >> user;
+	infi >> dest;
+	
+	
+	// in this case we use lftp to mirror data from the local system to some remote ftps server.
+	// (typically the CAMERA RAID)
+
+	// first off, make a script file for lftp to run.
+	std::ofstream lftp("/tmp/sessionDaemon.lftp");
+	lftp << "open " << user << "-" << host << endl;
+	lftp << "lcd " << procDataRoot << "; mirror -R --parallel=10 --only-newer --no-perms " << source << " " << dest << "/" << source << endl;
+	lftp << "exit";
+	std::string command = "lftp -f /tmp/sessionDaemon.lftp";
+	auto ret = bp::system( command.c_str() );
+	if( ret == 0 )
+	{
+		log << TimeStr() << " SUCCESS: lftp returned " << ret << " when mirroring " << source << endl;
+	}
+	else
+	{
+		log << TimeStr() << " ERROR: lftp returned " << ret << " when mirroring " << source << endl;
+		SetError();
+	}
+}
+
+
