@@ -532,6 +532,7 @@ void MainWindow::CreateInterface()
 	demonStartBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonStartClick ) );
 	demonClearBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonClearClick ) );
 	demonLogBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonLogClick ) );
+	demonErrBtn.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::DemonErrClick ) );
 	
 	//
 	// The bottom half of the window is two tabs, one for calibration, 

@@ -167,8 +167,9 @@ protected:
 	Gtk::Button          demonClearBtn;
 	Gtk::Label           demonStatusLabel;
 	Gtk::Label           demonJobsLabel;
-	Gtk::Button          demonLogButton;
-	Gtk::Button          demonErrButton;
+	Gtk::Label           demonErrLabel;
+	Gtk::Button          demonLogBtn;
+	Gtk::Button          demonErrBtn;
 	Gtk::Separator       demonStatusSep, demonJobsSep, demonErrSep;
 	
 	Gtk::Frame           debayerFrame;

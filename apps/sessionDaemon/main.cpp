@@ -27,7 +27,7 @@ std::string TimeStr()
 	return ss.str();
 }
 
-void RunDebayer( std::ifstream &infi, std::ofstream &log );
+void RunDebayer( std::ifstream &infi, std::string debayerBin, std::ofstream &log );
 void RunMirror( std::ifstream &infi, std::ofstream &log );
 
 void SetError()
@@ -157,7 +157,7 @@ int main(void)
 				infi >> command;
 				if( command.compare("debayer") == 0 )
 				{
-					RunDebayer( infi, log );
+					RunDebayer( infi, debayerBin, log );
 				}
 				else if( command.compare("stop") == 0 )
 				{
@@ -204,7 +204,7 @@ int main(void)
 }
 
 
-void RunDebayer( std::ifstream &infi, std::ofstream &log )
+void RunDebayer( std::ifstream &infi, std::string debayerBin, std::ofstream &log )
 {
 	std::string rawSource;
 	infi >> rawSource;
@@ -255,7 +255,7 @@ void RunDebayer( std::ifstream &infi, std::ofstream &log )
 	}
 	catch( const std::exception& ex )
 	{
-		log << TimeStr() << " ERROR: debayer " << rawSource << " -> " << outTarget << end;
+		log << TimeStr() << " ERROR: debayer " << rawSource << " -> " << outTarget << endl;
 		log << "\t\t" << ex.what() << "\n";
 		SetError();
 	}
